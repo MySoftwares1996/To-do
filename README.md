@@ -45,9 +45,9 @@ Builds are signed with the key in `app/debug.keystore`, so a newer APK installs 
 and your tasks are kept.
 
 ## Build locally
-Requires Android Studio (or the Android SDK) and JDK 17+:
+Open the folder in Android Studio and press Run, or with the Android SDK, JDK 17+ and Gradle 8.14 installed:
 ```
-./gradlew assembleRelease
+gradle assembleRelease
 # APK: app/build/outputs/apk/release/app-release.apk
 ```
 
