@@ -11,6 +11,9 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 - **Swipe a task to mark it done** (swipe a completed task to delete it), with **Undo**
 - **Home screen widget**: shows your next pending tasks (overdue in red), tap ✔ to mark one done,
   tap **+** to add a task; it resizes and updates instantly when tasks change
+- **Backup & restore** (⋮ → Backup & restore): saves all tasks to a JSON file in a place you choose
+  (Google Drive, phone storage…). After the first backup, the file is **updated automatically after every change**.
+  Restore on the same or a new phone, either adding to or replacing current tasks. All alarms are set again.
 - Quick date chips (Today, Tomorrow, Next Monday, Month-end) and Material date/time pickers
 - Add a task with a title, notes, date and time
 - Repeat: once, daily, weekly, monthly (same date), **month-end (last day of the month)**, yearly

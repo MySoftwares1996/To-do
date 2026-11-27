@@ -51,6 +51,10 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".BackupActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".SetupActivity"
             android:exported="false"
             android:label="@string/setup_title" />

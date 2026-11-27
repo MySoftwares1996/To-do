@@ -14,7 +14,10 @@ class TaskDb private constructor(private val appContext: Context) :
     SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 1) {
 
     /** Keep the home screen widget in sync with every change. */
-    private fun changed() = TaskWidget.refresh(appContext)
+    private fun changed() {
+        TaskWidget.refresh(appContext)
+        Backup.scheduleAuto(appContext)
+    }
 
     companion object {
         @Volatile private var instance: TaskDb? = null

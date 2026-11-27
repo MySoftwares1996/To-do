@@ -5,6 +5,10 @@
         android:title="Alarm reliability"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_backup"
+        android:title="Backup &amp; restore"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_clear"
         android:title="Clear completed"
         app:showAsAction="never" />

@@ -274,6 +274,7 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.menu_setup -> { startActivity(Intent(this, SetupActivity::class.java)); return true }
             R.id.menu_update -> { checkForUpdate(manual = true); return true }
+            R.id.menu_backup -> { startActivity(Intent(this, BackupActivity::class.java)); return true }
             R.id.menu_clear -> { clearCompleted(); return true }
         }
         return super.onOptionsItemSelected(item)
