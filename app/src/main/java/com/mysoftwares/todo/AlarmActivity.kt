@@ -29,6 +29,8 @@ class AlarmActivity : BaseActivity() {
         }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.activity_alarm)
+        // AM/PM only for 12-hour phones.
+        if (android.text.format.DateFormat.is24HourFormat(this)) findViewById<View>(R.id.ampm).visibility = View.GONE
 
         findViewById<Button>(R.id.done).setOnClickListener { TaskActions.done(this, taskId); finish() }
         findViewById<Button>(R.id.snooze10).setOnClickListener { TaskActions.snooze(this, taskId, 10); finish() }
@@ -38,8 +40,8 @@ class AlarmActivity : BaseActivity() {
         // Gentle pulsing bell.
         ObjectAnimator.ofPropertyValuesHolder(
             findViewById<View>(R.id.bell),
-            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.15f),
-            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.15f),
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.1f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.1f),
         ).apply {
             duration = 600
             repeatCount = ValueAnimator.INFINITE

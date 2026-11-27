@@ -6,16 +6,52 @@
     android:background="@color/alarm_bg"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    android:padding="28dp">
+    android:paddingHorizontal="24dp"
+    android:paddingTop="40dp"
+    android:paddingBottom="28dp">
 
-    <TextClock
-        android:id="@+id/clock"
+    <!-- Clock on one line: big time + small AM/PM -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:fontFamily="sans-serif-thin"
+        android:baselineAligned="true"
+        android:orientation="horizontal">
+
+        <TextClock
+            android:id="@+id/clock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-thin"
+            android:format12Hour="h:mm"
+            android:format24Hour="HH:mm"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="76sp" />
+
+        <TextClock
+            android:id="@+id/ampm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="sans-serif-light"
+            android:format12Hour="a"
+            android:format24Hour="a"
+            android:maxLines="1"
+            android:textAllCaps="true"
+            android:textColor="@color/white"
+            android:textSize="24sp" />
+    </LinearLayout>
+
+    <TextClock
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:alpha="0.7"
+        android:format12Hour="EEEE, d MMM"
+        android:format24Hour="EEEE, d MMM"
         android:textColor="@color/white"
-        android:textSize="84sp" />
+        android:textSize="17sp" />
 
     <View
         android:layout_width="match_parent"
@@ -24,8 +60,8 @@
 
     <ImageView
         android:id="@+id/bell"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:importantForAccessibility="no"
         android:src="@drawable/ic_bell_big" />
 
@@ -33,13 +69,14 @@
         android:id="@+id/important"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="24dp"
         android:background="@drawable/bg_pill_danger"
+        android:maxLines="1"
         android:paddingHorizontal="18dp"
         android:paddingVertical="8dp"
-        android:text="⚠  IMPORTANT – do this now!"
+        android:text="⚠  IMPORTANT – do it now"
         android:textColor="@color/white"
-        android:textSize="16sp"
+        android:textSize="15sp"
         android:textStyle="bold" />
 
     <TextView
@@ -47,17 +84,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
+        android:ellipsize="end"
         android:gravity="center"
+        android:maxLines="3"
         android:textColor="@color/white"
-        android:textSize="30sp"
+        android:textSize="28sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/due"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:alpha="0.85"
+        android:layout_marginTop="6dp"
+        android:alpha="0.7"
         android:gravity="center"
         android:textColor="@color/white"
         android:textSize="16sp" />
@@ -66,10 +105,11 @@
         android:id="@+id/notes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:alpha="0.85"
+        android:layout_marginTop="10dp"
+        android:alpha="0.7"
+        android:ellipsize="end"
         android:gravity="center"
-        android:maxLines="5"
+        android:maxLines="3"
         android:textColor="@color/white"
         android:textSize="15sp" />
 
@@ -81,12 +121,12 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/done"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="64dp"
         android:backgroundTint="@color/ios_green"
-        android:text="✔   DONE"
+        android:text="✔  DONE"
         android:textColor="@color/white"
         android:textSize="20sp"
-        app:cornerRadius="36dp" />
+        app:cornerRadius="32dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -97,22 +137,36 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/snooze10"
             android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_marginEnd="8dp"
+            android:layout_height="52dp"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/ios_orange"
-            android:text="Snooze 10 min"
+            android:backgroundTint="#2C2C2E"
+            android:maxLines="1"
+            android:text="10 min"
             android:textColor="@color/white"
-            app:cornerRadius="30dp" />
+            android:textSize="16sp"
+            app:cornerRadius="26dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/snooze60"
             android:layout_width="0dp"
-            android:layout_height="60dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:backgroundTint="#3A3A3C"
-            android:text="Snooze 1 hour"
+            android:backgroundTint="#2C2C2E"
+            android:maxLines="1"
+            android:text="1 hour"
             android:textColor="@color/white"
-            app:cornerRadius="30dp" />
+            android:textSize="16sp"
+            app:cornerRadius="26dp" />
     </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:alpha="0.6"
+        android:text="Snooze for…"
+        android:textColor="@color/white"
+        android:textSize="13sp" />
 </LinearLayout>
