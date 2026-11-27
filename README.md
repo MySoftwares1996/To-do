@@ -8,8 +8,9 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 - **iOS-style design**: large bold title that shrinks on scroll, light grey background with white grouped
   rounded lists (true black in dark mode), round tick circles, “+ New Task” bar, centred titles with ‹ back,
   grouped form with green switches, Android calendar date picker and clock-dial time picker
-- **Minimal main screen**: big title, “5 pending · 1 overdue” summary, filter chips (All · Today · Important · Overdue)
-- Clean Material 3 design. **Appearance** settings (⋮ → Appearance):
+- **Bottom tabs**: **Today** (overdue + today, red badge = overdue count) · **Upcoming** · **Done** · **Settings**;
+  “+” at the top right adds a task
+- Clean Material 3 design. **Appearance** settings (Settings → Appearance):
   - Theme: System / Light / Dark
   - Colour: Blue, Green, Purple, Orange, Teal, Pink, or **Wallpaper colours** (Material You, Android 12+)
   - Task list style: **Grouped** (iOS inset list) or **Cards**
@@ -19,7 +20,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 - **Swipe right = Done, swipe left = Delete**, with **Undo**
 - **Home screen widget**: shows your next pending tasks (overdue in red), tap ✔ to mark one done,
   tap **+** to add a task; it resizes and updates instantly when tasks change
-- **Backup & restore** (⋮ → Backup & restore): saves all tasks to a JSON file in a place you choose
+- **Backup & restore** (Settings → Backup & restore): saves all tasks to a JSON file in a place you choose
   (Google Drive, phone storage…). After the first backup, the file is **updated automatically after every change**.
   Restore on the same or a new phone, either adding to or replacing current tasks. All alarms are set again.
 - Add a task with a title, notes, date and time
@@ -45,7 +46,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 | App killed | Every time you open the app, all alarms are re-armed |
 
 ### What you must do once on your phone
-Open **⋮ → Alarm reliability** and make every item green. On Xiaomi, OPPO, vivo,
+Open **Settings → Alarm reliability** and make every item green. On Xiaomi, OPPO, vivo,
 realme, OnePlus, Huawei or Samsung phones, also turn on **Autostart** and set battery usage to
 **Unrestricted** (the screen shows instructions for your brand). Then tap **Test alarm**
 and lock the phone.
@@ -61,7 +62,7 @@ and install it on the phone (allow "Install unknown apps").
 ## Over-the-air (OTA) updates
 - Every push to the default branch builds the app and publishes it as a GitHub Release
   (`v1.0.<build number>`, with `OfficeToDo.apk` attached).
-- The app checks for a newer release when you open it (at most every 6 hours), or right away from **⋮ → Check for updates**.
+- The app checks for a newer release when you open it (at most every 6 hours), or right away from **Settings → Check for updates**.
 - When a new version exists, tap **Update now**: the app downloads it, verifies its SHA-256 checksum,
   and opens the Android installer. Tap **Update**. Your tasks and alarms are kept.
 - The first time, Android asks you to allow **Install unknown apps** for Office To-Do.

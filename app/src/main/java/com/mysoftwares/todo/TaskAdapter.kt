@@ -1,19 +1,16 @@
 package com.mysoftwares.todo
 
-import android.content.res.ColorStateList
 import android.graphics.Paint
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.chip.Chip
 import com.google.android.material.color.MaterialColors
 import java.text.DateFormat
 import java.time.Instant
@@ -21,15 +18,13 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Date
 
-/** Which tasks the list shows; chosen with the tiles at the top. */
-enum class Filter(val label: String) {
-    ALL("All"), TODAY("Today"), IMPORTANT("Important"), OVERDUE("Overdue")
-}
+/** The task tabs at the bottom of the main screen (Settings is a separate page). */
+enum class Tab(val title: String) { TODAY("Today"), UPCOMING("Upcoming"), DONE("Done") }
 
 /** A row in the list. */
 sealed class Row {
     data class Banner(val problems: Int) : Row()
-    data class Filters(val pending: Int, val overdue: Int, val filter: Filter) : Row()
+    data class Summary(val text: String) : Row()
     data class Header(val key: String, val title: String, val count: Int, val colorRes: Int?) : Row()
     data class Item(val task: Task, val first: Boolean, val last: Boolean) : Row()
     data class Empty(val text: String) : Row()
@@ -38,7 +33,6 @@ sealed class Row {
 class TaskAdapter(
     private val onClick: (Task) -> Unit,
     private val onCheck: (Task) -> Unit,
-    private val onFilter: (Filter) -> Unit,
     private val onBanner: () -> Unit,
     /** true = iOS inset grouped list; false = separate rounded cards. */
     private val grouped: Boolean = true,
@@ -46,7 +40,7 @@ class TaskAdapter(
 
     companion object {
         private const val T_BANNER = 0
-        private const val T_FILTERS = 1
+        private const val T_SUMMARY = 1
         private const val T_HEADER = 2
         private const val T_TASK = 3
         private const val T_EMPTY = 4
@@ -62,60 +56,46 @@ class TaskAdapter(
 
         private fun day(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate()
 
-        fun matches(t: Task, f: Filter, now: Long): Boolean = when (f) {
-            Filter.ALL -> true
-            Filter.TODAY -> !t.done && (t.dueAt < now || day(t.dueAt) == LocalDate.now())
-            Filter.IMPORTANT -> !t.done && t.important
-            Filter.OVERDUE -> !t.done && t.dueAt < now
-        }
 
-        fun buildRows(tasks: List<Task>, filter: Filter, problems: Int): List<Row> {
+        fun buildRows(tasks: List<Task>, tab: Tab, problems: Int): List<Row> {
             val now = System.currentTimeMillis()
             val today = LocalDate.now()
             val rows = mutableListOf<Row>()
-            if (problems > 0) rows += Row.Banner(problems)
-            rows += Row.Filters(
-                pending = tasks.count { !it.done },
-                overdue = tasks.count { matches(it, Filter.OVERDUE, now) },
-                filter = filter,
-            )
+            if (problems > 0 && tab == Tab.TODAY) rows += Row.Banner(problems)
 
-            data class Sec(val key: String, val title: String, val color: Int?, val items: MutableList<Task> = mutableListOf())
-            val overdue = Sec("overdue", "Overdue", R.color.ios_red)
-            val sToday = Sec("today", "Today", null)
-            val sTomorrow = Sec("tomorrow", "Tomorrow", null)
-            val sWeek = Sec("week", "This Week", null)
-            val sLater = Sec("later", "Later", null)
-            val sDone = Sec("done", "Completed", R.color.ios_secondary)
-            val sections = listOf(overdue, sToday, sTomorrow, sWeek, sLater, sDone)
-
-            for (t in tasks.filter { matches(it, filter, now) }) {
-                val d = day(t.dueAt)
-                when {
-                    t.done -> sDone
-                    t.dueAt < now -> overdue
-                    d == today -> sToday
-                    d == today.plusDays(1) -> sTomorrow
-                    d.isBefore(today.plusDays(7)) -> sWeek
-                    else -> sLater
-                }.items.add(t)
-            }
-            var any = false
-            for (s in sections) {
-                if (s.items.isEmpty()) continue
-                any = true
-                val list = if (s === sDone) s.items.takeLast(30).reversed() else s.items.sortedBy { it.dueAt }
-                rows += Row.Header(s.key, s.title, list.size, s.color)
+            fun section(key: String, title: String, color: Int?, list: List<Task>) {
+                if (list.isEmpty()) return
+                rows += Row.Header(key, title, list.size, color)
                 list.forEachIndexed { i, t -> rows += Row.Item(t, i == 0, i == list.lastIndex) }
             }
-            if (!any) rows += Row.Empty(
-                when (filter) {
-                    Filter.ALL -> "No Tasks"
-                    Filter.TODAY -> "Nothing due today"
-                    Filter.IMPORTANT -> "No important tasks"
-                    Filter.OVERDUE -> "Nothing overdue 🎉"
+            val pending = tasks.filter { !it.done }.sortedBy { it.dueAt }
+            when (tab) {
+                Tab.TODAY -> {
+                    val overdue = pending.filter { it.dueAt < now }
+                    val due = pending.filter { it.dueAt >= now && day(it.dueAt) == today }
+                    val dateText = java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMM").format(today)
+                    rows += Row.Summary("$dateText · ${overdue.size + due.size} to do")
+                    section("overdue", "Overdue", R.color.ios_red, overdue)
+                    section("today", "Today", null, due)
+                    if (overdue.isEmpty() && due.isEmpty()) rows += Row.Empty("Nothing due today")
                 }
-            )
+                Tab.UPCOMING -> {
+                    val future = pending.filter { it.dueAt >= now && day(it.dueAt).isAfter(today) }
+                    rows += Row.Summary("${future.size} scheduled")
+                    section("tomorrow", "Tomorrow", null, future.filter { day(it.dueAt) == today.plusDays(1) })
+                    section("week", "This Week", null, future.filter {
+                        val d = day(it.dueAt); d.isAfter(today.plusDays(1)) && d.isBefore(today.plusDays(7))
+                    })
+                    section("later", "Later", null, future.filter { !day(it.dueAt).isBefore(today.plusDays(7)) })
+                    if (future.isEmpty()) rows += Row.Empty("Nothing upcoming")
+                }
+                Tab.DONE -> {
+                    val done = tasks.filter { it.done }.sortedByDescending { it.dueAt }.take(30)
+                    rows += Row.Summary(if (done.isEmpty()) "No completed tasks" else "Last ${done.size} completed")
+                    section("done", "Completed", R.color.ios_secondary, done)
+                    if (done.isEmpty()) rows += Row.Empty("Nothing completed yet")
+                }
+            }
             return rows
         }
 
@@ -139,7 +119,7 @@ class TaskAdapter(
 
     override fun getItemViewType(position: Int) = when (getItem(position)) {
         is Row.Banner -> T_BANNER
-        is Row.Filters -> T_FILTERS
+        is Row.Summary -> T_SUMMARY
         is Row.Header -> T_HEADER
         is Row.Item -> T_TASK
         is Row.Empty -> T_EMPTY
@@ -151,7 +131,7 @@ class TaskAdapter(
         val inf = LayoutInflater.from(parent.context)
         val layout = when (viewType) {
             T_BANNER -> R.layout.item_banner
-            T_FILTERS -> R.layout.item_filters
+            T_SUMMARY -> R.layout.item_summary
             T_HEADER -> R.layout.item_header
             T_EMPTY -> R.layout.item_empty
             else -> R.layout.item_task
@@ -166,7 +146,7 @@ class TaskAdapter(
                 (v as TextView).text = v.context.getString(R.string.banner_problems, row.problems)
                 v.setOnClickListener { onBanner() }
             }
-            is Row.Filters -> bindFilters(v, row)
+            is Row.Summary -> (v as TextView).text = row.text
             is Row.Header -> {
                 val t = v.findViewById<TextView>(R.id.header)
                 t.text = row.title
@@ -178,34 +158,6 @@ class TaskAdapter(
         }
     }
 
-    private fun bindFilters(v: View, row: Row.Filters) {
-        val ctx = v.context
-        v.findViewById<TextView>(R.id.summary).text = when {
-            row.pending == 0 -> "All done 🎉"
-            row.overdue > 0 -> "${row.pending} pending · ${row.overdue} overdue"
-            else -> "${row.pending} pending"
-        }
-        val box = v.findViewById<LinearLayout>(R.id.chips)
-        box.removeAllViews()
-        val accent = MaterialColors.getColor(v, androidx.appcompat.R.attr.colorPrimary)
-        val cell = ContextCompat.getColor(ctx, R.color.ios_cell)
-        val label = ContextCompat.getColor(ctx, R.color.ios_label)
-        val gap = (8 * ctx.resources.displayMetrics.density).toInt()
-        Filter.entries.forEach { f ->
-            val selected = f == row.filter
-            box.addView(Chip(ctx).apply {
-                text = f.label
-                isCheckable = false
-                chipBackgroundColor = ColorStateList.valueOf(if (selected) accent else cell)
-                setTextColor(if (selected) ContextCompat.getColor(ctx, R.color.white) else label)
-                chipStrokeWidth = 0f
-                setOnClickListener { onFilter(f) }
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
-                ).apply { marginEnd = gap }
-            })
-        }
-    }
 
     private fun bindTask(v: View, row: Row.Item) {
         val t = row.task

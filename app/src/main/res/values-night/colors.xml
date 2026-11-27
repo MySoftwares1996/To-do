@@ -45,4 +45,5 @@
     <color name="accent_pink_container">#4D0E1B</color>
     <color name="accent_pink_on">#FFFFFF</color>
     <color name="accent_pink_on_container">#FFFFFF</color>
+    <color name="ios_tabbar">#161618</color>
 </resources>

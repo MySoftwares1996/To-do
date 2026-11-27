@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.google.android.material.appbar.MaterialToolbar
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
@@ -34,7 +35,10 @@ class MainActivity : BaseActivity() {
     private lateinit var adapter: TaskAdapter
     private lateinit var list: RecyclerView
     private lateinit var collapsing: CollapsingToolbarLayout
-    private var filter = Filter.ALL
+    private var tab = Tab.TODAY
+    private var onSettings = false
+    private lateinit var bottomNav: BottomNavigationView
+    private lateinit var settingsPage: View
     private var askedPermission = false
     private val io = Executors.newSingleThreadExecutor()
     /** Downloaded update waiting for the user to allow "Install unknown apps". */
@@ -47,8 +51,9 @@ class MainActivity : BaseActivity() {
         override fun run() { refresh(); ticker.postDelayed(this, 60_000) }
     }
 
-    private val backToAll = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() = setFilter(Filter.ALL)
+    /** Back from another tab returns to Today first. */
+    private val backToToday = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() { bottomNav.selectedItemId = R.id.tab_today }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,15 +64,15 @@ class MainActivity : BaseActivity() {
         supportActionBar?.setDisplayShowTitleEnabled(false) // the large collapsing title is used instead
         collapsing = findViewById(R.id.collapsing)
         list = findViewById(R.id.list)
-        filter = savedInstanceState?.getString("filter")?.let { runCatching { Filter.valueOf(it) }.getOrNull() } ?: Filter.ALL
-        onBackPressedDispatcher.addCallback(this, backToAll)
-
-        findViewById<View>(R.id.add).setOnClickListener { startActivity(Intent(this, EditTaskActivity::class.java)) }
+        settingsPage = findViewById(R.id.settings_page)
+        bottomNav = findViewById(R.id.bottom_nav)
+        bottomNav.isItemActiveIndicatorEnabled = false
+        onBackPressedDispatcher.addCallback(this, backToToday)
+        setupSettings()
 
         adapter = TaskAdapter(
             onClick = { startActivity(Intent(this, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, it.id)) },
             onCheck = { toggleDone(it) },
-            onFilter = { setFilter(it) },
             onBanner = { startActivity(Intent(this, SetupActivity::class.java)) },
             grouped = grouped,
         )
@@ -75,23 +80,109 @@ class MainActivity : BaseActivity() {
         list.adapter = adapter
         list.itemAnimator?.changeDuration = 150
         attachSwipe()
-        showTitle()
+
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.tab_today -> showTab(Tab.TODAY)
+                R.id.tab_upcoming -> showTab(Tab.UPCOMING)
+                R.id.tab_done -> showTab(Tab.DONE)
+                R.id.tab_settings -> showSettings()
+            }
+            true
+        }
+        val saved = savedInstanceState?.getString("tab")
+        bottomNav.selectedItemId = when (saved) {
+            "UPCOMING" -> R.id.tab_upcoming
+            "DONE" -> R.id.tab_done
+            "SETTINGS" -> R.id.tab_settings
+            else -> R.id.tab_today
+        }
+        // Selecting the already-selected item fires no callback, so show the page directly too.
+        when (saved) {
+            "UPCOMING" -> showTab(Tab.UPCOMING)
+            "DONE" -> showTab(Tab.DONE)
+            "SETTINGS" -> showSettings()
+            else -> showTab(Tab.TODAY)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString("filter", filter.name)
+        outState.putString("tab", if (onSettings) "SETTINGS" else tab.name)
     }
 
-    private fun setFilter(f: Filter) {
-        filter = f
-        showTitle()
+    private fun showTab(t: Tab) {
+        tab = t
+        onSettings = false
+        collapsing.title = t.title
+        list.visibility = View.VISIBLE
+        settingsPage.visibility = View.GONE
+        backToToday.isEnabled = t != Tab.TODAY
+        invalidateOptionsMenu()
         refresh()
+        list.scrollToPosition(0)
     }
 
-    private fun showTitle() {
-        collapsing.title = getString(R.string.app_name)
-        backToAll.isEnabled = filter != Filter.ALL // Back returns to "All" first
+    private fun showSettings() {
+        onSettings = true
+        collapsing.title = "Settings"
+        list.visibility = View.GONE
+        settingsPage.visibility = View.VISIBLE
+        backToToday.isEnabled = true
+        invalidateOptionsMenu()
+        refreshSettings()
+    }
+
+    // ---- Settings tab ----
+
+    private fun settingRow(id: Int, icon: Int, color: Int, label: String, onClick: () -> Unit) {
+        val row = findViewById<View>(id)
+        row.findViewById<android.widget.ImageView>(R.id.row_icon).apply {
+            setImageResource(icon)
+            background.mutate().setTint(ContextCompat.getColor(context, color))
+        }
+        row.findViewById<android.widget.TextView>(R.id.row_title).text = label
+        row.setOnClickListener { onClick() }
+    }
+
+    private fun settingValue(id: Int, value: String) {
+        findViewById<View>(id).findViewById<android.widget.TextView>(R.id.row_value).text = value
+    }
+
+    private fun setupSettings() {
+        settingRow(R.id.set_reliability, R.drawable.ic_check_circle, R.color.ios_green, "Alarm reliability") {
+            startActivity(Intent(this, SetupActivity::class.java))
+        }
+        settingRow(R.id.set_test, R.drawable.ic_bell_small, R.color.ios_red, "Test alarm") { testAlarm() }
+        settingRow(R.id.set_appearance, R.drawable.ic_palette, R.color.brand, "Appearance") {
+            startActivity(Intent(this, AppearanceActivity::class.java))
+        }
+        settingRow(R.id.set_backup, R.drawable.ic_tray, R.color.ios_indigo, "Backup & restore") {
+            startActivity(Intent(this, BackupActivity::class.java))
+        }
+        settingRow(R.id.set_update, R.drawable.ic_repeat, R.color.ios_gray, "Check for updates") { checkForUpdate(manual = true) }
+        findViewById<View>(R.id.set_clear).setOnClickListener { clearCompleted() }
+        findViewById<android.widget.TextView>(R.id.set_version).text = "Office To-Do ${Updater.currentVersionName}"
+    }
+
+    private fun refreshSettings() {
+        val problems = Reliability.problemCount(this)
+        settingValue(R.id.set_reliability, if (problems == 0) "All set" else "$problems to fix")
+        findViewById<View>(R.id.set_reliability).findViewById<android.widget.ImageView>(R.id.row_icon)
+            .background.mutate().setTint(ContextCompat.getColor(this, if (problems == 0) R.color.ios_green else R.color.ios_red))
+        settingValue(R.id.set_test, "in 1 min")
+        settingValue(R.id.set_appearance, Appearance.mode(this).label)
+        settingValue(R.id.set_backup, if (Backup.autoUri(this) != null) "On" else "Off")
+        settingValue(R.id.set_update, Updater.currentVersionName)
+    }
+
+    private fun testAlarm() {
+        val at = System.currentTimeMillis() + 60_000
+        val t = TaskDb.get(this).save(
+            Task(title = "Test alarm", notes = "If you can hear this, alarms work. Tap Done.", startAt = at, dueAt = at)
+        )
+        AlarmScheduler.schedule(this, t)
+        toast("Test alarm in 1 minute. Lock the phone now and wait.")
     }
 
     override fun onResume() {
@@ -128,7 +219,16 @@ class MainActivity : BaseActivity() {
 
     private fun refresh() {
         val tasks = TaskDb.get(this).all()
-        adapter.submitList(TaskAdapter.buildRows(tasks, filter, Reliability.problemCount(this)))
+        adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.problemCount(this)))
+        // Red badge on the Today tab = number of overdue tasks.
+        val now = System.currentTimeMillis()
+        val overdue = tasks.count { !it.done && it.dueAt < now }
+        bottomNav.getOrCreateBadge(R.id.tab_today).apply {
+            number = overdue
+            isVisible = overdue > 0
+            backgroundColor = ContextCompat.getColor(this@MainActivity, R.color.ios_red)
+        }
+        if (onSettings) refreshSettings()
     }
 
     // ---- Done / Delete / Undo ----
@@ -163,7 +263,7 @@ class MainActivity : BaseActivity() {
 
     private fun showUndo(msg: String, snapshot: Task) {
         Snackbar.make(findViewById(R.id.root), msg, Snackbar.LENGTH_LONG)
-            .setAnchorView(R.id.bottom_bar)
+            .setAnchorView(R.id.bottom_nav)
             .setAction("Undo") {
                 AlarmScheduler.schedule(this, TaskDb.get(this).restore(snapshot))
                 refresh()
@@ -287,13 +387,14 @@ class MainActivity : BaseActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        menu.findItem(R.id.menu_add)?.isVisible = !onSettings // "+" on task tabs only
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.menu_setup -> { startActivity(Intent(this, SetupActivity::class.java)); return true }
-            R.id.menu_update -> { checkForUpdate(manual = true); return true }
-            R.id.menu_appearance -> { startActivity(Intent(this, AppearanceActivity::class.java)); return true }
-            R.id.menu_backup -> { startActivity(Intent(this, BackupActivity::class.java)); return true }
-            R.id.menu_clear -> { clearCompleted(); return true }
+        if (item.itemId == R.id.menu_add) {
+            startActivity(Intent(this, EditTaskActivity::class.java)); return true
         }
         return super.onOptionsItemSelected(item)
     }

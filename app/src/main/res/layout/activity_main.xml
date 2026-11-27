@@ -48,40 +48,78 @@
         android:paddingBottom="88dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <!-- Bottom bar: "+ New Task" -->
-    <LinearLayout
-        android:id="@+id/bottom_bar"
+    <!-- Settings tab content -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/settings_page"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom"
-        android:background="@drawable/bg_bottom_bar"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="16dp">
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="88dp"
+        android:visibility="gone"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
-            android:id="@+id/add"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingEnd="12dp">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp">
 
-            <ImageView
-                android:layout_width="26dp"
-                android:layout_height="26dp"
-                android:importantForAccessibility="no"
-                android:src="@drawable/ic_plus_circle_fill" />
+            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Alarms" />
+            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/set_reliability" layout="@layout/item_form_row" />
+                    <include layout="@layout/divider_inset" />
+                    <include android:id="@+id/set_test" layout="@layout/item_form_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Look" />
+            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <include android:id="@+id/set_appearance" layout="@layout/item_form_row" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Data" />
+            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                    <include android:id="@+id/set_backup" layout="@layout/item_form_row" />
+                    <include layout="@layout/divider_inset" />
+                    <include android:id="@+id/set_update" layout="@layout/item_form_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp">
+                <TextView
+                    android:id="@+id/set_clear"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:text="Clear Completed"
+                    android:textColor="@color/ios_red"
+                    android:textSize="17sp" />
+            </com.google.android.material.card.MaterialCardView>
 
             <TextView
+                android:id="@+id/set_version"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="New Task"
-                android:textColor="?attr/colorPrimary"
-                android:textSize="17sp"
-                android:textStyle="bold" />
+                android:paddingStart="16dp"
+                android:paddingTop="8dp"
+                android:textColor="@color/ios_secondary"
+                android:textSize="13sp" />
         </LinearLayout>
-    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Bottom tabs -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_tab_bar"
+        app:elevation="0dp"
+        app:itemIconTint="@color/tab_tint"
+        app:itemTextColor="@color/tab_tint"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_tabs" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
