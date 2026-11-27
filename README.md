@@ -8,7 +8,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 - **iOS-style design**: large bold title that shrinks on scroll, light grey background with white grouped
   rounded lists (true black in dark mode), round tick circles, “+ New Task” bar, centred titles with ‹ back,
   grouped form with green switches, Android calendar date picker and clock-dial time picker
-- **Summary tiles** at the top (Today, Upcoming, Important, All) with counts – tap to filter
+- **Minimal main screen**: big title, “5 pending · 1 overdue” summary, filter chips (All · Today · Important · Overdue)
 - Clean Material 3 design. **Appearance** settings (⋮ → Appearance):
   - Theme: System / Light / Dark
   - Colour: Blue, Green, Purple, Orange, Teal, Pink, or **Wallpaper colours** (Material You, Android 12+)

@@ -1,17 +1,19 @@
 package com.mysoftwares.todo
 
+import android.content.res.ColorStateList
 import android.graphics.Paint
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.card.MaterialCardView
+import com.google.android.material.chip.Chip
 import com.google.android.material.color.MaterialColors
 import java.text.DateFormat
 import java.time.Instant
@@ -20,14 +22,14 @@ import java.time.ZoneId
 import java.util.Date
 
 /** Which tasks the list shows; chosen with the tiles at the top. */
-enum class Filter(val title: String) {
-    ALL("Office To-Do"), TODAY("Today"), UPCOMING("Upcoming"), IMPORTANT("Important")
+enum class Filter(val label: String) {
+    ALL("All"), TODAY("Today"), IMPORTANT("Important"), OVERDUE("Overdue")
 }
 
 /** A row in the list. */
 sealed class Row {
     data class Banner(val problems: Int) : Row()
-    data class Tiles(val today: Int, val upcoming: Int, val important: Int, val all: Int, val filter: Filter) : Row()
+    data class Filters(val pending: Int, val overdue: Int, val filter: Filter) : Row()
     data class Header(val key: String, val title: String, val count: Int, val colorRes: Int?) : Row()
     data class Item(val task: Task, val first: Boolean, val last: Boolean) : Row()
     data class Empty(val text: String) : Row()
@@ -44,7 +46,7 @@ class TaskAdapter(
 
     companion object {
         private const val T_BANNER = 0
-        private const val T_TILES = 1
+        private const val T_FILTERS = 1
         private const val T_HEADER = 2
         private const val T_TASK = 3
         private const val T_EMPTY = 4
@@ -63,8 +65,8 @@ class TaskAdapter(
         fun matches(t: Task, f: Filter, now: Long): Boolean = when (f) {
             Filter.ALL -> true
             Filter.TODAY -> !t.done && (t.dueAt < now || day(t.dueAt) == LocalDate.now())
-            Filter.UPCOMING -> !t.done && t.dueAt >= now
             Filter.IMPORTANT -> !t.done && t.important
+            Filter.OVERDUE -> !t.done && t.dueAt < now
         }
 
         fun buildRows(tasks: List<Task>, filter: Filter, problems: Int): List<Row> {
@@ -72,11 +74,9 @@ class TaskAdapter(
             val today = LocalDate.now()
             val rows = mutableListOf<Row>()
             if (problems > 0) rows += Row.Banner(problems)
-            rows += Row.Tiles(
-                today = tasks.count { matches(it, Filter.TODAY, now) },
-                upcoming = tasks.count { matches(it, Filter.UPCOMING, now) },
-                important = tasks.count { matches(it, Filter.IMPORTANT, now) },
-                all = tasks.count { !it.done },
+            rows += Row.Filters(
+                pending = tasks.count { !it.done },
+                overdue = tasks.count { matches(it, Filter.OVERDUE, now) },
                 filter = filter,
             )
 
@@ -112,8 +112,8 @@ class TaskAdapter(
                 when (filter) {
                     Filter.ALL -> "No Tasks"
                     Filter.TODAY -> "Nothing due today"
-                    Filter.UPCOMING -> "Nothing upcoming"
                     Filter.IMPORTANT -> "No important tasks"
+                    Filter.OVERDUE -> "Nothing overdue 🎉"
                 }
             )
             return rows
@@ -139,7 +139,7 @@ class TaskAdapter(
 
     override fun getItemViewType(position: Int) = when (getItem(position)) {
         is Row.Banner -> T_BANNER
-        is Row.Tiles -> T_TILES
+        is Row.Filters -> T_FILTERS
         is Row.Header -> T_HEADER
         is Row.Item -> T_TASK
         is Row.Empty -> T_EMPTY
@@ -151,7 +151,7 @@ class TaskAdapter(
         val inf = LayoutInflater.from(parent.context)
         val layout = when (viewType) {
             T_BANNER -> R.layout.item_banner
-            T_TILES -> R.layout.item_tiles
+            T_FILTERS -> R.layout.item_filters
             T_HEADER -> R.layout.item_header
             T_EMPTY -> R.layout.item_empty
             else -> R.layout.item_task
@@ -166,7 +166,7 @@ class TaskAdapter(
                 (v as TextView).text = v.context.getString(R.string.banner_problems, row.problems)
                 v.setOnClickListener { onBanner() }
             }
-            is Row.Tiles -> bindTiles(v, row)
+            is Row.Filters -> bindFilters(v, row)
             is Row.Header -> {
                 val t = v.findViewById<TextView>(R.id.header)
                 t.text = row.title
@@ -178,24 +178,33 @@ class TaskAdapter(
         }
     }
 
-    private fun bindTiles(v: View, row: Row.Tiles) {
+    private fun bindFilters(v: View, row: Row.Filters) {
         val ctx = v.context
-        val accent = MaterialColors.getColor(v, androidx.appcompat.R.attr.colorPrimary)
-        fun tile(id: Int, label: String, count: Int, icon: Int, color: Int, f: Filter) {
-            val card = v.findViewById<MaterialCardView>(id)
-            card.findViewById<TextView>(R.id.tile_label).text = label
-            card.findViewById<TextView>(R.id.tile_count).text = count.toString()
-            card.findViewById<ImageView>(R.id.tile_icon).apply {
-                setImageResource(icon)
-                background.mutate().setTint(color)
-            }
-            card.strokeWidth = if (row.filter == f && f != Filter.ALL) (2 * ctx.resources.displayMetrics.density).toInt() else 0
-            card.setOnClickListener { onFilter(if (row.filter == f) Filter.ALL else f) }
+        v.findViewById<TextView>(R.id.summary).text = when {
+            row.pending == 0 -> "All done 🎉"
+            row.overdue > 0 -> "${row.pending} pending · ${row.overdue} overdue"
+            else -> "${row.pending} pending"
         }
-        tile(R.id.tile_today, "Today", row.today, R.drawable.ic_calendar, accent, Filter.TODAY)
-        tile(R.id.tile_upcoming, "Upcoming", row.upcoming, R.drawable.ic_clock, ContextCompat.getColor(ctx, R.color.ios_red), Filter.UPCOMING)
-        tile(R.id.tile_important, "Important", row.important, R.drawable.ic_flag, ContextCompat.getColor(ctx, R.color.ios_orange), Filter.IMPORTANT)
-        tile(R.id.tile_all, "All", row.all, R.drawable.ic_tray, ContextCompat.getColor(ctx, R.color.ios_gray), Filter.ALL)
+        val box = v.findViewById<LinearLayout>(R.id.chips)
+        box.removeAllViews()
+        val accent = MaterialColors.getColor(v, androidx.appcompat.R.attr.colorPrimary)
+        val cell = ContextCompat.getColor(ctx, R.color.ios_cell)
+        val label = ContextCompat.getColor(ctx, R.color.ios_label)
+        val gap = (8 * ctx.resources.displayMetrics.density).toInt()
+        Filter.entries.forEach { f ->
+            val selected = f == row.filter
+            box.addView(Chip(ctx).apply {
+                text = f.label
+                isCheckable = false
+                chipBackgroundColor = ColorStateList.valueOf(if (selected) accent else cell)
+                setTextColor(if (selected) ContextCompat.getColor(ctx, R.color.white) else label)
+                chipStrokeWidth = 0f
+                setOnClickListener { onFilter(f) }
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { marginEnd = gap }
+            })
+        }
     }
 
     private fun bindTask(v: View, row: Row.Item) {

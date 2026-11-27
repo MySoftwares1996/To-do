@@ -87,16 +87,12 @@ class MainActivity : BaseActivity() {
         filter = f
         showTitle()
         refresh()
-        list.smoothScrollToPosition(0)
     }
 
     private fun showTitle() {
-        collapsing.title = filter.title
-        supportActionBar?.setDisplayHomeAsUpEnabled(filter != Filter.ALL)
-        backToAll.isEnabled = filter != Filter.ALL
+        collapsing.title = getString(R.string.app_name)
+        backToAll.isEnabled = filter != Filter.ALL // Back returns to "All" first
     }
-
-    override fun onSupportNavigateUp(): Boolean { setFilter(Filter.ALL); return true }
 
     override fun onResume() {
         super.onResume()
