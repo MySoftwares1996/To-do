@@ -19,7 +19,9 @@ import java.security.MessageDigest
  * All builds are signed with the same key, so the update installs over the old version and keeps tasks.
  */
 object Updater {
-    private const val LATEST = "https://api.github.com/repos/MySoftwares1996/To-do/releases/latest"
+    /** Set at build time from the GitHub repository that built the app (see app/build.gradle.kts). */
+    private val LATEST = "https://api.github.com/repos/${BuildConfig.UPDATE_REPO}/releases/latest"
+    val RELEASES_PAGE = "https://github.com/${BuildConfig.UPDATE_REPO}/releases/latest"
     private const val PREFS = "updater"
     private const val KEY_LAST_CHECK = "last_check"
     private const val AUTO_CHECK_INTERVAL = 6 * 60 * 60 * 1000L

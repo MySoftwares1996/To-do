@@ -11,10 +11,14 @@ android {
         applicationId = "com.mysoftwares.todo"
         minSdk = 26
         targetSdk = 35
-        // CI sets VERSION_CODE to the build number; the in-app updater compares it.
+        // CI sets VERSION_CODE to the number of commits (always grows, never resets);
+        // the in-app updater compares it with the latest release.
         val buildNumber = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
         versionCode = buildNumber
         versionName = "1.0.$buildNumber"
+        // Repository the updater checks; CI passes the repository that built the app.
+        val repo = System.getenv("GITHUB_REPOSITORY") ?: "MySoftwares1996/To-do"
+        buildConfigField("String", "UPDATE_REPO", "\"$repo\"")
     }
 
     // Release signing. The private key lives in GitHub Secrets (see README, "Signing key"); CI writes it to
@@ -56,9 +60,11 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+    // Lint runs as a separate CI step and its report is uploaded; it does not block a release.
     lint {
         checkReleaseBuilds = false
         abortOnError = false
+        htmlReport = true
     }
     kotlinOptions {
         jvmTarget = "17"

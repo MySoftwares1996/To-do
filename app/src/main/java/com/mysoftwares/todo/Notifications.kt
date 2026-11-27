@@ -89,7 +89,7 @@ object Notifications {
             .setAutoCancel(false)
             .setFullScreenIntent(fullScreen, true)
             .setContentIntent(fullScreen)
-            .addAction(0, "✔ Done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE))
+            .addAction(0, "✔ Done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE, task.dueAt))
             .addAction(0, "Snooze 10 min", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE))
         if (fallback) {
             b.setSound(alarmSound(), android.media.AudioManager.STREAM_ALARM)
@@ -117,7 +117,7 @@ object Notifications {
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setOngoing(task.important)
             .setContentIntent(open)
-            .addAction(0, "✔ Done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE))
+            .addAction(0, "✔ Done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE, task.dueAt))
             .addAction(0, "Snooze 1 hour", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE_HOUR))
             .build()
         notify(context, task.id.toInt(), n)
@@ -137,7 +137,7 @@ object Notifications {
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(open)
             .setAutoCancel(true)
-            .addAction(0, "✔ Already done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE))
+            .addAction(0, "✔ Already done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE, task.dueAt))
             .build()
         notify(context, ADVANCE_ID_OFFSET + task.id.toInt(), n)
     }

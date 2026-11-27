@@ -4,10 +4,16 @@ import android.content.Context
 
 /** Done / Snooze logic shared by the alarm screen and notification buttons. */
 object TaskActions {
-    fun done(context: Context, id: Long) {
+    /**
+     * Marks the task done (or moves a repeating task to its next date).
+     * [expectedDue] is the due time the user saw; if the task has already moved on
+     * (a double tap, or Done pressed on two places) the call is ignored, so a
+     * repeating task never skips a date.
+     */
+    fun done(context: Context, id: Long, expectedDue: Long? = null) {
         val db = TaskDb.get(context)
         val t = db.get(id)
-        if (t != null) {
+        if (t != null && !t.done && (expectedDue == null || expectedDue == t.dueAt)) {
             val next = Recurrence.nextAfter(t.startAt, t.repeat, maxOf(System.currentTimeMillis(), t.dueAt), t.workday)
             val saved = if (next == null) {
                 db.save(t.copy(done = true, snoozeUntil = 0))

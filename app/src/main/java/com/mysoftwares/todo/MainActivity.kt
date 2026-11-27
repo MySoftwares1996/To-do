@@ -27,7 +27,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
-import java.util.concurrent.Executors
 
 class MainActivity : BaseActivity() {
     override val wrapWithToolbar = false
@@ -40,7 +39,7 @@ class MainActivity : BaseActivity() {
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var settingsPage: View
     private var askedPermission = false
-    private val io = Executors.newSingleThreadExecutor()
+    private val io = AppExecutors.io
     /** Downloaded update waiting for the user to allow "Install unknown apps". */
     private var pendingApk: File? = null
     private val grouped by lazy { Appearance.listStyle(this) == Appearance.ListStyle.COMPACT }
@@ -261,12 +260,14 @@ class MainActivity : BaseActivity() {
     private fun toggleDone(task: Task) {
         haptic()
         val before = TaskDb.get(this).get(task.id) ?: return
+        // Ignore a stale tap: the task already changed since this row was shown (double tap).
+        if (before.done != task.done || before.dueAt != task.dueAt) { refresh(); return }
         if (before.done) {
             TaskActions.undoDone(this, task.id)
             refresh()
             return
         }
-        TaskActions.done(this, task.id)
+        TaskActions.done(this, task.id, task.dueAt)
         refresh()
         val msg = if (before.repeat == Repeat.NONE) "Completed: ${before.title}"
         else "Completed. Next: ${TaskAdapter.friendlyTime(TaskDb.get(this).get(task.id)?.dueAt ?: before.dueAt)}"
@@ -375,7 +376,7 @@ class MainActivity : BaseActivity() {
             .setPositiveButton("Back up now") { _, _ -> startActivity(Intent(this, BackupActivity::class.java)) }
             .setNeutralButton("Releases page") { _, _ ->
                 runCatching {
-                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/MySoftwares1996/To-do/releases/latest")))
+                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(Updater.RELEASES_PAGE)))
                 }
             }
             .setNegativeButton("Later", null)

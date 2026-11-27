@@ -80,7 +80,7 @@ class TaskWidget : AppWidgetProvider() {
                         Intent(context, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, t.id)
                     )
                 )
-                row.setOnClickPendingIntent(R.id.row_done, ActionReceiver.intent(context, t.id, ActionReceiver.ACTION_DONE))
+                row.setOnClickPendingIntent(R.id.row_done, ActionReceiver.intent(context, t.id, ActionReceiver.ACTION_DONE, t.dueAt))
                 views.addView(R.id.widget_list, row)
             }
             return views

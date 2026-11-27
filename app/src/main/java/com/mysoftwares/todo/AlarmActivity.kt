@@ -17,6 +17,7 @@ class AlarmActivity : BaseActivity() {
     override val wrapWithToolbar = false
 
     private var taskId: Long = -1
+    private var shownDue: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +33,7 @@ class AlarmActivity : BaseActivity() {
         // AM/PM only for 12-hour phones.
         if (android.text.format.DateFormat.is24HourFormat(this)) findViewById<View>(R.id.ampm).visibility = View.GONE
 
-        findViewById<Button>(R.id.done).setOnClickListener { TaskActions.done(this, taskId); finish() }
+        findViewById<Button>(R.id.done).setOnClickListener { TaskActions.done(this, taskId, shownDue.takeIf { it > 0 }); finish() }
         findViewById<Button>(R.id.snooze10).setOnClickListener { TaskActions.snooze(this, taskId, 10); finish() }
         findViewById<Button>(R.id.snooze60).setOnClickListener { TaskActions.snooze(this, taskId, 60); finish() }
         show(intent)
@@ -59,6 +60,7 @@ class AlarmActivity : BaseActivity() {
         taskId = intent.getLongExtra(AlarmScheduler.EXTRA_TASK_ID, -1)
         val task = TaskDb.get(this).get(taskId)
         if (task == null || task.done) { finish(); return }
+        shownDue = task.dueAt
         findViewById<TextView>(R.id.title).text = task.title
         findViewById<TextView>(R.id.due).text = "Due " + TaskAdapter.friendlyTime(task.dueAt)
         findViewById<TextView>(R.id.notes).apply {

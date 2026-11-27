@@ -45,6 +45,8 @@ class AlarmService : Service() {
     private var vibrator: Vibrator? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var restoreVolume: Int = -1
+    /** The volume we set; only restore if the user has not changed it while ringing. */
+    private var raisedVolume: Int = -1
 
     private val timeout = Runnable { onTimeout() }
     private val beep = object : Runnable {
@@ -107,7 +109,8 @@ class AlarmService : Service() {
             if (audio.getStreamVolume(AudioManager.STREAM_ALARM) == 0) {
                 restoreVolume = 0
                 val max = audio.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-                audio.setStreamVolume(AudioManager.STREAM_ALARM, (max * 0.7).toInt().coerceAtLeast(1), 0)
+                raisedVolume = (max * 0.7).toInt().coerceAtLeast(1)
+                audio.setStreamVolume(AudioManager.STREAM_ALARM, raisedVolume, 0)
             }
         } catch (_: Exception) { }
 
@@ -164,7 +167,10 @@ class AlarmService : Service() {
         vibrator?.cancel()
         if (restoreVolume >= 0) {
             try {
-                getSystemService(AudioManager::class.java).setStreamVolume(AudioManager.STREAM_ALARM, restoreVolume, 0)
+                val audio = getSystemService(AudioManager::class.java)
+                if (audio.getStreamVolume(AudioManager.STREAM_ALARM) == raisedVolume) {
+                    audio.setStreamVolume(AudioManager.STREAM_ALARM, restoreVolume, 0)
+                }
             } catch (_: Exception) { }
         }
         wakeLock?.let { if (it.isHeld) it.release() }

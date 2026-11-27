@@ -203,7 +203,9 @@ class TaskAdapter(
 
         val check = v.findViewById<ImageView>(R.id.check)
         check.setImageResource(if (t.done) R.drawable.ic_circle_checked else R.drawable.ic_circle_empty)
+        check.isEnabled = true
         check.setOnClickListener {
+            check.isEnabled = false // one tap only; re-enabled when the row is redrawn
             // Fill the circle first, then let the row move – feels like iOS.
             check.setImageResource(if (t.done) R.drawable.ic_circle_empty else R.drawable.ic_circle_checked)
             check.animate().scaleX(1.2f).scaleY(1.2f).setDuration(120).withEndAction {
