@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 /** Checklist of everything that must be ON for alarms to ring reliably, with one-tap fixes. */
-class SetupActivity : AppCompatActivity() {
+class SetupActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_setup)

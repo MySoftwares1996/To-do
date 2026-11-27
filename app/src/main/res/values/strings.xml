@@ -7,4 +7,5 @@
     <string name="empty">Tap “New task” to add a bank due date, month-end closing or any important work.</string>
     <string name="widget_description">Your next pending tasks. Tap ✔ to mark one done.</string>
     <string name="backup_title">Backup &amp; restore</string>
+    <string name="appearance_title">Appearance</string>
 </resources>

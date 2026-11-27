@@ -5,7 +5,11 @@ payments, month-end closing, tax filing, payroll, and any other important task.
 Its main job is to **ring a real alarm and show a notification at the exact time, every time.**
 
 ## Features
-- Clean Material 3 design with light and dark mode
+- Clean Material 3 design. **Appearance** settings (⋮ → Appearance):
+  - Theme: System / Light / Dark
+  - Colour: Blue, Green, Purple, Orange, Teal, Pink, or **Wallpaper colours** (Material You, Android 12+)
+  - Task list style: **Cards** (roomy) or **Compact** (see more at once)
+  - **Large text** option
 - Tasks grouped as **Overdue / Today / Tomorrow / This week / Later / Completed**, with colour stripes
   (red = overdue, orange = important) and friendly times like "Tomorrow, 10:00 AM · in 18 hours"
 - **Swipe a task to mark it done** (swipe a completed task to delete it), with **Undo**

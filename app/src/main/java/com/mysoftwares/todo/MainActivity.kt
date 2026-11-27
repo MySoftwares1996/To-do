@@ -29,7 +29,7 @@ import com.google.android.material.snackbar.Snackbar
 import java.io.File
 import java.util.concurrent.Executors
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
     private lateinit var adapter: TaskAdapter
     private lateinit var list: RecyclerView
     private lateinit var banner: MaterialCardView
@@ -47,6 +47,8 @@ class MainActivity : AppCompatActivity() {
         override fun run() { refresh(); ticker.postDelayed(this, 60_000) }
     }
 
+    private val compact by lazy { Appearance.listStyle(this) == Appearance.ListStyle.COMPACT }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -62,9 +64,17 @@ class MainActivity : AppCompatActivity() {
         adapter = TaskAdapter(
             onClick = { startActivity(Intent(this, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, it.id)) },
             onCheck = { toggleDone(it) },
+            compact = compact,
         )
         list.layoutManager = LinearLayoutManager(this)
         list.adapter = adapter
+        if (compact) {
+            list.addItemDecoration(
+                com.google.android.material.divider.MaterialDividerItemDecoration(this, LinearLayoutManager.VERTICAL).apply {
+                    isLastItemDecorated = false
+                }
+            )
+        }
         list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
                 if (dy > 6 && fab.isExtended) fab.shrink() else if (dy < -6 && !fab.isExtended) fab.extend()
@@ -189,7 +199,7 @@ class MainActivity : AppCompatActivity() {
                 val t = adapter.taskAt(vh.bindingAdapterPosition)
                 if (t != null && dX != 0f) {
                     val v = vh.itemView
-                    val r = 16 * resources.displayMetrics.density
+                    val r = if (compact) 0f else 16 * resources.displayMetrics.density
                     paint.color = ContextCompat.getColor(this@MainActivity, if (t.done) R.color.danger else R.color.ok)
                     c.drawRoundRect(RectF(v.left.toFloat(), v.top.toFloat(), v.right.toFloat(), v.bottom.toFloat()), r, r, paint)
                     val icon = if (t.done) deleteIcon else doneIcon
@@ -274,6 +284,7 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.menu_setup -> { startActivity(Intent(this, SetupActivity::class.java)); return true }
             R.id.menu_update -> { checkForUpdate(manual = true); return true }
+            R.id.menu_appearance -> { startActivity(Intent(this, AppearanceActivity::class.java)); return true }
             R.id.menu_backup -> { startActivity(Intent(this, BackupActivity::class.java)); return true }
             R.id.menu_clear -> { clearCompleted(); return true }
         }

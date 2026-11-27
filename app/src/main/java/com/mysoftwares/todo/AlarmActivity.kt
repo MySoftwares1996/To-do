@@ -13,7 +13,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
 /** Full-screen alarm shown over the lock screen. */
-class AlarmActivity : AppCompatActivity() {
+class AlarmActivity : BaseActivity() {
     private var taskId: Long = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {

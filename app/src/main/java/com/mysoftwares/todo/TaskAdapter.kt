@@ -27,6 +27,7 @@ sealed class Row {
 class TaskAdapter(
     private val onClick: (Task) -> Unit,
     private val onCheck: (Task) -> Unit,
+    private val compact: Boolean = false,
 ) : ListAdapter<Row, RecyclerView.ViewHolder>(DIFF) {
 
     companion object {
@@ -117,7 +118,7 @@ class TaskAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inf = LayoutInflater.from(parent.context)
         return if (viewType == TYPE_HEADER) HeaderVH(inf.inflate(R.layout.item_header, parent, false))
-        else TaskVH(inf.inflate(R.layout.item_task, parent, false))
+        else TaskVH(inf.inflate(if (compact) R.layout.item_task_compact else R.layout.item_task, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -159,14 +160,12 @@ class TaskAdapter(
 
         h.badge.visibility = if (t.important && !t.done) View.VISIBLE else View.GONE
         h.stripe.setBackgroundColor(
-            ContextCompat.getColor(
-                ctx, when {
-                    t.done -> R.color.muted
-                    overdue -> R.color.danger
-                    t.important -> R.color.warn
-                    else -> R.color.brand
-                }
-            )
+            when {
+                t.done -> ContextCompat.getColor(ctx, R.color.muted)
+                overdue -> ContextCompat.getColor(ctx, R.color.danger)
+                t.important -> ContextCompat.getColor(ctx, R.color.warn)
+                else -> MaterialColors.getColor(h.stripe, androidx.appcompat.R.attr.colorPrimary)
+            }
         )
 
         h.check.setOnCheckedChangeListener(null)

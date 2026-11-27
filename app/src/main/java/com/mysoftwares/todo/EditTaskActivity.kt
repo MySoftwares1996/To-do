@@ -30,7 +30,7 @@ import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 
-class EditTaskActivity : AppCompatActivity() {
+class EditTaskActivity : BaseActivity() {
     private var existing: Task? = null
     private var whenAt: LocalDateTime = LocalDateTime.now().plusHours(1).truncatedTo(ChronoUnit.HOURS)
     private var repeatIndex = 0

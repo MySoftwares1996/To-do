@@ -14,7 +14,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.util.concurrent.Executors
 
-class BackupActivity : AppCompatActivity() {
+class BackupActivity : BaseActivity() {
     private val io = Executors.newSingleThreadExecutor()
 
     private val createFile = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->

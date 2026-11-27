@@ -51,6 +51,10 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".AppearanceActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".BackupActivity"
             android:exported="false" />
 

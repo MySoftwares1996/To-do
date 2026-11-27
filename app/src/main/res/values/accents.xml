@@ -1,0 +1,77 @@
+<resources>
+    <style name="ThemeOverlay.Accent.Blue" parent="">
+        <item name="colorPrimary">@color/accent_blue</item>
+        <item name="colorOnPrimary">@color/accent_blue_on</item>
+        <item name="colorPrimaryContainer">@color/accent_blue_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_blue_on_container</item>
+        <item name="colorSecondary">@color/accent_blue</item>
+        <item name="colorSecondaryContainer">@color/accent_blue_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_blue_on_container</item>
+    </style>
+
+    <style name="ThemeOverlay.Accent.Green" parent="">
+        <item name="colorPrimary">@color/accent_green</item>
+        <item name="colorOnPrimary">@color/accent_green_on</item>
+        <item name="colorPrimaryContainer">@color/accent_green_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_green_on_container</item>
+        <item name="colorSecondary">@color/accent_green</item>
+        <item name="colorSecondaryContainer">@color/accent_green_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_green_on_container</item>
+    </style>
+
+    <style name="ThemeOverlay.Accent.Purple" parent="">
+        <item name="colorPrimary">@color/accent_purple</item>
+        <item name="colorOnPrimary">@color/accent_purple_on</item>
+        <item name="colorPrimaryContainer">@color/accent_purple_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_purple_on_container</item>
+        <item name="colorSecondary">@color/accent_purple</item>
+        <item name="colorSecondaryContainer">@color/accent_purple_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_purple_on_container</item>
+    </style>
+
+    <style name="ThemeOverlay.Accent.Orange" parent="">
+        <item name="colorPrimary">@color/accent_orange</item>
+        <item name="colorOnPrimary">@color/accent_orange_on</item>
+        <item name="colorPrimaryContainer">@color/accent_orange_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_orange_on_container</item>
+        <item name="colorSecondary">@color/accent_orange</item>
+        <item name="colorSecondaryContainer">@color/accent_orange_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_orange_on_container</item>
+    </style>
+
+    <style name="ThemeOverlay.Accent.Teal" parent="">
+        <item name="colorPrimary">@color/accent_teal</item>
+        <item name="colorOnPrimary">@color/accent_teal_on</item>
+        <item name="colorPrimaryContainer">@color/accent_teal_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_teal_on_container</item>
+        <item name="colorSecondary">@color/accent_teal</item>
+        <item name="colorSecondaryContainer">@color/accent_teal_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_teal_on_container</item>
+    </style>
+
+    <style name="ThemeOverlay.Accent.Pink" parent="">
+        <item name="colorPrimary">@color/accent_pink</item>
+        <item name="colorOnPrimary">@color/accent_pink_on</item>
+        <item name="colorPrimaryContainer">@color/accent_pink_container</item>
+        <item name="colorOnPrimaryContainer">@color/accent_pink_on_container</item>
+        <item name="colorSecondary">@color/accent_pink</item>
+        <item name="colorSecondaryContainer">@color/accent_pink_container</item>
+        <item name="colorOnSecondaryContainer">@color/accent_pink_on_container</item>
+    </style>
+
+    <!-- Large text option -->
+    <style name="ThemeOverlay.TextLarge" parent="">
+        <item name="textAppearanceTitleMedium">@style/Text.TitleLarger</item>
+        <item name="textAppearanceBodyMedium">@style/Text.BodyLarger</item>
+        <item name="textAppearanceBodySmall">@style/Text.SmallLarger</item>
+    </style>
+    <style name="Text.TitleLarger" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">19sp</item>
+    </style>
+    <style name="Text.BodyLarger" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textSize">16sp</item>
+    </style>
+    <style name="Text.SmallLarger" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textSize">14sp</item>
+    </style>
+</resources>
