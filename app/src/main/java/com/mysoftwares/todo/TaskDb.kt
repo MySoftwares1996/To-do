@@ -10,8 +10,11 @@ import android.database.sqlite.SQLiteOpenHelper
  * Tasks are stored in *device-protected* storage so alarms can be re-armed and can
  * ring even right after a reboot, before the phone is unlocked.
  */
-class TaskDb private constructor(context: Context) :
-    SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), "tasks.db", null, 1) {
+class TaskDb private constructor(private val appContext: Context) :
+    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 1) {
+
+    /** Keep the home screen widget in sync with every change. */
+    private fun changed() = TaskWidget.refresh(appContext)
 
     companion object {
         @Volatile private var instance: TaskDb? = null
@@ -58,12 +61,14 @@ class TaskDb private constructor(context: Context) :
     @Synchronized
     fun save(t: Task): Task {
         val v = values(t)
-        return if (t.id == 0L) {
+        val saved = if (t.id == 0L) {
             t.copy(id = writableDatabase.insertOrThrow("tasks", null, v))
         } else {
             writableDatabase.update("tasks", v, "id=?", arrayOf(t.id.toString()))
             t
         }
+        changed()
+        return saved
     }
 
     /** Puts back an exact earlier copy of a task (used by Undo, also after delete). */
@@ -71,6 +76,7 @@ class TaskDb private constructor(context: Context) :
     fun restore(t: Task): Task {
         val v = values(t).apply { put("id", t.id) }
         writableDatabase.insertWithOnConflict("tasks", null, v, SQLiteDatabase.CONFLICT_REPLACE)
+        changed()
         return t
     }
 
@@ -91,6 +97,7 @@ class TaskDb private constructor(context: Context) :
     @Synchronized
     fun delete(id: Long) {
         writableDatabase.delete("tasks", "id=?", arrayOf(id.toString()))
+        changed()
     }
 
     private fun Cursor.toTask() = Task(

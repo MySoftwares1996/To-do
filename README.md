@@ -9,6 +9,8 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 - Tasks grouped as **Overdue / Today / Tomorrow / This week / Later / Completed**, with colour stripes
   (red = overdue, orange = important) and friendly times like "Tomorrow, 10:00 AM · in 18 hours"
 - **Swipe a task to mark it done** (swipe a completed task to delete it), with **Undo**
+- **Home screen widget**: shows your next pending tasks (overdue in red), tap ✔ to mark one done,
+  tap **+** to add a task; it resizes and updates instantly when tasks change
 - Quick date chips (Today, Tomorrow, Next Monday, Month-end) and Material date/time pickers
 - Add a task with a title, notes, date and time
 - Repeat: once, daily, weekly, monthly (same date), **month-end (last day of the month)**, yearly

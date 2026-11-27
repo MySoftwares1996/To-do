@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // Self-healing: every time the app is opened, all alarms are re-armed.
         AlarmScheduler.rescheduleAll(this)
+        TaskWidget.refresh(this)
         ticker.removeCallbacks(tick)
         tick.run()
         if (!askedPermission && Build.VERSION.SDK_INT >= 33 &&

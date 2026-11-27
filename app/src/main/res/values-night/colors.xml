@@ -6,4 +6,7 @@
     <color name="ok">#81C995</color>
     <color name="muted">#7F868C</color>
     <color name="text_secondary">#BDC1C6</color>
+    <color name="widget_bg">#202124</color>
+    <color name="widget_text">#E8EAED</color>
+    <color name="widget_sub">#9AA0A6</color>
 </resources>
