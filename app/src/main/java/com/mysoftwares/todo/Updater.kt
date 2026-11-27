@@ -65,7 +65,9 @@ object Updater {
                         versionCode = code,
                         versionName = tag.removePrefix("v"),
                         apkUrl = a.getString("browser_download_url"),
-                        notes = json.optString("body"),
+                        notes = json.optString("body").lines()
+                            .filterNot { it.startsWith("Co-Authored-By:") || it.startsWith("Claude-Session:") }
+                            .joinToString("\n").trim(),
                         sha256 = a.optString("digest").takeIf { it.startsWith("sha256:") }?.removePrefix("sha256:"),
                     )
                 }
