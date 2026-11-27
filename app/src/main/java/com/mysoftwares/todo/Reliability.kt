@@ -25,7 +25,7 @@ object Reliability {
         val list = mutableListOf<Check>()
         val nm = c.getSystemService(NotificationManager::class.java)
 
-        val channelsOk = listOf(Notifications.CH_ALARM, Notifications.CH_ALARM_FALLBACK, Notifications.CH_REMINDER)
+        val channelsOk = listOf(Notifications.CH_ALARM, Notifications.CH_ALARM_FALLBACK, Notifications.CH_REMINDER, Notifications.CH_EARLY)
             .all { (nm.getNotificationChannel(it)?.importance ?: 1) != NotificationManager.IMPORTANCE_NONE }
         list += Check(
             "Notifications allowed",

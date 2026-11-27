@@ -28,6 +28,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 - **Working day** option for repeating tasks (all except Daily): if the date falls on a weekly off, ring on the
   **same day**, the **previous working day** or the **next working day**. Weekly off (Settings): Saturday & Sunday,
   Sunday only, or Sunday + 2nd & 4th Saturday
+- Early reminders ring **5 times** (notification + sound every 3 s on the alarm volume); the due-time reminder rings as set
 - Early reminder: 15 min, 1 hour, 1, 2 or 3 days, or 1 week before the due time
 - **Important** tasks show a red "IMPORTANT WORK – you must do this now!" screen and
   **ring again every 10 minutes until you tap Done**

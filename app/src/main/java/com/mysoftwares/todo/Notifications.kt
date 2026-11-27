@@ -19,6 +19,8 @@ object Notifications {
     const val CH_ALARM_FALLBACK = "alarm_fallback_v1"
     /** Advance reminders and "you missed this" reminders. */
     const val CH_REMINDER = "reminder_v1"
+    /** Early reminders: silent channel, the app plays the sound 5 times itself (EarlyChime). */
+    const val CH_EARLY = "early_v1"
 
     fun createChannels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
@@ -44,6 +46,14 @@ object Notifications {
                 vibrationPattern = longArrayOf(0, 800, 400, 800)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 setBypassDnd(true)
+            }
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CH_EARLY, "Early reminders", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Reminders before the due time (the app rings 5 times)"
+                setSound(null, null)
+                enableVibration(false)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
         )
         nm.createNotificationChannel(
@@ -154,7 +164,7 @@ object Notifications {
             Intent(context, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val n = NotificationCompat.Builder(context, CH_REMINDER)
+        val n = NotificationCompat.Builder(context, CH_EARLY)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Coming up: ${task.title}")
             .setContentText("Due ${formatTime(task.dueAt)}" + if (task.important) " – IMPORTANT, plan for it" else "")

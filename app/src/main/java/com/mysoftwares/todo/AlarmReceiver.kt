@@ -26,7 +26,8 @@ class AlarmReceiver : BroadcastReceiver() {
             AlarmScheduler.ACTION_ADVANCE -> {
                 val at = task.advanceAt ?: return
                 if (at > now + 60_000) { AlarmScheduler.schedule(context, task); return } // stale
-                Notifications.showAdvance(context, task)
+                Notifications.showAdvance(context, task) // silent notification…
+                EarlyChime.play(context, goAsync())       // …plus the sound 5 times
                 // Remember which early reminder was shown; the next one (if any) is armed.
                 AlarmScheduler.schedule(context, db.save(task.copy(advanceShownFor = at)))
             }
