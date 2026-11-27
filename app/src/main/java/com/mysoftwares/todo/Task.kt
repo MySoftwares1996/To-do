@@ -6,19 +6,19 @@ import java.time.ZonedDateTime
 import java.time.temporal.TemporalAdjusters
 
 enum class Repeat(val label: String) {
-    NONE("Once"),
-    DAILY("Every day"),
-    WEEKLY("Every week"),
-    MONTHLY("Every month (same date)"),
-    MONTH_END("Every month-end (last day)"),
-    QUARTERLY("Every quarter (3 months)"),
-    YEARLY("Every year");
+    NONE("Never"),
+    DAILY("Daily"),
+    WEEKLY("Weekly"),
+    MONTHLY("Monthly"),
+    MONTH_END("Month-end"),
+    QUARTERLY("Quarterly"),
+    YEARLY("Yearly");
 }
 
 /** Options for "remind me before the due time" (in minutes). */
 val ADVANCE_OPTIONS = listOf(
-    0 to "No advance reminder",
-    15 to "15 minutes before",
+    0 to "None",
+    15 to "15 min before",
     60 to "1 hour before",
     24 * 60 to "1 day before",
     2 * 24 * 60 to "2 days before",

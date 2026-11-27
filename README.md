@@ -23,7 +23,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
   (Google Drive, phone storage…). After the first backup, the file is **updated automatically after every change**.
   Restore on the same or a new phone, either adding to or replacing current tasks. All alarms are set again.
 - Add a task with a title, notes, date and time
-- Repeat: once, daily, weekly, monthly (same date), **month-end (last day of the month)**, **quarterly (every 3 months)**, yearly
+- Repeat: never, daily, weekly, monthly (same date), **month-end** (last day), **quarterly** (every 3 months), yearly
 - Early reminder: 15 min, 1 hour, 1, 2 or 3 days, or 1 week before the due time
 - **Important** tasks show a red "IMPORTANT WORK – you must do this now!" screen and
   **ring again every 10 minutes until you tap Done**

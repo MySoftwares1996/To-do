@@ -4,9 +4,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.format.DateFormat
-import android.view.Gravity
 import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageView
@@ -32,6 +30,8 @@ import java.time.temporal.TemporalAdjusters
 
 /** Task form: Cancel / Add in the bar, grouped rows, Android date and clock pickers. */
 class EditTaskActivity : BaseActivity() {
+    override val wrapWithToolbar = false // this screen has its own Cancel | Title | Add bar
+
     private var existing: Task? = null
     private var whenAt: LocalDateTime = LocalDateTime.now().plusHours(1).truncatedTo(ChronoUnit.HOURS)
     private var repeatIndex = 0
@@ -70,7 +70,8 @@ class EditTaskActivity : BaseActivity() {
 
         val t = existing
         if (t != null) {
-            setTitle("Details")
+            findViewById<TextView>(R.id.bar_title).text = "Details"
+            findViewById<TextView>(R.id.bar_save).text = "Done"
             if (savedInstanceState == null) {
                 title.setText(t.title)
                 notes.setText(t.notes)
@@ -82,7 +83,7 @@ class EditTaskActivity : BaseActivity() {
             findViewById<View>(R.id.delete_group).visibility = View.VISIBLE
             findViewById<View>(R.id.delete).setOnClickListener { confirmDelete() }
         } else {
-            setTitle(R.string.new_task)
+            findViewById<TextView>(R.id.bar_title).text = "New Task"
             if (savedInstanceState == null) important.isChecked = true
             title.requestFocus()
         }
@@ -91,7 +92,9 @@ class EditTaskActivity : BaseActivity() {
             repeatIndex = it.getInt("repeat")
             advanceIndex = it.getInt("advance")
         }
-        addCancelButton()
+        findViewById<View>(R.id.bar_cancel).setOnClickListener { finish() }
+        findViewById<View>(R.id.bar_save).setOnClickListener { save() }
+        updateSaveEnabled()
         showSelections()
 
         rowDate.setOnClickListener { pickDate() }
@@ -112,7 +115,7 @@ class EditTaskActivity : BaseActivity() {
         title.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
-            override fun afterTextChanged(s: Editable?) = invalidateOptionsMenu()
+            override fun afterTextChanged(s: Editable?) = updateSaveEnabled()
         })
     }
 
@@ -123,17 +126,10 @@ class EditTaskActivity : BaseActivity() {
         outState.putInt("advance", advanceIndex)
     }
 
-    /** iOS puts "Cancel" on the left of the navigation bar. */
-    private fun addCancelButton() {
-        val bar = toolbar ?: return
-        bar.addView(TextView(this).apply {
-            text = "Cancel"
-            textSize = 17f
-            setTextColor(MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary))
-            setPadding((8 * resources.displayMetrics.density).toInt(), 0, 0, 0)
-            setOnClickListener { finish() }
-            layoutParams = Toolbar.LayoutParams(Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT, Gravity.START)
-        })
+    /** "Add" is greyed out until a title is typed. */
+    private fun updateSaveEnabled() {
+        val ok = !title.text.isNullOrBlank()
+        findViewById<TextView>(R.id.bar_save).apply { isEnabled = ok; alpha = if (ok) 1f else 0.35f }
     }
 
     private fun setupRow(row: View, icon: Int, color: Int, label: String, chevron: Boolean) {
@@ -204,8 +200,7 @@ class EditTaskActivity : BaseActivity() {
         AlertDialog.Builder(this)
             .setTitle(titleText)
             .setSingleChoiceItems(items.toTypedArray(), selected) { d, which -> onPick(which); d.dismiss() }
-            .setNegativeButton("Cancel", null)
-            .show()
+            .show() // tap a choice to pick it, tap outside to close
     }
 
     private fun showSelections() {
@@ -270,19 +265,4 @@ class EditTaskActivity : BaseActivity() {
             .show()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menu.add(0, 1, 0, if (existing == null) "Add" else "Done")
-            .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        return true
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        menu.findItem(1)?.isEnabled = !title.text.isNullOrBlank()
-        return super.onPrepareOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == 1) { save(); return true }
-        return super.onOptionsItemSelected(item)
-    }
 }
