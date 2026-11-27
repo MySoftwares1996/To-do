@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Office To-Do</string>
+    <string name="setup_title">Alarm reliability</string>
+    <string name="new_task">New task</string>
+    <string name="edit_task">Edit task</string>
+    <string name="banner_problems">⚠ %1$d setting(s) may stop your alarms. Tap to fix.</string>
+    <string name="empty">No tasks yet.\nTap + to add a bank due date, month-end closing or any important work.</string>
+</resources>

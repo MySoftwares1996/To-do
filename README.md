@@ -1,0 +1,54 @@
+# Office To-Do (Android)
+
+A simple native Android to-do app for office work: bank due dates, EMI or credit-card
+payments, month-end closing, tax filing, payroll, and any other important task.
+Its main job is to **ring a real alarm and show a notification at the exact time, every time.**
+
+## Features
+- Add a task with a title, notes, date and time
+- Repeat: once, daily, weekly, monthly (same date), **month-end (last day of the month)**, yearly
+- Early reminder: 15 min, 1 hour, 1, 2 or 3 days, or 1 week before the due time
+- **Important** tasks show a red "IMPORTANT WORK – you must do this now!" screen and
+  **ring again every 10 minutes until you tap Done**
+- Full-screen alarm over the lock screen with **Done / Snooze 10 min / Snooze 1 hour**
+- Quick-pick templates (bank EMI, credit card bill, month-end closing, tax or GST, payroll…)
+- An "Alarm reliability" screen that checks the phone settings and fixes them in one tap, plus a **test alarm** button
+
+## How it makes sure alarms ring
+| Risk | What the app does |
+|---|---|
+| Doze or battery saver delays alarms | Uses `AlarmManager.setAlarmClock()`, the highest-priority system alarm (the same kind the Clock app uses) |
+| Exact-alarm permission | `USE_EXACT_ALARM` (granted automatically on Android 13+), `SCHEDULE_EXACT_ALARM` on Android 12, and a fallback alarm if it's denied |
+| Phone restart | Re-arms all alarms on boot, **even before the first unlock** (direct-boot storage) |
+| Time or timezone change, app update | Re-arms all alarms |
+| Alarm missed while the phone was off | Rings as soon as the phone is back on |
+| Silent mode | Plays on the ALARM sound stream; if the alarm volume is 0 it is raised while ringing |
+| Lock screen | Full-screen alarm activity + ongoing notification |
+| Ringing service blocked | Backup: an "insistent" notification that loops the alarm sound |
+| User ignores it | Important tasks ring again every 10 minutes and stay in the notification shade |
+| App killed | Every time you open the app, all alarms are re-armed |
+
+### What you must do once on your phone
+Open **⋮ → Alarm reliability** and make every item green. On Xiaomi, OPPO, vivo,
+realme, OnePlus, Huawei or Samsung phones, also turn on **Autostart** and set battery usage to
+**Unrestricted** (the screen shows instructions for your brand). Then tap **Test alarm**
+and lock the phone.
+
+> Never use **Force stop** on the app. Android then cancels all of the app's alarms until
+> you open it again. No app can work around this, so don't do it.
+
+## Get the APK
+Every push builds the APK with GitHub Actions: open **Actions → Build APK → latest run →
+Artifacts → OfficeToDo-apk**, download it, unzip it, and install the APK on the phone (allow "Install unknown apps").
+
+Builds are signed with the key in `app/debug.keystore`, so a newer APK installs over the old one
+and your tasks are kept.
+
+## Build locally
+Requires Android Studio (or the Android SDK) and JDK 17+:
+```
+./gradlew assembleRelease
+# APK: app/build/outputs/apk/release/app-release.apk
+```
+
+Minimum Android version: 8.0 (API 26). Target: Android 15 (API 35).
