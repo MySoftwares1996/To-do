@@ -44,7 +44,7 @@
         android:id="@+id/row_done"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:contentDescription="Mark done"
+        android:contentDescription="@string/ui_mark_done"
         android:padding="8dp"
         android:src="@drawable/ic_check_outline" />
 </LinearLayout>

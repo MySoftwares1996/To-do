@@ -19,7 +19,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:gravity="center"
             android:paddingHorizontal="16dp"
-            android:text="Cancel"
+            android:text="@string/ui_cancel"
             android:textColor="?attr/colorPrimary"
             android:textSize="17sp" />
 
@@ -40,7 +40,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:gravity="center"
             android:paddingHorizontal="16dp"
-            android:text="Add"
+            android:text="@string/ui_add"
             android:textColor="?attr/colorPrimary"
             android:textSize="17sp"
             android:textStyle="bold" />
@@ -83,7 +83,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@null"
-                    android:hint="Title"
+                    android:hint="@string/ui_title"
                     android:importantForAutofill="no"
                     android:inputType="textCapSentences"
                     android:minHeight="50dp"
@@ -104,7 +104,7 @@
                     android:layout_height="wrap_content"
                     android:background="@null"
                     android:gravity="top"
-                    android:hint="Notes (account no., amount, steps…)"
+                    android:hint="@string/ui_notes_account_no_amount_steps"
                     android:importantForAutofill="no"
                     android:inputType="textCapSentences|textMultiLine"
                     android:minHeight="80dp"
@@ -121,7 +121,7 @@
             style="@style/IosGroupLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Remind with" />
+            android:text="@string/ui_remind_with" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/remind_group"
@@ -136,7 +136,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="⏰  Alarm" />
+                android:text="@string/ui_alarm" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/remind_notification"
@@ -144,7 +144,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="🔔  Notification" />
+                android:text="@string/ui_notification" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <TextView
@@ -161,7 +161,7 @@
             style="@style/IosGroupLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Alarm" />
+            android:text="@string/ui_alarm_2" />
 
         <com.google.android.material.card.MaterialCardView
             style="@style/IosGroup"
@@ -252,7 +252,7 @@
                     android:layout_marginStart="14dp"
                     android:layout_weight="1"
                     android:paddingVertical="12dp"
-                    android:text="Important"
+                    android:text="@string/ui_important"
                     android:textColor="@color/ios_label"
                     android:textSize="17sp" />
 
@@ -288,7 +288,7 @@
                 android:layout_height="50dp"
                 android:background="?attr/selectableItemBackground"
                 android:gravity="center"
-                android:text="Delete Task"
+                android:text="@string/ui_delete_task"
                 android:textColor="@color/ios_red"
                 android:textSize="17sp" />
         </com.google.android.material.card.MaterialCardView>

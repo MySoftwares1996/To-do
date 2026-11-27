@@ -40,7 +40,7 @@
             android:id="@+id/widget_add"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:contentDescription="Add task"
+            android:contentDescription="@string/ui_add_task"
             android:padding="4dp"
             android:src="@drawable/ic_add_circle" />
     </LinearLayout>
@@ -57,7 +57,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:text="Nothing pending 🎉"
+        android:text="@string/ui_nothing_pending"
         android:textColor="@color/widget_sub"
         android:textSize="14sp" />
 </LinearLayout>

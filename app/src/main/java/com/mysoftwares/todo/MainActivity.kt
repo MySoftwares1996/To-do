@@ -44,8 +44,7 @@ class MainActivity : BaseActivity() {
     private lateinit var settingsPage: View
     private var askedPermission = false
     private val io = AppExecutors.io
-    /** Downloaded update waiting for the user to allow "Install unknown apps". */
-    private var pendingApk: File? = null
+    private val updates by lazy { UpdateUi(this) }
     private val grouped by lazy { Appearance.listStyle(this) == Appearance.ListStyle.COMPACT }
 
     /** Refresh once a minute so "in 5 minutes" / overdue colours stay current. */
@@ -196,7 +195,7 @@ class MainActivity : BaseActivity() {
         settingRow(R.id.set_backup, R.drawable.ic_tray, R.color.ios_indigo, "Backup & restore") {
             startActivity(Intent(this, BackupActivity::class.java))
         }
-        settingRow(R.id.set_update, R.drawable.ic_repeat, R.color.ios_gray, "Check for updates") { checkForUpdate(manual = true) }
+        settingRow(R.id.set_update, R.drawable.ic_repeat, R.color.ios_gray, "Check for updates") { updates.checkForUpdate(manual = true) }
         findViewById<View>(R.id.set_clear).setOnClickListener { clearCompleted() }
         findViewById<android.widget.TextView>(R.id.set_version).text = "Office To-Do ${Updater.currentVersionName}"
     }
@@ -304,13 +303,7 @@ class MainActivity : BaseActivity() {
             askedPermission = true
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }
-        pendingApk?.let {
-            if (Build.VERSION.SDK_INT < 26 || packageManager.canRequestPackageInstalls()) {
-                pendingApk = null
-                Updater.install(this, it)
-            }
-        }
-        if (Updater.autoCheckDue(this)) checkForUpdate(manual = false)
+        updates.onResume()
     }
 
     override fun onPause() {
@@ -431,89 +424,6 @@ class MainActivity : BaseActivity() {
         }).attachToRecyclerView(list)
     }
 
-    // ---- Over-the-air updates ----
-
-    private fun toast(msg: String) = Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-
-    private fun checkForUpdate(manual: Boolean) {
-        if (manual) toast("Checking for updates…")
-        io.execute {
-            val rel = runCatching { Updater.fetchLatest() }.getOrNull()
-            runOnUiThread {
-                if (isFinishing || isDestroyed) return@runOnUiThread
-                when {
-                    rel == null -> if (manual) toast("Could not check for updates. Please check your internet connection.")
-                    rel.versionCode > Updater.currentVersionCode -> showUpdateDialog(rel)
-                    manual -> toast("You have the latest version (${Updater.currentVersionName}).")
-                }
-            }
-        }
-    }
-
-    /** The new version uses the new private signing key: a one-time reinstall is needed. */
-    private fun showReinstallHelp() {
-        AlertDialog.Builder(this)
-            .setTitle("One-time reinstall needed")
-            .setMessage(
-                "This update is signed with a new, more secure key, so Android can't install it over this version.\n\n" +
-                    "1. Settings → Backup & restore → Back up now\n" +
-                    "2. Uninstall Office To-Do\n" +
-                    "3. Install the new version from the releases page\n" +
-                    "4. Settings → Backup & restore → Restore from file\n\n" +
-                    "After this, updates install normally again."
-            )
-            .setPositiveButton("Back up now") { _, _ -> startActivity(Intent(this, BackupActivity::class.java)) }
-            .setNeutralButton("Releases page") { _, _ ->
-                runCatching {
-                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(Updater.RELEASES_PAGE)))
-                }
-            }
-            .setNegativeButton("Later", null)
-            .show()
-    }
-
-    private fun showUpdateDialog(rel: Updater.Release) {
-        val notes = rel.notes.trim().take(600)
-        AlertDialog.Builder(this)
-            .setTitle("Update available")
-            .setMessage(
-                "Version ${rel.versionName} is ready (you have ${Updater.currentVersionName}).\n" +
-                    "Your tasks and alarms are kept." + if (notes.isNotEmpty()) "\n\nWhat's new:\n$notes" else ""
-            )
-            .setPositiveButton("Update now") { _, _ -> downloadAndInstall(rel) }
-            .setNegativeButton("Later", null)
-            .show()
-    }
-
-    private fun downloadAndInstall(rel: Updater.Release) {
-        val bar = LinearProgressIndicator(this).apply {
-            max = 100
-            isIndeterminate = false
-            val pad = (24 * resources.displayMetrics.density).toInt()
-            setPadding(pad, pad, pad, pad)
-        }
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Downloading update…")
-            .setView(bar)
-            .setCancelable(false)
-            .show()
-        io.execute {
-            val result = runCatching {
-                Updater.download(this, rel) { p -> runOnUiThread { bar.setProgressCompat(p, true) } }
-            }
-            runOnUiThread {
-                if (!isDestroyed) dialog.dismiss()
-                result.onSuccess { apk ->
-                    if (!Updater.sameSigner(this, apk)) { showReinstallHelp(); return@onSuccess }
-                    if (!Updater.install(this, apk)) {
-                        pendingApk = apk
-                        toast("Allow 'Install unknown apps' for Office To-Do, then press Back to continue.")
-                    }
-                }.onFailure { toast("Update failed: ${it.message}") }
-            }
-        }
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
         return true
@@ -530,6 +440,8 @@ class MainActivity : BaseActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
+    private fun toast(msg: String) = updates.toast(msg)
 
     private fun clearCompleted() {
         val done = TaskDb.get(this).all().filter { it.done }

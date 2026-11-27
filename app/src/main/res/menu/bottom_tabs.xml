@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/tab_today" android:icon="@drawable/ic_calendar" android:title="Today" />
-    <item android:id="@+id/tab_upcoming" android:icon="@drawable/ic_clock" android:title="Upcoming" />
-    <item android:id="@+id/tab_done" android:icon="@drawable/ic_check_circle" android:title="Done" />
-    <item android:id="@+id/tab_settings" android:icon="@drawable/ic_settings" android:title="Settings" />
+    <item android:id="@+id/tab_today" android:icon="@drawable/ic_calendar" android:title="@string/ui_today" />
+    <item android:id="@+id/tab_upcoming" android:icon="@drawable/ic_clock" android:title="@string/ui_upcoming" />
+    <item android:id="@+id/tab_done" android:icon="@drawable/ic_check_circle" android:title="@string/ui_done_2" />
+    <item android:id="@+id/tab_settings" android:icon="@drawable/ic_settings" android:title="@string/ui_settings" />
 </menu>

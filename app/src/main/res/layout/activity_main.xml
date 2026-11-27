@@ -48,7 +48,7 @@
             android:background="@drawable/bg_search"
             android:drawableStart="@drawable/ic_search"
             android:drawablePadding="8dp"
-            android:hint="Search tasks, notes, categories"
+            android:hint="@string/ui_search_tasks_notes_categories"
             android:imeOptions="actionSearch"
             android:importantForAutofill="no"
             android:inputType="text"
@@ -84,7 +84,7 @@
             android:orientation="vertical"
             android:paddingHorizontal="16dp">
 
-            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Alarms" />
+            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_alarms" />
             <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                     <include android:id="@+id/set_reliability" layout="@layout/item_form_row" />
@@ -103,7 +103,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Work" />
+            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_work" />
             <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                     <include android:id="@+id/set_weekly_off" layout="@layout/item_form_row" />
@@ -118,16 +118,16 @@
                 android:layout_height="wrap_content"
                 android:paddingHorizontal="16dp"
                 android:paddingTop="6dp"
-                android:text="Used by repeating tasks set to “Previous working day” or “Next working day”."
+                android:text="@string/ui_used_by_repeating_tasks_set_to_previous_"
                 android:textColor="@color/ios_secondary"
                 android:textSize="13sp" />
 
-            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Look" />
+            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_look" />
             <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
                 <include android:id="@+id/set_appearance" layout="@layout/item_form_row" />
             </com.google.android.material.card.MaterialCardView>
 
-            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Data" />
+            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_data" />
             <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
                     <include android:id="@+id/set_backup" layout="@layout/item_form_row" />
@@ -145,7 +145,7 @@
                     android:layout_height="50dp"
                     android:background="?attr/selectableItemBackground"
                     android:gravity="center"
-                    android:text="Clear Completed"
+                    android:text="@string/ui_clear_completed"
                     android:textColor="@color/ios_red"
                     android:textSize="17sp" />
             </com.google.android.material.card.MaterialCardView>

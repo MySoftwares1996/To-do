@@ -14,7 +14,7 @@
             style="@style/IosGroupLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Theme"
+            android:text="@string/ui_theme"
             />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -31,7 +31,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="System" />
+                android:text="@string/ui_system" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/mode_light"
@@ -39,7 +39,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Light" />
+                android:text="@string/ui_light" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/mode_dark"
@@ -47,7 +47,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Dark" />
+                android:text="@string/ui_dark" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <TextView
@@ -55,7 +55,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Colour"
+            android:text="@string/ui_colour"
             />
 
         <HorizontalScrollView
@@ -84,7 +84,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="Task list style"
+            android:text="@string/ui_task_list_style"
             />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
@@ -101,7 +101,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Grouped" />
+                android:text="@string/ui_grouped" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/list_cards"
@@ -109,14 +109,14 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Cards" />
+                android:text="@string/ui_cards" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Grouped: one white list per section, like iOS. Cards: each task on its own card."
+            android:text="@string/ui_grouped_one_white_list_per_section_like_"
             android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
@@ -143,13 +143,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Large text"
+                        android:text="@string/ui_large_text"
                         android:textAppearance="?attr/textAppearanceTitleMedium" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Bigger task titles and times"
+                        android:text="@string/ui_bigger_task_titles_and_times"
                         android:textAppearance="?attr/textAppearanceBodySmall"
                         android:textColor="?attr/colorOnSurfaceVariant" />
                 </LinearLayout>
