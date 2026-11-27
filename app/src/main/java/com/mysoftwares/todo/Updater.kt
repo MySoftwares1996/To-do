@@ -131,6 +131,25 @@ object Updater {
         return out
     }
 
+    /**
+     * True if the downloaded APK is signed with the same key as this app (or if that cannot be checked).
+     * A different key means Android will refuse to install it over the current app.
+     */
+    @Suppress("DEPRECATION")
+    fun sameSigner(context: Context, apk: File): Boolean = try {
+        val pm = context.packageManager
+        fun certs(info: android.content.pm.PackageInfo?): Set<String>? {
+            if (info == null) return null
+            val sigs = if (Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else info.signatures
+            return sigs?.map { it.toCharsString() }?.toSet()
+        }
+        val flag = if (Build.VERSION.SDK_INT >= 28) android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES
+        else android.content.pm.PackageManager.GET_SIGNATURES
+        val mine = certs(pm.getPackageInfo(context.packageName, flag))
+        val theirs = certs(pm.getPackageArchiveInfo(apk.path, flag))
+        mine == null || theirs == null || mine == theirs
+    } catch (_: Exception) { true }
+
     /** Opens the system installer. Returns false if the user first has to allow installs from this app. */
     fun install(activity: Activity, apk: File): Boolean {
         if (Build.VERSION.SDK_INT >= 26 && !activity.packageManager.canRequestPackageInstalls()) {

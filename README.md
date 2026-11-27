@@ -24,7 +24,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
   (Google Drive, phone storage…). After the first backup, the file is **updated automatically after every change**.
   Restore on the same or a new phone, either adding to or replacing current tasks. All alarms are set again.
 - Add a task with a title, notes, date and time
-- Repeat: never, daily, weekly, monthly (same date), **month-end** (last day), **quarterly** (every 3 months), yearly
+- Repeat: never, daily, weekly, monthly (same date), **month-end** (last day), **quarterly** (every 3 months), **quarter-end** (31 Mar / 30 Jun / 30 Sep / 31 Dec), yearly
 - **Working day** option for repeating tasks (all except Daily): if the date falls on a weekly off, ring on the
   **same day**, the **previous working day** or the **next working day**. Weekly off (Settings): Saturday & Sunday,
   Sunday only, or Sunday + 2nd & 4th Saturday
@@ -71,8 +71,19 @@ and install it on the phone (allow "Install unknown apps").
 - The first time, Android asks you to allow **Install unknown apps** for Office To-Do.
 - Android always asks you to confirm an update. Silent installs are only possible for Play Store or device-owner apps.
 
-Builds are signed with the key in `app/debug.keystore`, so a newer APK installs over the old one
-and your tasks are kept.
+## Signing key
+Release builds are signed with a **private key stored in GitHub Secrets**
+(`SIGNING_KEYSTORE_B64`, `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS`, `SIGNING_KEY_PASSWORD`).
+CI writes it to a temporary file only while building and deletes it afterwards.
+If the secrets are missing, CI falls back to the old public `app/debug.keystore` and shows a warning.
+
+Moving from the old key to the private key needs a one-time reinstall (the app explains the steps):
+back up → uninstall → install the new APK → restore.
+
+## Tests
+`gradle testReleaseUnitTest` checks the date logic (monthly clamping, month-end, quarterly, quarter-end,
+leap years, previous/next working day, 2nd/4th Saturday, holidays). CI runs the tests before every build;
+a failing test stops the release.
 
 ## Build locally
 Open the folder in Android Studio and press Run, or with the Android SDK, JDK 17+ and Gradle 8.14 installed:

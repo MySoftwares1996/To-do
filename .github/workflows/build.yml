@@ -22,10 +22,29 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.14.3"
-      - name: Build APK
-        run: gradle --no-daemon assembleRelease
+      # Private signing key from GitHub Secrets (Settings > Secrets and variables > Actions).
+      - name: Prepare signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.SIGNING_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "SIGNING_STORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+            echo "Signing with the private release key"
+          else
+            echo "::warning::SIGNING_KEYSTORE_B64 secret not set - signing with the old public key"
+          fi
+      - name: Test and build APK
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: gradle --no-daemon testReleaseUnitTest assembleRelease
       - name: Rename APK
         run: cp app/build/outputs/apk/release/app-release.apk OfficeToDo.apk
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore"
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

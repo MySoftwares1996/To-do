@@ -18,19 +18,33 @@ object WorkDays {
     @Volatile var offDays: OffDays = OffDays.SAT_SUN
         private set
 
+    /** Public / office holidays added by the user. */
+    @Volatile var holidays: Set<LocalDate> = emptySet()
+        private set
+
     private fun prefs(c: Context) =
         c.applicationContext.createDeviceProtectedStorageContext().getSharedPreferences("workdays", Context.MODE_PRIVATE)
 
     fun load(c: Context) {
         offDays = runCatching { OffDays.valueOf(prefs(c).getString("off", null) ?: "") }.getOrDefault(OffDays.SAT_SUN)
+        holidays = prefs(c).getStringSet("holidays", emptySet())!!
+            .mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }.toSet()
     }
+
+    fun setHolidays(c: Context, dates: Set<LocalDate>) {
+        prefs(c).edit().putStringSet("holidays", dates.map { it.toString() }.toSet()).apply()
+        holidays = dates
+    }
+
+    /** For unit tests only. */
+    fun setForTest(off: OffDays, hol: Set<LocalDate>) { offDays = off; holidays = hol }
 
     fun set(c: Context, value: OffDays) {
         prefs(c).edit().putString("off", value.name).apply()
         offDays = value
     }
 
-    fun isWorkingDay(d: LocalDate): Boolean = when (d.dayOfWeek) {
+    fun isWorkingDay(d: LocalDate): Boolean = d !in holidays && when (d.dayOfWeek) {
         DayOfWeek.SUNDAY -> false
         DayOfWeek.SATURDAY -> when (offDays) {
             OffDays.SAT_SUN -> false

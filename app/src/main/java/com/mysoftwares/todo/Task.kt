@@ -12,6 +12,7 @@ enum class Repeat(val label: String) {
     MONTHLY("Monthly"),
     MONTH_END("Month-end"),
     QUARTERLY("Quarterly"),
+    QUARTER_END("Quarter-end"),
     YEARLY("Yearly");
 }
 
@@ -77,6 +78,10 @@ object Recurrence {
             Repeat.MONTHLY -> s.plusMonths(k) // clamps 31st -> 30th/28th without drifting
             Repeat.MONTH_END -> s.plusMonths(k).with(TemporalAdjusters.lastDayOfMonth())
             Repeat.QUARTERLY -> s.plusMonths(3 * k) // same date every 3 months, clamped like monthly
+            Repeat.QUARTER_END -> { // last day of Mar / Jun / Sep / Dec
+                val first = s.plusMonths(((3 - s.monthValue % 3) % 3).toLong()) // move to the quarter's last month
+                first.plusMonths(3 * k).with(TemporalAdjusters.lastDayOfMonth())
+            }
             Repeat.YEARLY -> s.plusYears(k)
         }
         return z.toInstant().toEpochMilli()

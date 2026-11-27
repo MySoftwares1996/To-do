@@ -360,6 +360,28 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    /** The new version uses the new private signing key: a one-time reinstall is needed. */
+    private fun showReinstallHelp() {
+        AlertDialog.Builder(this)
+            .setTitle("One-time reinstall needed")
+            .setMessage(
+                "This update is signed with a new, more secure key, so Android can't install it over this version.\n\n" +
+                    "1. Settings → Backup & restore → Back up now\n" +
+                    "2. Uninstall Office To-Do\n" +
+                    "3. Install the new version from the releases page\n" +
+                    "4. Settings → Backup & restore → Restore from file\n\n" +
+                    "After this, updates install normally again."
+            )
+            .setPositiveButton("Back up now") { _, _ -> startActivity(Intent(this, BackupActivity::class.java)) }
+            .setNeutralButton("Releases page") { _, _ ->
+                runCatching {
+                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/MySoftwares1996/To-do/releases/latest")))
+                }
+            }
+            .setNegativeButton("Later", null)
+            .show()
+    }
+
     private fun showUpdateDialog(rel: Updater.Release) {
         val notes = rel.notes.trim().take(600)
         AlertDialog.Builder(this)
@@ -392,6 +414,7 @@ class MainActivity : BaseActivity() {
             runOnUiThread {
                 if (!isDestroyed) dialog.dismiss()
                 result.onSuccess { apk ->
+                    if (!Updater.sameSigner(this, apk)) { showReinstallHelp(); return@onSuccess }
                     if (!Updater.install(this, apk)) {
                         pendingApk = apk
                         toast("Allow 'Install unknown apps' for Office To-Do, then press Back to continue.")

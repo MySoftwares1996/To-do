@@ -17,9 +17,10 @@ android {
         versionName = "1.0.$buildNumber"
     }
 
-    // A fixed signing key committed to the repo so every CI build has the same
-    // signature. That lets a new APK install over the old one without
-    // uninstalling (which would delete all tasks).
+    // Release signing. The private key lives in GitHub Secrets (see README, "Signing key"); CI writes it to
+    // a temporary file and passes its location and passwords in environment variables.
+    // Without those variables (e.g. a local build) the old public key in debug.keystore is used.
+    val releaseStore = System.getenv("SIGNING_STORE_FILE")
     signingConfigs {
         getByName("debug") {
             storeFile = file("debug.keystore")
@@ -27,12 +28,21 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+        create("release") {
+            if (releaseStore != null) {
+                storeFile = file(releaseStore)
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (releaseStore != null) signingConfigs.getByName("release")
+            else signingConfigs.getByName("debug")
         }
     }
 
@@ -42,6 +52,9 @@ android {
     }
     buildFeatures {
         buildConfig = true
+    }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
     lint {
         checkReleaseBuilds = false
@@ -57,4 +70,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+
+    testImplementation("junit:junit:4.13.2")
 }
