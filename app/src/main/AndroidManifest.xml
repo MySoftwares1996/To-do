@@ -51,7 +51,6 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity android:name=".HolidaysActivity" android:exported="false" />
-        <activity android:name=".CategoriesActivity" android:exported="false" />
         <activity android:name=".ReportActivity" android:exported="false" />
 
         <activity

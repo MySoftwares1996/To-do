@@ -98,8 +98,7 @@
                     <include android:id="@+id/set_weekly_off" layout="@layout/item_form_row" />
                     <include layout="@layout/divider_inset" />
                     <include android:id="@+id/set_holidays" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_categories" layout="@layout/item_form_row" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
             <TextView

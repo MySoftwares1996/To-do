@@ -181,9 +181,6 @@ class MainActivity : BaseActivity() {
         settingRow(R.id.set_holidays, R.drawable.ic_flag, R.color.ios_red, "Holidays") {
             startActivity(Intent(this, HolidaysActivity::class.java))
         }
-        settingRow(R.id.set_categories, R.drawable.ic_tray, R.color.brand, "Categories") {
-            startActivity(Intent(this, CategoriesActivity::class.java))
-        }
         settingRow(R.id.set_report, R.drawable.ic_check_circle, R.color.ios_green, "Monthly report") {
             startActivity(Intent(this, ReportActivity::class.java))
         }
@@ -210,7 +207,7 @@ class MainActivity : BaseActivity() {
         settingValue(R.id.set_nag, "${AlarmPrefs.nagMinutes(this)} min")
         settingValue(R.id.set_ring, "${AlarmPrefs.ringMinutes(this)} min")
         settingValue(R.id.set_holidays, WorkDays.holidays.size.toString())
-        settingValue(R.id.set_categories, Categories.all(this).size.toString())
+
         settingValue(R.id.set_appearance, Appearance.mode(this).label)
         settingValue(R.id.set_weekly_off, when (WorkDays.offDays) {
             WorkDays.OffDays.SAT_SUN -> "Sat & Sun"

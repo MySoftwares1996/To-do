@@ -65,8 +65,8 @@ class TaskAdapter(
             if (q.isNotEmpty()) {
                 // Search covers all tasks (pending first, then completed), whatever the tab.
                 val hits = tasks.filter {
-                    it.title.contains(q, true) || it.notes.contains(q, true) || it.category.contains(q, true)
-                }.sortedWith(compareBy<Task> { it.done }.thenBy { it.dueAt })
+                    it.title.contains(q, true) || it.notes.contains(q, true)
+                }.sortedWith(compareBy<Task> { it.done }.thenByDescending { it.priority.ordinal }.thenBy { it.dueAt })
                 if (hits.isNotEmpty()) {
                     rows += Row.Header("results", "Results", hits.size, null)
                     hits.forEachIndexed { i, t -> rows += Row.Item(t, i == 0, i == hits.lastIndex) }
@@ -80,7 +80,9 @@ class TaskAdapter(
                 rows += Row.Header(key, title, list.size, color)
                 list.forEachIndexed { i, t -> rows += Row.Item(t, i == 0, i == list.lastIndex) }
             }
-            val pending = tasks.filter { !it.done }.sortedBy { it.dueAt }
+            // Within each section: higher priority first, then by time.
+            val pending = tasks.filter { !it.done }
+                .sortedWith(compareByDescending<Task> { it.priority.ordinal }.thenBy { it.dueAt })
             when (tab) {
                 Tab.TODAY -> {
                     val overdue = pending.filter { it.dueAt < now }
@@ -113,7 +115,7 @@ class TaskAdapter(
             val today = LocalDate.now()
             val q = query.trim()
             if (q.isNotEmpty()) {
-                val n = tasks.count { it.title.contains(q, true) || it.notes.contains(q, true) || it.category.contains(q, true) }
+                val n = tasks.count { it.title.contains(q, true) || it.notes.contains(q, true) }
                 return if (n == 0) "No results" else "$n found"
             }
             val pending = tasks.filter { !it.done }
@@ -248,24 +250,27 @@ class TaskAdapter(
         sub.setTextColor(ContextCompat.getColor(ctx, if (overdue) R.color.ios_red else R.color.ios_secondary))
 
         val extras = mutableListOf<String>()
+        if (t.important && !t.done) extras += "⚠ Important"
         if (t.remindType == RemindType.NOTIFICATION) extras += "🔔 Notification"
         if (t.repeat != Repeat.NONE) extras += "↻ " + t.repeat.label
         if (t.snoozeUntil > 0 && !t.done) extras += "⏰ Snoozed to " + DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
         if (t.notes.isNotBlank()) extras += t.notes.lineSequence().first()
         v.findViewById<TextView>(R.id.repeat).apply {
             val line = android.text.SpannableStringBuilder()
-            if (t.category.isNotEmpty()) {
-                // Coloured dot + category name, e.g. "● Bank"
-                val color = Categories.colorOf(ctx, t.category) ?: ContextCompat.getColor(ctx, R.color.ios_gray)
-                line.append("●", android.text.style.ForegroundColorSpan(color), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                line.append(" ").append(t.category)
-                if (extras.isNotEmpty()) line.append("  ·  ")
-            }
             line.append(extras.joinToString("  ·  "))
             text = line
             visibility = if (line.isEmpty()) View.GONE else View.VISIBLE
         }
-        v.findViewById<View>(R.id.badge).visibility = if (t.important && !t.done) View.VISIBLE else View.GONE
+        // Priority marks: !!! red, !! orange, ! grey
+        v.findViewById<TextView>(R.id.badge).apply {
+            text = t.priority.marks
+            visibility = if (t.priority != Priority.NONE && !t.done) View.VISIBLE else View.GONE
+            setTextColor(ContextCompat.getColor(ctx, when (t.priority) {
+                Priority.HIGH -> R.color.ios_red
+                Priority.MEDIUM -> R.color.ios_orange
+                else -> R.color.ios_secondary
+            }))
+        }
 
         val check = v.findViewById<ImageView>(R.id.check)
         check.setImageResource(if (t.done) R.drawable.ic_circle_checked else R.drawable.ic_circle_empty)

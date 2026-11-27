@@ -37,7 +37,7 @@ class EditTaskActivity : BaseActivity() {
     private var repeatIndex = 0
     private val advances = mutableSetOf<Int>()
     private var remindType = RemindType.ALARM
-    private var category = ""
+    private var priority = Priority.NONE
     private var workdayIndex = 0
 
     private lateinit var title: EditText
@@ -48,7 +48,7 @@ class EditTaskActivity : BaseActivity() {
     private lateinit var rowRepeat: View
     private lateinit var rowEarly: View
     private lateinit var rowWorkday: View
-    private lateinit var rowCategory: View
+    private lateinit var rowPriority: View
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,13 +63,13 @@ class EditTaskActivity : BaseActivity() {
         rowRepeat = findViewById(R.id.row_repeat)
         rowEarly = findViewById(R.id.row_early)
         rowWorkday = findViewById(R.id.row_workday)
-        rowCategory = findViewById(R.id.row_category)
+        rowPriority = findViewById(R.id.row_priority)
 
         findViewById<ImageView>(R.id.when_icon).background.mutate().setTint(ContextCompat.getColor(this, R.color.ios_red))
         findViewById<ImageView>(R.id.remind_icon).background.mutate().setTint(ContextCompat.getColor(this, R.color.brand))
         setupRow(rowRepeat, R.drawable.ic_repeat, R.color.ios_gray, "Repeat", chevron = true)
         setupRow(rowEarly, R.drawable.ic_bell_small, R.color.ios_indigo, "Early Reminders", chevron = true)
-        setupRow(rowCategory, R.drawable.ic_tray, R.color.brand, "Category", chevron = true)
+        setupRow(rowPriority, R.drawable.ic_priority, R.color.ios_red, "Priority", chevron = true)
         setupRow(rowWorkday, R.drawable.ic_calendar, R.color.ios_green, "Working day", chevron = true)
         findViewById<ImageView>(R.id.important_icon).background.mutate()
             .setTint(ContextCompat.getColor(this, R.color.ios_orange))
@@ -90,7 +90,7 @@ class EditTaskActivity : BaseActivity() {
             repeatIndex = t.repeat.ordinal
             advances.addAll(t.advances)
             remindType = t.remindType
-            category = t.category
+            priority = t.priority
             workdayIndex = t.workday.ordinal
             findViewById<View>(R.id.delete_group).visibility = View.VISIBLE
             findViewById<View>(R.id.delete).setOnClickListener { confirmDelete() }
@@ -104,7 +104,7 @@ class EditTaskActivity : BaseActivity() {
             repeatIndex = it.getInt("repeat")
             advances.clear(); advances.addAll(it.getIntArray("advances")?.toList().orEmpty())
             remindType = RemindType.valueOf(it.getString("remind") ?: "ALARM")
-            category = it.getString("category").orEmpty()
+            priority = runCatching { Priority.valueOf(it.getString("priority") ?: "") }.getOrDefault(Priority.NONE)
             workdayIndex = it.getInt("workday")
         }
         findViewById<View>(R.id.bar_cancel).setOnClickListener { finish() }
@@ -121,7 +121,11 @@ class EditTaskActivity : BaseActivity() {
             choose("If it falls on a weekly off", WorkdayRule.entries.map { it.label }, workdayIndex) { workdayIndex = it; showSelections() }
         }
         rowEarly.setOnClickListener { chooseAdvances() }
-        rowCategory.setOnClickListener { chooseCategory() }
+        rowPriority.setOnClickListener {
+            choose("Priority", Priority.entries.map { p -> if (p.marks.isEmpty()) p.label else "${p.label}   ${p.marks}" }, priority.ordinal) {
+                priority = Priority.entries[it]; showSelections()
+            }
+        }
         val remindGroup = findViewById<com.google.android.material.button.MaterialButtonToggleGroup>(R.id.remind_group)
         remindGroup.check(if (remindType == RemindType.NOTIFICATION) R.id.remind_notification else R.id.remind_alarm)
         remindGroup.addOnButtonCheckedListener { _, btn, checked ->
@@ -147,7 +151,7 @@ class EditTaskActivity : BaseActivity() {
         outState.putInt("repeat", repeatIndex)
         outState.putIntArray("advances", advances.toIntArray())
         outState.putString("remind", remindType.name)
-        outState.putString("category", category)
+        outState.putString("priority", priority.name)
         outState.putInt("workday", workdayIndex)
     }
 
@@ -236,13 +240,6 @@ class EditTaskActivity : BaseActivity() {
             .show()
     }
 
-    private fun chooseCategory() {
-        val names = listOf("None") + Categories.all(this).map { it.name }
-        choose("Category", names, names.indexOf(category.ifEmpty { "None" }).coerceAtLeast(0)) {
-            category = if (it == 0) "" else names[it]; showSelections()
-        }
-    }
-
     private fun choose(titleText: String, items: List<String>, selected: Int, onPick: (Int) -> Unit) {
         AlertDialog.Builder(this)
             .setTitle(titleText)
@@ -262,9 +259,7 @@ class EditTaskActivity : BaseActivity() {
                 ADVANCE_OPTIONS.firstOrNull { it.first == m }?.second?.removeSuffix(" before") ?: "$m min"
             }
         }, accent = false)
-        setValue(rowCategory, category.ifEmpty { "None" }, accent = false)
-        rowCategory.findViewById<ImageView>(R.id.row_icon).background.mutate()
-            .setTint(Categories.colorOf(this, category) ?: ContextCompat.getColor(this, R.color.ios_gray))
+        setValue(rowPriority, if (priority == Priority.NONE) "None" else "${priority.label} ${priority.marks}", accent = false)
         findViewById<TextView>(R.id.important_note).text =
             (if (remindType == RemindType.ALARM) "Alarm: full-screen ringing. " else "Notification: one alert with Done / Snooze. ") +
                 "Important: reminds again every ${AlarmPrefs.nagMinutes(this)} min until Done." +
@@ -314,7 +309,7 @@ class EditTaskActivity : BaseActivity() {
                 important = important.isChecked,
                 advances = advances.sorted(),
                 remindType = remindType,
-                category = category,
+                priority = priority,
                 done = false,
                 snoozeUntil = 0,
                 rangFor = 0,

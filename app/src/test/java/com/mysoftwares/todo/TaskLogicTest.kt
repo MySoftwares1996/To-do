@@ -36,7 +36,7 @@ class TaskLogicTest {
             Task(
                 id = 3, title = "Bank \"EMI\", A/c 4521", notes = "₹25,000\nline 2", startAt = due, dueAt = due + 5,
                 repeat = Repeat.QUARTER_END, important = true, advances = listOf(1440, 2880), workday = WorkdayRule.PREVIOUS,
-                remindType = RemindType.NOTIFICATION, category = "Bank",
+                remindType = RemindType.NOTIFICATION, priority = Priority.HIGH,
             ),
             Task(id = 4, title = "Plain", startAt = due, dueAt = due, done = true),
         )
@@ -48,7 +48,7 @@ class TaskLogicTest {
         val t = Backup.fromJson(json).single()
         assertEquals(listOf(60), t.advances)
         assertEquals(RemindType.ALARM, t.remindType)
-        assertEquals("", t.category)
+        assertEquals(Priority.NONE, t.priority)
     }
 
     @Test(expected = IllegalArgumentException::class)

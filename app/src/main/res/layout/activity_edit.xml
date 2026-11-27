@@ -226,7 +226,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Repeat, working day, early reminders, category -->
+            <!-- Repeat, working day, early reminders, priority -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/IosGroup"
                 android:layout_width="match_parent"
@@ -255,7 +255,7 @@
                     <include layout="@layout/divider_inset" />
                     <include android:id="@+id/row_early" layout="@layout/item_form_row" />
                     <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/row_category" layout="@layout/item_form_row" />
+                    <include android:id="@+id/row_priority" layout="@layout/item_form_row" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

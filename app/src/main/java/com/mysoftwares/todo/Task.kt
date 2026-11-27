@@ -23,6 +23,11 @@ enum class WorkdayRule(val label: String, val short: String) {
     NEXT("Next working day", "Next");
 }
 
+/** Task priority, shown as ! / !! / !!! and used to sort the list. */
+enum class Priority(val label: String, val marks: String) {
+    NONE("None", ""), LOW("Low", "!"), MEDIUM("Medium", "!!"), HIGH("High", "!!!");
+}
+
 /** How the task reminds at its due time. */
 enum class RemindType(val label: String) { ALARM("Alarm"), NOTIFICATION("Notification") }
 
@@ -63,8 +68,7 @@ data class Task(
     val workday: WorkdayRule = WorkdayRule.SAME_DAY,
     /** Ring a full alarm, or only show a notification. */
     val remindType: RemindType = RemindType.ALARM,
-    /** Category name ("" = none). */
-    val category: String = "",
+    val priority: Priority = Priority.NONE,
 ) {
     /** When the main alarm should ring. */
     val alarmAt: Long get() = if (snoozeUntil > 0) snoozeUntil else dueAt

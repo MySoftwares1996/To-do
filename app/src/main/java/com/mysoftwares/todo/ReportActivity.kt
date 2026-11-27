@@ -58,10 +58,10 @@ class ReportActivity : BaseActivity() {
         val dt = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
         fun q(s: String) = "\"" + s.replace("\"", "\"\"") + "\""
         val csv = buildString {
-            append("Task,Category,Due,Completed,On time\r\n")
+            append("Task,Due,Completed,On time\r\n")
             done.forEach {
                 append(listOf(
-                    q(it.title), q(it.category), q(dt.format(Date(it.dueAt))), q(dt.format(Date(it.doneAt))),
+                    q(it.title), q(dt.format(Date(it.dueAt))), q(dt.format(Date(it.doneAt))),
                     if (it.doneAt <= it.dueAt + 60 * 60_000L) "Yes" else "No",
                 ).joinToString(",")).append("\r\n")
             }

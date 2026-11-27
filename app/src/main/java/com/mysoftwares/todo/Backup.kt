@@ -40,7 +40,7 @@ object Backup {
                 put("advanceMinutes", t.advances.firstOrNull() ?: 0) // older app versions
                 put("advances", JSONArray(t.advances))
                 put("remindType", t.remindType.name)
-                put("category", t.category)
+                put("priority", t.priority.name)
                 put("done", t.done)
                 put("snoozeUntil", t.snoozeUntil)
                 put("rangFor", t.rangFor)
@@ -76,7 +76,7 @@ object Backup {
                 advances = o.optJSONArray("advances")?.let { a -> (0 until a.length()).map { a.getInt(it) } }
                     ?: listOf(o.optInt("advanceMinutes")).filter { it > 0 },
                 remindType = runCatching { RemindType.valueOf(o.optString("remindType")) }.getOrDefault(RemindType.ALARM),
-                category = o.optString("category"),
+                priority = runCatching { Priority.valueOf(o.optString("priority")) }.getOrDefault(Priority.NONE),
                 done = o.optBoolean("done"),
                 snoozeUntil = o.optLong("snoozeUntil"),
                 rangFor = o.optLong("rangFor"),

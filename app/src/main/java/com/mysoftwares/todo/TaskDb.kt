@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper
  * ring even right after a reboot, before the phone is unlocked.
  */
 class TaskDb private constructor(private val appContext: Context) :
-    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 3) {
+    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 4) {
 
     /** Keep the home screen widget in sync with every change. */
     private fun changed() {
@@ -45,7 +45,8 @@ class TaskDb private constructor(private val appContext: Context) :
                 workday TEXT NOT NULL DEFAULT 'SAME_DAY',
                 advance_list TEXT NOT NULL DEFAULT '',
                 remind_type TEXT NOT NULL DEFAULT 'ALARM',
-                category TEXT NOT NULL DEFAULT ''
+                category TEXT NOT NULL DEFAULT '',
+                priority TEXT NOT NULL DEFAULT 'NONE'
             )"""
         )
         createHistory(db)
@@ -60,6 +61,7 @@ class TaskDb private constructor(private val appContext: Context) :
             db.execSQL("UPDATE tasks SET advance_list = advance_min WHERE advance_min > 0")
             createHistory(db)
         }
+        if (oldVersion < 4) db.execSQL("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'NONE'")
     }
 
     /** One row per completed occurrence – used by the monthly report. */
@@ -81,7 +83,7 @@ class TaskDb private constructor(private val appContext: Context) :
     @Synchronized
     fun logDone(t: Task, doneAt: Long) {
         writableDatabase.insert("history", null, ContentValues().apply {
-            put("task_id", t.id); put("title", t.title); put("category", t.category)
+            put("task_id", t.id); put("title", t.title); put("category", "")
             put("due_at", t.dueAt); put("done_at", doneAt)
         })
     }
@@ -158,7 +160,8 @@ class TaskDb private constructor(private val appContext: Context) :
             put("advance_min", t.advances.firstOrNull() ?: 0)
             put("advance_list", t.advances.joinToString(","))
             put("remind_type", t.remindType.name)
-            put("category", t.category)
+            put("category", "") // categories were removed; column kept for old databases
+            put("priority", t.priority.name)
             put("done", if (t.done) 1 else 0)
             put("snooze_until", t.snoozeUntil)
             put("rang_for", t.rangFor)
@@ -182,7 +185,7 @@ class TaskDb private constructor(private val appContext: Context) :
         important = getInt(getColumnIndexOrThrow("important")) == 1,
         advances = parseAdvances(getString(getColumnIndexOrThrow("advance_list")), getInt(getColumnIndexOrThrow("advance_min"))),
         remindType = runCatching { RemindType.valueOf(getString(getColumnIndexOrThrow("remind_type"))) }.getOrDefault(RemindType.ALARM),
-        category = getString(getColumnIndexOrThrow("category")),
+        priority = runCatching { Priority.valueOf(getString(getColumnIndexOrThrow("priority"))) }.getOrDefault(Priority.NONE),
         done = getInt(getColumnIndexOrThrow("done")) == 1,
         snoozeUntil = getLong(getColumnIndexOrThrow("snooze_until")),
         rangFor = getLong(getColumnIndexOrThrow("rang_for")),
