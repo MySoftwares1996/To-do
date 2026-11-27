@@ -15,7 +15,7 @@ class ActionReceiver : BroadcastReceiver() {
             ACTION_DONE -> TaskActions.done(
                 context, id, intent.getLongExtra(EXTRA_DUE, 0).takeIf { it > 0 }
             )
-            ACTION_SNOOZE -> TaskActions.snooze(context, id, 10)
+            ACTION_SNOOZE -> TaskActions.snooze(context, id, AlarmPrefs.snooze1(context))
             ACTION_SNOOZE_HOUR -> TaskActions.snooze(context, id, 60)
         }
     }

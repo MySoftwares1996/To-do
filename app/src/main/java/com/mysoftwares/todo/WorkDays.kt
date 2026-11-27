@@ -18,8 +18,8 @@ object WorkDays {
     @Volatile var offDays: OffDays = OffDays.SAT_SUN
         private set
 
-    /** Public / office holidays added by the user. */
-    @Volatile var holidays: Set<LocalDate> = emptySet()
+    /** Public / office holidays added by the user: date → name. */
+    @Volatile var holidays: Map<LocalDate, String> = emptyMap()
         private set
 
     private fun prefs(c: Context) =
@@ -27,17 +27,25 @@ object WorkDays {
 
     fun load(c: Context) {
         offDays = runCatching { OffDays.valueOf(prefs(c).getString("off", null) ?: "") }.getOrDefault(OffDays.SAT_SUN)
-        holidays = prefs(c).getStringSet("holidays", emptySet())!!
-            .mapNotNull { runCatching { LocalDate.parse(it) }.getOrNull() }.toSet()
+        holidays = prefs(c).getStringSet("holidays", emptySet())!!.mapNotNull { line ->
+            val date = runCatching { LocalDate.parse(line.substringBefore("|")) }.getOrNull() ?: return@mapNotNull null
+            date to line.substringAfter("|", "")
+        }.toMap()
     }
 
-    fun setHolidays(c: Context, dates: Set<LocalDate>) {
-        prefs(c).edit().putStringSet("holidays", dates.map { it.toString() }.toSet()).apply()
-        holidays = dates
+    fun setHolidays(c: Context, list: Map<LocalDate, String>) {
+        prefs(c).edit().putStringSet("holidays", list.map { (d, n) -> "$d|$n" }.toSet()).apply()
+        holidays = list
+    }
+
+    /** Removes holidays more than a year old so the list stays short. */
+    fun pruneOld(c: Context) {
+        val cutoff = LocalDate.now().minusYears(1)
+        if (holidays.keys.any { it.isBefore(cutoff) }) setHolidays(c, holidays.filterKeys { !it.isBefore(cutoff) })
     }
 
     /** For unit tests only. */
-    fun setForTest(off: OffDays, hol: Set<LocalDate>) { offDays = off; holidays = hol }
+    fun setForTest(off: OffDays, hol: Set<LocalDate>) { offDays = off; holidays = hol.associateWith { "" } }
 
     fun set(c: Context, value: OffDays) {
         prefs(c).edit().putString("off", value.name).apply()

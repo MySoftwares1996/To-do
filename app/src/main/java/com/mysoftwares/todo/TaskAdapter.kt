@@ -57,10 +57,23 @@ class TaskAdapter(
         private fun day(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate()
 
 
-        fun buildRows(tasks: List<Task>, tab: Tab, problems: Int): List<Row> {
+        fun buildRows(tasks: List<Task>, tab: Tab, problems: Int, query: String = ""): List<Row> {
             val now = System.currentTimeMillis()
             val today = LocalDate.now()
             val rows = mutableListOf<Row>()
+            val q = query.trim()
+            if (q.isNotEmpty()) {
+                // Search covers all tasks (pending first, then completed), whatever the tab.
+                val hits = tasks.filter {
+                    it.title.contains(q, true) || it.notes.contains(q, true) || it.category.contains(q, true)
+                }.sortedWith(compareBy<Task> { it.done }.thenBy { it.dueAt })
+                rows += Row.Summary(if (hits.isEmpty()) "No results" else "${hits.size} found")
+                if (hits.isNotEmpty()) {
+                    rows += Row.Header("results", "Results", hits.size, null)
+                    hits.forEachIndexed { i, t -> rows += Row.Item(t, i == 0, i == hits.lastIndex) }
+                } else rows += Row.Empty("Nothing matches “$q”")
+                return rows
+            }
             if (problems > 0 && tab == Tab.TODAY) rows += Row.Banner(problems)
 
             fun section(key: String, title: String, color: Int?, list: List<Task>) {
@@ -192,12 +205,22 @@ class TaskAdapter(
         sub.setTextColor(ContextCompat.getColor(ctx, if (overdue) R.color.ios_red else R.color.ios_secondary))
 
         val extras = mutableListOf<String>()
+        if (t.remindType == RemindType.NOTIFICATION) extras += "🔔 Notification"
         if (t.repeat != Repeat.NONE) extras += "↻ " + t.repeat.label
         if (t.snoozeUntil > 0 && !t.done) extras += "Snoozed to " + friendlyTime(t.snoozeUntil)
         if (t.notes.isNotBlank()) extras += t.notes.lineSequence().first()
         v.findViewById<TextView>(R.id.repeat).apply {
-            text = extras.joinToString("  ·  ")
-            visibility = if (extras.isEmpty()) View.GONE else View.VISIBLE
+            val line = android.text.SpannableStringBuilder()
+            if (t.category.isNotEmpty()) {
+                // Coloured dot + category name, e.g. "● Bank"
+                val color = Categories.colorOf(ctx, t.category) ?: ContextCompat.getColor(ctx, R.color.ios_gray)
+                line.append("●", android.text.style.ForegroundColorSpan(color), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                line.append(" ").append(t.category)
+                if (extras.isNotEmpty()) line.append("  ·  ")
+            }
+            line.append(extras.joinToString("  ·  "))
+            text = line
+            visibility = if (line.isEmpty()) View.GONE else View.VISIBLE
         }
         v.findViewById<View>(R.id.badge).visibility = if (t.important && !t.done) View.VISIBLE else View.GONE
 

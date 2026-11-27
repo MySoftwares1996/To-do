@@ -28,8 +28,6 @@ class AlarmService : Service() {
     companion object {
         const val ACTION_RING = "com.mysoftwares.todo.RING"
         private const val FG_ID = Int.MAX_VALUE - 7
-        private const val RING_TIMEOUT_MS = 3 * 60_000L
-        private const val NAG_MINUTES = 10
 
         @Volatile var ringingTaskId: Long = -1
             private set
@@ -91,7 +89,7 @@ class AlarmService : Service() {
         Notifications.cancel(this, task.id)
         startRinging()
         handler.removeCallbacks(timeout)
-        handler.postDelayed(timeout, RING_TIMEOUT_MS)
+        handler.postDelayed(timeout, AlarmPrefs.ringMinutes(this) * 60_000L)
         return START_NOT_STICKY
     }
 
@@ -99,13 +97,14 @@ class AlarmService : Service() {
         if (wakeLock == null) {
             wakeLock = getSystemService(PowerManager::class.java)
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OfficeToDo:ringing")
-                .apply { acquire(RING_TIMEOUT_MS + 30_000) }
+                .apply { acquire(AlarmPrefs.ringMinutes(this@AlarmService) * 60_000L + 30_000) }
         }
-        if (player != null || tone != null) return
+        if (player != null || tone != null || vibrator != null) return
+        val vibrateOnly = AlarmPrefs.vibrateOnly(this)
 
         val audio = getSystemService(AudioManager::class.java)
         // If the alarm volume is muted, raise it while ringing so the alarm is never silent.
-        try {
+        if (!vibrateOnly) try {
             if (audio.getStreamVolume(AudioManager.STREAM_ALARM) == 0) {
                 restoreVolume = 0
                 val max = audio.getStreamMaxVolume(AudioManager.STREAM_ALARM)
@@ -118,10 +117,10 @@ class AlarmService : Service() {
             .setUsage(AudioAttributes.USAGE_ALARM)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
-        try {
+        if (!vibrateOnly) try {
             player = MediaPlayer().apply {
                 setAudioAttributes(attrs)
-                setDataSource(this@AlarmService, Notifications.alarmSound()!!)
+                setDataSource(this@AlarmService, AlarmPrefs.sound(this@AlarmService) ?: Notifications.alarmSound()!!)
                 isLooping = true
                 prepare()
                 start()
@@ -147,7 +146,7 @@ class AlarmService : Service() {
     private fun handleUnanswered(task: Task) {
         val db = TaskDb.get(this)
         val updated = if (task.important) {
-            db.save(task.copy(snoozeUntil = System.currentTimeMillis() + NAG_MINUTES * 60_000L))
+            db.save(task.copy(snoozeUntil = System.currentTimeMillis() + AlarmPrefs.nagMinutes(this) * 60_000L))
         } else task
         AlarmScheduler.schedule(this, updated)
         Notifications.showMissed(this, updated)

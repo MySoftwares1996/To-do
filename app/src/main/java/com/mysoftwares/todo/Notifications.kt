@@ -90,7 +90,7 @@ object Notifications {
             .setFullScreenIntent(fullScreen, true)
             .setContentIntent(fullScreen)
             .addAction(0, "✔ Done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE, task.dueAt))
-            .addAction(0, "Snooze 10 min", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE))
+            .addAction(0, "Snooze " + AlarmPrefs.label(AlarmPrefs.snooze1(context)), ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE))
         if (fallback) {
             b.setSound(alarmSound(), android.media.AudioManager.STREAM_ALARM)
             b.setVibrate(longArrayOf(0, 800, 400, 800))
@@ -108,7 +108,7 @@ object Notifications {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val text = if (task.important) "Not done yet! It will ring again in 10 minutes." else "Not done yet."
+        val text = if (task.important) "Not done yet! It will remind you again in ${AlarmPrefs.nagMinutes(context)} minutes." else "Not done yet."
         val n = NotificationCompat.Builder(context, CH_REMINDER)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Pending: ${task.title}")
@@ -119,6 +119,31 @@ object Notifications {
             .setContentIntent(open)
             .addAction(0, "✔ Done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE, task.dueAt))
             .addAction(0, "Snooze 1 hour", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE_HOUR))
+            .build()
+        notify(context, task.id.toInt(), n)
+    }
+
+    /** Due-time reminder for tasks set to "Notification" (no ringing screen). */
+    fun showDue(context: Context, task: Task) {
+        val open = PendingIntent.getActivity(
+            context, task.id.toInt(),
+            Intent(context, AlarmActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, task.id)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val n = NotificationCompat.Builder(context, CH_REMINDER)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle((if (task.important) "⚠ " else "") + task.title)
+            .setContentText(alarmText(task))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(
+                alarmText(task) + if (task.notes.isNotBlank()) "\n${task.notes}" else ""))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(task.important)
+            .setContentIntent(open)
+            .addAction(0, "✔ Done", ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE, task.dueAt))
+            .addAction(0, "Snooze " + AlarmPrefs.label(AlarmPrefs.snooze1(context)), ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE))
             .build()
         notify(context, task.id.toInt(), n)
     }

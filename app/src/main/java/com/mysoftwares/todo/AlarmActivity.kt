@@ -34,8 +34,17 @@ class AlarmActivity : BaseActivity() {
         if (android.text.format.DateFormat.is24HourFormat(this)) findViewById<View>(R.id.ampm).visibility = View.GONE
 
         findViewById<Button>(R.id.done).setOnClickListener { TaskActions.done(this, taskId, shownDue.takeIf { it > 0 }); finish() }
-        findViewById<Button>(R.id.snooze10).setOnClickListener { TaskActions.snooze(this, taskId, 10); finish() }
-        findViewById<Button>(R.id.snooze60).setOnClickListener { TaskActions.snooze(this, taskId, 60); finish() }
+        val s1 = AlarmPrefs.snooze1(this)
+        val s2 = AlarmPrefs.snooze2(this)
+        findViewById<Button>(R.id.snooze10).apply {
+            text = AlarmPrefs.label(s1)
+            setOnClickListener { TaskActions.snooze(this@AlarmActivity, taskId, s1); finish() }
+        }
+        findViewById<Button>(R.id.snooze60).apply {
+            text = AlarmPrefs.label(s2)
+            setOnClickListener { TaskActions.snooze(this@AlarmActivity, taskId, s2); finish() }
+        }
+        findViewById<Button>(R.id.snooze_more).setOnClickListener { moreSnooze() }
         show(intent)
 
         // Gentle pulsing bell.
@@ -49,6 +58,46 @@ class AlarmActivity : BaseActivity() {
             repeatMode = ValueAnimator.REVERSE
             start()
         }
+    }
+
+    /** More snooze choices: 5 min, 30 min, 2 hours, tomorrow 9 AM, or a picked time. */
+    private fun moreSnooze() {
+        val labels = arrayOf("5 minutes", "30 minutes", "2 hours", "Tomorrow, 9:00 AM", "Pick a time…")
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Snooze until…")
+            .setItems(labels) { _, i ->
+                when (i) {
+                    0 -> { TaskActions.snooze(this, taskId, 5); finish() }
+                    1 -> { TaskActions.snooze(this, taskId, 30); finish() }
+                    2 -> { TaskActions.snooze(this, taskId, 120); finish() }
+                    3 -> {
+                        val at = java.time.LocalDate.now().plusDays(1).atTime(9, 0)
+                            .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        TaskActions.snoozeUntil(this, taskId, at); finish()
+                    }
+                    4 -> pickTime()
+                }
+            }
+            .show()
+    }
+
+    private fun pickTime() {
+        val now = java.time.LocalDateTime.now().plusHours(1)
+        val picker = com.google.android.material.timepicker.MaterialTimePicker.Builder()
+            .setTimeFormat(
+                if (android.text.format.DateFormat.is24HourFormat(this)) com.google.android.material.timepicker.TimeFormat.CLOCK_24H
+                else com.google.android.material.timepicker.TimeFormat.CLOCK_12H
+            )
+            .setHour(now.hour).setMinute(0)
+            .setTitleText("Snooze until")
+            .build()
+        picker.addOnPositiveButtonClickListener {
+            var at = java.time.LocalDate.now().atTime(picker.hour, picker.minute)
+            if (!at.isAfter(java.time.LocalDateTime.now())) at = at.plusDays(1) // time passed → tomorrow
+            TaskActions.snoozeUntil(this, taskId, at.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())
+            finish()
+        }
+        picker.show(supportFragmentManager, "snooze_time")
     }
 
     override fun onNewIntent(intent: Intent) {

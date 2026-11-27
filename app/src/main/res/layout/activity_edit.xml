@@ -116,6 +116,46 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Remind with: Alarm / Notification -->
+        <TextView
+            style="@style/IosGroupLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Remind with" />
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/remind_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/remind_alarm"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="⏰  Alarm" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/remind_notification"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="🔔  Notification" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <TextView
+            android:id="@+id/remind_note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="6dp"
+            android:textColor="@color/ios_secondary"
+            android:textSize="13sp" />
+
         <!-- Date + time -->
         <TextView
             style="@style/IosGroupLabel"
@@ -168,6 +208,8 @@
 
                 <include layout="@layout/divider_inset" />
                 <include android:id="@+id/row_early" layout="@layout/item_form_row" />
+                <include layout="@layout/divider_inset" />
+                <include android:id="@+id/row_category" layout="@layout/item_form_row" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -223,11 +265,11 @@
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
+            android:id="@+id/important_note"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingHorizontal="16dp"
             android:paddingTop="6dp"
-            android:text="Important tasks ring again every 10 minutes until you mark them done."
             android:textColor="@color/ios_secondary"
             android:textSize="13sp" />
 

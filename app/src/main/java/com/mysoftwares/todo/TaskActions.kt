@@ -14,6 +14,7 @@ object TaskActions {
         val db = TaskDb.get(context)
         val t = db.get(id)
         if (t != null && !t.done && (expectedDue == null || expectedDue == t.dueAt)) {
+            db.logDone(t, System.currentTimeMillis()) // for the monthly report
             val next = Recurrence.nextAfter(t.startAt, t.repeat, maxOf(System.currentTimeMillis(), t.dueAt), t.workday)
             val saved = if (next == null) {
                 db.save(t.copy(done = true, snoozeUntil = 0))
@@ -35,6 +36,15 @@ object TaskActions {
                     db.save(t.copy(snoozeUntil = System.currentTimeMillis() + minutes * 60_000L))
                 )
             }
+        }
+        finishAlarm(context, id)
+    }
+
+    /** Snooze until an exact time (e.g. "Tomorrow 9:00 AM" or a picked time). */
+    fun snoozeUntil(context: Context, id: Long, at: Long) {
+        val db = TaskDb.get(context)
+        db.get(id)?.let { t ->
+            if (!t.done) AlarmScheduler.schedule(context, db.save(t.copy(snoozeUntil = at)))
         }
         finishAlarm(context, id)
     }

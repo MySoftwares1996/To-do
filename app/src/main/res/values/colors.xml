@@ -50,4 +50,5 @@
     <color name="accent_pink_on_container">#000000</color>
     <color name="ios_tabbar">#F9F9FB</color>
     <color name="alarm_button">#2C2C2E</color>
+    <color name="ios_search">#E3E3E8</color>
 </resources>

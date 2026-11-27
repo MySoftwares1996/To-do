@@ -78,4 +78,5 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20231013") // real JSON for backup tests (Android's is a stub on the JVM)
 }

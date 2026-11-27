@@ -15,7 +15,9 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import android.media.RingtoneManager
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -36,6 +38,8 @@ class MainActivity : BaseActivity() {
     private lateinit var collapsing: CollapsingToolbarLayout
     private var tab = Tab.TODAY
     private var onSettings = false
+    private var query = ""
+    private lateinit var search: android.widget.EditText
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var settingsPage: View
     private var askedPermission = false
@@ -64,6 +68,12 @@ class MainActivity : BaseActivity() {
         collapsing = findViewById(R.id.collapsing)
         list = findViewById(R.id.list)
         settingsPage = findViewById(R.id.settings_page)
+        search = findViewById(R.id.search)
+        search.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) { query = s?.toString().orEmpty(); refresh() }
+        })
         bottomNav = findViewById(R.id.bottom_nav)
         bottomNav.isItemActiveIndicatorEnabled = false
         onBackPressedDispatcher.addCallback(this, backToToday)
@@ -116,6 +126,7 @@ class MainActivity : BaseActivity() {
         collapsing.title = t.title
         list.visibility = View.VISIBLE
         settingsPage.visibility = View.GONE
+        search.visibility = View.VISIBLE
         backToToday.isEnabled = t != Tab.TODAY
         invalidateOptionsMenu()
         refresh()
@@ -127,6 +138,7 @@ class MainActivity : BaseActivity() {
         collapsing.title = "Settings"
         list.visibility = View.GONE
         settingsPage.visibility = View.VISIBLE
+        search.visibility = View.GONE
         backToToday.isEnabled = true
         invalidateOptionsMenu()
         refreshSettings()
@@ -152,8 +164,32 @@ class MainActivity : BaseActivity() {
         settingRow(R.id.set_reliability, R.drawable.ic_check_circle, R.color.ios_green, "Alarm reliability") {
             startActivity(Intent(this, SetupActivity::class.java))
         }
+        settingRow(R.id.set_sound, R.drawable.ic_bell_small, R.color.ios_indigo, "Alarm sound") { pickSound() }
+        settingRow(R.id.set_vibrate, R.drawable.ic_repeat, R.color.ios_gray, "Vibrate only") {
+            AlarmPrefs.setVibrateOnly(this, !AlarmPrefs.vibrateOnly(this)); refreshSettings()
+        }
+        settingRow(R.id.set_snooze, R.drawable.ic_clock, R.color.ios_orange, "Snooze buttons") { chooseSnooze() }
+        settingRow(R.id.set_nag, R.drawable.ic_flag, R.color.ios_orange, "Repeat important every") {
+            pickMinutes("Repeat important every", AlarmPrefs.NAG_CHOICES, AlarmPrefs.nagMinutes(this)) {
+                AlarmPrefs.setNagMinutes(this, it); refreshSettings()
+            }
+        }
+        settingRow(R.id.set_ring, R.drawable.ic_bell_small, R.color.ios_red, "Ring for") {
+            pickMinutes("Ring for", AlarmPrefs.RING_CHOICES, AlarmPrefs.ringMinutes(this)) {
+                AlarmPrefs.setRingMinutes(this, it); refreshSettings()
+            }
+        }
         settingRow(R.id.set_test, R.drawable.ic_bell_small, R.color.ios_red, "Test alarm") { testAlarm() }
         settingRow(R.id.set_weekly_off, R.drawable.ic_calendar, R.color.ios_orange, "Weekly off") { chooseWeeklyOff() }
+        settingRow(R.id.set_holidays, R.drawable.ic_flag, R.color.ios_red, "Holidays") {
+            startActivity(Intent(this, HolidaysActivity::class.java))
+        }
+        settingRow(R.id.set_categories, R.drawable.ic_tray, R.color.brand, "Categories") {
+            startActivity(Intent(this, CategoriesActivity::class.java))
+        }
+        settingRow(R.id.set_report, R.drawable.ic_check_circle, R.color.ios_green, "Monthly report") {
+            startActivity(Intent(this, ReportActivity::class.java))
+        }
         settingRow(R.id.set_appearance, R.drawable.ic_palette, R.color.brand, "Appearance") {
             startActivity(Intent(this, AppearanceActivity::class.java))
         }
@@ -171,6 +207,13 @@ class MainActivity : BaseActivity() {
         findViewById<View>(R.id.set_reliability).findViewById<android.widget.ImageView>(R.id.row_icon)
             .background.mutate().setTint(ContextCompat.getColor(this, if (problems == 0) R.color.ios_green else R.color.ios_red))
         settingValue(R.id.set_test, "in 1 min")
+        settingValue(R.id.set_sound, if (AlarmPrefs.vibrateOnly(this)) "Off" else soundName())
+        settingValue(R.id.set_vibrate, if (AlarmPrefs.vibrateOnly(this)) "On" else "Off")
+        settingValue(R.id.set_snooze, "${AlarmPrefs.label(AlarmPrefs.snooze1(this))} · ${AlarmPrefs.label(AlarmPrefs.snooze2(this))}")
+        settingValue(R.id.set_nag, "${AlarmPrefs.nagMinutes(this)} min")
+        settingValue(R.id.set_ring, "${AlarmPrefs.ringMinutes(this)} min")
+        settingValue(R.id.set_holidays, WorkDays.holidays.size.toString())
+        settingValue(R.id.set_categories, Categories.all(this).size.toString())
         settingValue(R.id.set_appearance, Appearance.mode(this).label)
         settingValue(R.id.set_weekly_off, when (WorkDays.offDays) {
             WorkDays.OffDays.SAT_SUN -> "Sat & Sun"
@@ -179,6 +222,51 @@ class MainActivity : BaseActivity() {
         })
         settingValue(R.id.set_backup, if (Backup.autoUri(this) != null) "On" else "Off")
         settingValue(R.id.set_update, Updater.currentVersionName)
+    }
+
+    private val soundPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        if (r.resultCode == RESULT_OK) {
+            @Suppress("DEPRECATION")
+            val uri = r.data?.getParcelableExtra<android.net.Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            AlarmPrefs.setSound(this, uri)
+            refreshSettings()
+        }
+    }
+
+    private fun pickSound() {
+        soundPicker.launch(
+            Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Alarm sound")
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, AlarmPrefs.sound(this) ?: Notifications.alarmSound())
+        )
+    }
+
+    private fun soundName(): String {
+        val uri = AlarmPrefs.sound(this) ?: return "Default"
+        return runCatching { RingtoneManager.getRingtone(this, uri)?.getTitle(this) }.getOrNull() ?: "Custom"
+    }
+
+    private fun pickMinutes(title: String, choices: List<Int>, current: Int, onPick: (Int) -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle(title)
+            .setSingleChoiceItems(choices.map { AlarmPrefs.label(it) }.toTypedArray(), choices.indexOf(current)) { d, i ->
+                onPick(choices[i]); d.dismiss()
+            }
+            .show()
+    }
+
+    /** Pick the two quick snooze buttons shown on the alarm screen. */
+    private fun chooseSnooze() {
+        val choices = AlarmPrefs.SNOOZE_CHOICES
+        pickMinutes("First snooze button", choices, AlarmPrefs.snooze1(this)) { first ->
+            pickMinutes("Second snooze button", choices.filter { it != first }, AlarmPrefs.snooze2(this)) { second ->
+                AlarmPrefs.setSnooze(this, minOf(first, second), maxOf(first, second))
+                refreshSettings()
+            }
+        }
     }
 
     private fun chooseWeeklyOff() {
@@ -237,7 +325,7 @@ class MainActivity : BaseActivity() {
 
     private fun refresh() {
         val tasks = TaskDb.get(this).all()
-        adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.problemCount(this)))
+        adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.problemCount(this), query))
         // Red badge on the Today tab = number of overdue tasks.
         val now = System.currentTimeMillis()
         val overdue = tasks.count { !it.done && it.dueAt < now }
@@ -271,7 +359,7 @@ class MainActivity : BaseActivity() {
         refresh()
         val msg = if (before.repeat == Repeat.NONE) "Completed: ${before.title}"
         else "Completed. Next: ${TaskAdapter.friendlyTime(TaskDb.get(this).get(task.id)?.dueAt ?: before.dueAt)}"
-        showUndo(msg, before)
+        showUndo(msg, before, undoesDone = true)
     }
 
     private fun deleteWithUndo(task: Task) {
@@ -281,10 +369,11 @@ class MainActivity : BaseActivity() {
         showUndo("Deleted: ${task.title}", task)
     }
 
-    private fun showUndo(msg: String, snapshot: Task) {
+    private fun showUndo(msg: String, snapshot: Task, undoesDone: Boolean = false) {
         Snackbar.make(findViewById(R.id.root), msg, Snackbar.LENGTH_LONG)
             .setAnchorView(R.id.bottom_nav)
             .setAction("Undo") {
+                if (undoesDone) TaskDb.get(this).unlogLast(snapshot.id)
                 AlarmScheduler.schedule(this, TaskDb.get(this).restore(snapshot))
                 refresh()
             }

@@ -23,6 +23,9 @@ enum class WorkdayRule(val label: String, val short: String) {
     NEXT("Next working day", "Next");
 }
 
+/** How the task reminds at its due time. */
+enum class RemindType(val label: String) { ALARM("Alarm"), NOTIFICATION("Notification") }
+
 /** The working-day rule applies to repeating tasks except Daily. */
 fun Repeat.usesWorkdayRule() = this != Repeat.NONE && this != Repeat.DAILY
 
@@ -47,24 +50,31 @@ data class Task(
     val dueAt: Long,
     val repeat: Repeat = Repeat.NONE,
     val important: Boolean = true,
-    val advanceMinutes: Int = 0,
+    /** Early reminders, in minutes before the due time (e.g. 1440 = 1 day). */
+    val advances: List<Int> = emptyList(),
     val done: Boolean = false,
     /** If > 0 the user snoozed: ring at this time instead of dueAt. */
     val snoozeUntil: Long = 0,
     /** The alarm time that has already rung, so it is not rung twice. */
     val rangFor: Long = 0,
-    /** The dueAt for which the advance reminder was already shown. */
+    /** Time of the last early reminder already shown for the current occurrence (0 = none yet). */
     val advanceShownFor: Long = 0,
     /** Move occurrences that fall on a weekly off day (repeating tasks except Daily). */
     val workday: WorkdayRule = WorkdayRule.SAME_DAY,
+    /** Ring a full alarm, or only show a notification. */
+    val remindType: RemindType = RemindType.ALARM,
+    /** Category name ("" = none). */
+    val category: String = "",
 ) {
     /** When the main alarm should ring. */
     val alarmAt: Long get() = if (snoozeUntil > 0) snoozeUntil else dueAt
 
-    /** When the advance reminder should show, or null if none / already shown. */
+    /** The next early reminder still to show for this occurrence, or null. */
     val advanceAt: Long?
-        get() = if (advanceMinutes <= 0 || done || advanceShownFor == dueAt) null
-        else dueAt - advanceMinutes * 60_000L
+        get() = if (done) null else advances.filter { it > 0 }
+            .map { dueAt - it * 60_000L }
+            .filter { it > advanceShownFor && it < dueAt }
+            .minOrNull()
 }
 
 object Recurrence {

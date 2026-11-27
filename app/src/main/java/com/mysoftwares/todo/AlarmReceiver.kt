@@ -24,8 +24,11 @@ class AlarmReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             AlarmScheduler.ACTION_ADVANCE -> {
+                val at = task.advanceAt ?: return
+                if (at > now + 60_000) { AlarmScheduler.schedule(context, task); return } // stale
                 Notifications.showAdvance(context, task)
-                AlarmScheduler.schedule(context, db.save(task.copy(advanceShownFor = task.dueAt)))
+                // Remember which early reminder was shown; the next one (if any) is armed.
+                AlarmScheduler.schedule(context, db.save(task.copy(advanceShownFor = at)))
             }
             AlarmScheduler.ACTION_ALARM -> {
                 // Stale alarm (task was edited to a later time) – just re-arm.
@@ -33,13 +36,26 @@ class AlarmReceiver : BroadcastReceiver() {
                     AlarmScheduler.schedule(context, task)
                     return
                 }
-                db.save(task.copy(rangFor = task.alarmAt))
-                ring(context, task)
+                val rang = db.save(task.copy(rangFor = task.alarmAt))
+                if (task.remindType == RemindType.NOTIFICATION) notifyOnly(context, rang) else ring(context, task)
             }
         }
     }
 
     companion object {
+        /** "Notification" reminder type: one notification with sound, no ringing screen. */
+        fun notifyOnly(context: Context, task: Task) {
+            Notifications.showDue(context, task)
+            if (task.important) {
+                // Important: come back every few minutes until Done.
+                val db = TaskDb.get(context)
+                AlarmScheduler.schedule(
+                    context,
+                    db.save(task.copy(snoozeUntil = System.currentTimeMillis() + AlarmPrefs.nagMinutes(context) * 60_000L))
+                )
+            }
+        }
+
         fun ring(context: Context, task: Task) {
             try {
                 ContextCompat.startForegroundService(
