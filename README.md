@@ -7,7 +7,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 ## Features
 - **iOS-style design**: large bold title that shrinks on scroll, light grey background with white grouped
   rounded lists (true black in dark mode), round tick circles, “+ New Task” bar, centred titles with ‹ back,
-  grouped form with green switches and **wheel date/time pickers**
+  grouped form with green switches, Android calendar date picker and clock-dial time picker
 - **Summary tiles** at the top (Today, Upcoming, Important, All) with counts – tap to filter
 - Clean Material 3 design. **Appearance** settings (⋮ → Appearance):
   - Theme: System / Light / Dark
@@ -22,14 +22,12 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 - **Backup & restore** (⋮ → Backup & restore): saves all tasks to a JSON file in a place you choose
   (Google Drive, phone storage…). After the first backup, the file is **updated automatically after every change**.
   Restore on the same or a new phone, either adding to or replacing current tasks. All alarms are set again.
-- Quick date chips (Today, Tomorrow, Next Monday, Month-end)
 - Add a task with a title, notes, date and time
-- Repeat: once, daily, weekly, monthly (same date), **month-end (last day of the month)**, yearly
+- Repeat: once, daily, weekly, monthly (same date), **month-end (last day of the month)**, **quarterly (every 3 months)**, yearly
 - Early reminder: 15 min, 1 hour, 1, 2 or 3 days, or 1 week before the due time
 - **Important** tasks show a red "IMPORTANT WORK – you must do this now!" screen and
   **ring again every 10 minutes until you tap Done**
 - Full-screen alarm over the lock screen with **Done / Snooze 10 min / Snooze 1 hour**
-- Quick-pick templates (bank EMI, credit card bill, month-end closing, tax or GST, payroll…)
 - An "Alarm reliability" screen that checks the phone settings and fixes them in one tap, plus a **test alarm** button
 
 ## How it makes sure alarms ring

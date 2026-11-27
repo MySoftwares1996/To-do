@@ -11,6 +11,7 @@ enum class Repeat(val label: String) {
     WEEKLY("Every week"),
     MONTHLY("Every month (same date)"),
     MONTH_END("Every month-end (last day)"),
+    QUARTERLY("Every quarter (3 months)"),
     YEARLY("Every year");
 }
 
@@ -63,6 +64,7 @@ object Recurrence {
             Repeat.WEEKLY -> s.plusWeeks(k)
             Repeat.MONTHLY -> s.plusMonths(k) // clamps 31st -> 30th/28th without drifting
             Repeat.MONTH_END -> s.plusMonths(k).with(TemporalAdjusters.lastDayOfMonth())
+            Repeat.QUARTERLY -> s.plusMonths(3 * k) // same date every 3 months, clamped like monthly
             Repeat.YEARLY -> s.plusYears(k)
         }
         return z.toInstant().toEpochMilli()
