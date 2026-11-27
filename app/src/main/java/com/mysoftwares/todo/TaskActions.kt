@@ -8,7 +8,7 @@ object TaskActions {
         val db = TaskDb.get(context)
         val t = db.get(id)
         if (t != null) {
-            val next = Recurrence.nextAfter(t.startAt, t.repeat, maxOf(System.currentTimeMillis(), t.dueAt))
+            val next = Recurrence.nextAfter(t.startAt, t.repeat, maxOf(System.currentTimeMillis(), t.dueAt), t.workday)
             val saved = if (next == null) {
                 db.save(t.copy(done = true, snoozeUntil = 0))
             } else {
@@ -47,5 +47,16 @@ object TaskActions {
     private fun finishAlarm(context: Context, id: Long) {
         Notifications.cancel(context, id)
         AlarmService.stopIfRinging(context, id)
+    }
+
+    /** After the weekly off days change, move upcoming repeating tasks to their new dates. */
+    fun recomputeWorkdays(context: Context) {
+        val db = TaskDb.get(context)
+        val now = System.currentTimeMillis()
+        db.all().filter { !it.done && it.repeat.usesWorkdayRule() && it.workday != WorkdayRule.SAME_DAY && it.dueAt > now }
+            .forEach { t ->
+                val due = Recurrence.nextAfter(t.startAt, t.repeat, now, t.workday) ?: return@forEach
+                if (due != t.dueAt) AlarmScheduler.schedule(context, db.save(t.copy(dueAt = due, rangFor = 0, advanceShownFor = 0)))
+            }
     }
 }

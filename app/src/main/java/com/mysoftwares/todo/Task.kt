@@ -15,6 +15,16 @@ enum class Repeat(val label: String) {
     YEARLY("Yearly");
 }
 
+/** What to do when a repeating task falls on a weekly off day. */
+enum class WorkdayRule(val label: String, val short: String) {
+    SAME_DAY("Same day", "Same day"),
+    PREVIOUS("Previous working day", "Previous"),
+    NEXT("Next working day", "Next");
+}
+
+/** The working-day rule applies to repeating tasks except Daily. */
+fun Repeat.usesWorkdayRule() = this != Repeat.NONE && this != Repeat.DAILY
+
 /** Options for "remind me before the due time" (in minutes). */
 val ADVANCE_OPTIONS = listOf(
     0 to "None",
@@ -44,6 +54,8 @@ data class Task(
     val rangFor: Long = 0,
     /** The dueAt for which the advance reminder was already shown. */
     val advanceShownFor: Long = 0,
+    /** Move occurrences that fall on a weekly off day (repeating tasks except Daily). */
+    val workday: WorkdayRule = WorkdayRule.SAME_DAY,
 ) {
     /** When the main alarm should ring. */
     val alarmAt: Long get() = if (snoozeUntil > 0) snoozeUntil else dueAt
@@ -55,7 +67,7 @@ data class Task(
 }
 
 object Recurrence {
-    /** Occurrence number [k] (0 = start) of a repeating task. */
+    /** Occurrence number [k] (0 = start) of a repeating task, before working-day adjustment. */
     fun occurrence(start: Long, repeat: Repeat, k: Long): Long {
         val s = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start), ZoneId.systemDefault())
         val z = when (repeat) {
@@ -70,12 +82,23 @@ object Recurrence {
         return z.toInstant().toEpochMilli()
     }
 
-    /** First occurrence strictly after [after]. Returns null for one-time tasks. */
-    fun nextAfter(start: Long, repeat: Repeat, after: Long): Long? {
+    /** Moves [ms] off a weekly off day according to [rule] (keeps the time of day). */
+    fun adjust(ms: Long, repeat: Repeat, rule: WorkdayRule): Long {
+        if (!repeat.usesWorkdayRule() || rule == WorkdayRule.SAME_DAY) return ms
+        var z = ZonedDateTime.ofInstant(Instant.ofEpochMilli(ms), ZoneId.systemDefault())
+        var guard = 0
+        while (!WorkDays.isWorkingDay(z.toLocalDate()) && guard++ < 14) {
+            z = if (rule == WorkdayRule.PREVIOUS) z.minusDays(1) else z.plusDays(1)
+        }
+        return z.toInstant().toEpochMilli()
+    }
+
+    /** First (adjusted) occurrence strictly after [after], counting from k = 0. Null for one-time tasks. */
+    fun nextAfter(start: Long, repeat: Repeat, after: Long, rule: WorkdayRule = WorkdayRule.SAME_DAY): Long? {
         if (repeat == Repeat.NONE) return null
         var k = 0L
         while (true) {
-            val t = occurrence(start, repeat, k)
+            val t = adjust(occurrence(start, repeat, k), repeat, rule)
             if (t > after) return t
             k++
         }

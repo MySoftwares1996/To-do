@@ -42,6 +42,7 @@ object Backup {
                 put("snoozeUntil", t.snoozeUntil)
                 put("rangFor", t.rangFor)
                 put("advanceShownFor", t.advanceShownFor)
+                put("workday", t.workday.name)
             })
         }
         return JSONObject().apply {
@@ -74,6 +75,7 @@ object Backup {
                 snoozeUntil = o.optLong("snoozeUntil"),
                 rangFor = o.optLong("rangFor"),
                 advanceShownFor = o.optLong("advanceShownFor"),
+                workday = runCatching { WorkdayRule.valueOf(o.optString("workday")) }.getOrDefault(WorkdayRule.SAME_DAY),
             )
         }
     }

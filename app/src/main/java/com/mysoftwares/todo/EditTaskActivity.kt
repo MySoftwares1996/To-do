@@ -36,6 +36,7 @@ class EditTaskActivity : BaseActivity() {
     private var whenAt: LocalDateTime = LocalDateTime.now().plusHours(1).truncatedTo(ChronoUnit.HOURS)
     private var repeatIndex = 0
     private var advanceIndex = 0
+    private var workdayIndex = 0
 
     private lateinit var title: EditText
     private lateinit var notes: EditText
@@ -44,6 +45,7 @@ class EditTaskActivity : BaseActivity() {
     private lateinit var rowTime: View
     private lateinit var rowRepeat: View
     private lateinit var rowEarly: View
+    private lateinit var rowWorkday: View
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,11 +59,13 @@ class EditTaskActivity : BaseActivity() {
         rowTime = findViewById(R.id.row_time)
         rowRepeat = findViewById(R.id.row_repeat)
         rowEarly = findViewById(R.id.row_early)
+        rowWorkday = findViewById(R.id.row_workday)
 
         setupRow(rowDate, R.drawable.ic_calendar, R.color.ios_red, "Date", chevron = false)
         setupRow(rowTime, R.drawable.ic_clock, R.color.brand, "Time", chevron = false)
         setupRow(rowRepeat, R.drawable.ic_repeat, R.color.ios_gray, "Repeat", chevron = true)
         setupRow(rowEarly, R.drawable.ic_bell_small, R.color.ios_indigo, "Early Reminder", chevron = true)
+        setupRow(rowWorkday, R.drawable.ic_calendar, R.color.ios_green, "Working day", chevron = true)
         findViewById<ImageView>(R.id.important_icon).background.mutate()
             .setTint(ContextCompat.getColor(this, R.color.ios_orange))
 
@@ -80,6 +84,7 @@ class EditTaskActivity : BaseActivity() {
             whenAt = LocalDateTime.ofInstant(Instant.ofEpochMilli(t.dueAt), ZoneId.systemDefault())
             repeatIndex = t.repeat.ordinal
             advanceIndex = ADVANCE_OPTIONS.indexOfFirst { it.first == t.advanceMinutes }.coerceAtLeast(0)
+            workdayIndex = t.workday.ordinal
             findViewById<View>(R.id.delete_group).visibility = View.VISIBLE
             findViewById<View>(R.id.delete).setOnClickListener { confirmDelete() }
         } else {
@@ -91,6 +96,7 @@ class EditTaskActivity : BaseActivity() {
             whenAt = LocalDateTime.parse(it.getString("when"))
             repeatIndex = it.getInt("repeat")
             advanceIndex = it.getInt("advance")
+            workdayIndex = it.getInt("workday")
         }
         findViewById<View>(R.id.bar_cancel).setOnClickListener { finish() }
         findViewById<View>(R.id.bar_save).setOnClickListener { save() }
@@ -101,6 +107,9 @@ class EditTaskActivity : BaseActivity() {
         rowTime.setOnClickListener { pickTime() }
         rowRepeat.setOnClickListener {
             choose("Repeat", Repeat.entries.map { it.label }, repeatIndex) { repeatIndex = it; showSelections() }
+        }
+        rowWorkday.setOnClickListener {
+            choose("If it falls on a weekly off", WorkdayRule.entries.map { it.label }, workdayIndex) { workdayIndex = it; showSelections() }
         }
         rowEarly.setOnClickListener {
             choose("Early Reminder", ADVANCE_OPTIONS.map { it.second }, advanceIndex) { advanceIndex = it; showSelections() }
@@ -124,6 +133,7 @@ class EditTaskActivity : BaseActivity() {
         outState.putString("when", whenAt.toString())
         outState.putInt("repeat", repeatIndex)
         outState.putInt("advance", advanceIndex)
+        outState.putInt("workday", workdayIndex)
     }
 
     /** "Add" is greyed out until a title is typed. */
@@ -210,6 +220,14 @@ class EditTaskActivity : BaseActivity() {
         setValue(rowTime, java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms)), accent = true)
         setValue(rowRepeat, if (repeatIndex == 0) "Never" else Repeat.entries[repeatIndex].label, accent = false)
         setValue(rowEarly, if (advanceIndex == 0) "None" else ADVANCE_OPTIONS[advanceIndex].second, accent = false)
+        val rep = Repeat.entries[repeatIndex]
+        val showWorkday = rep.usesWorkdayRule()
+        findViewById<View>(R.id.workday_wrap).visibility = if (showWorkday) View.VISIBLE else View.GONE
+        setValue(rowWorkday, WorkdayRule.entries[workdayIndex].short, accent = false)
+        findViewById<TextView>(R.id.workday_note).apply {
+            visibility = if (showWorkday) View.VISIBLE else View.GONE
+            text = "Weekly off: ${WorkDays.offDays.label}. Change it in Settings → Weekly off."
+        }
     }
 
     private fun save() {
@@ -221,7 +239,9 @@ class EditTaskActivity : BaseActivity() {
         val startMs = start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val now = System.currentTimeMillis()
 
-        var due = startMs
+        val rule = if (rep.usesWorkdayRule()) WorkdayRule.entries[workdayIndex] else WorkdayRule.SAME_DAY
+        // First occurrence (moved to a working day if asked) that is still in the future.
+        var due = if (rep == Repeat.NONE) startMs else Recurrence.nextAfter(startMs, rep, now - 1, rule)!!
         if (due <= now) {
             if (rep == Repeat.NONE) {
                 AlertDialog.Builder(this)
@@ -231,7 +251,7 @@ class EditTaskActivity : BaseActivity() {
                     .show()
                 return
             }
-            due = Recurrence.nextAfter(startMs, rep, now)!!
+            due = Recurrence.nextAfter(startMs, rep, now, rule)!!
         }
 
         val base = existing ?: Task(title = name, startAt = startMs, dueAt = due)
@@ -248,6 +268,7 @@ class EditTaskActivity : BaseActivity() {
                 snoozeUntil = 0,
                 rangFor = 0,
                 advanceShownFor = 0,
+                workday = rule,
             )
         )
         Notifications.cancel(this, task.id)

@@ -154,6 +154,7 @@ class MainActivity : BaseActivity() {
             startActivity(Intent(this, SetupActivity::class.java))
         }
         settingRow(R.id.set_test, R.drawable.ic_bell_small, R.color.ios_red, "Test alarm") { testAlarm() }
+        settingRow(R.id.set_weekly_off, R.drawable.ic_calendar, R.color.ios_orange, "Weekly off") { chooseWeeklyOff() }
         settingRow(R.id.set_appearance, R.drawable.ic_palette, R.color.brand, "Appearance") {
             startActivity(Intent(this, AppearanceActivity::class.java))
         }
@@ -172,8 +173,26 @@ class MainActivity : BaseActivity() {
             .background.mutate().setTint(ContextCompat.getColor(this, if (problems == 0) R.color.ios_green else R.color.ios_red))
         settingValue(R.id.set_test, "in 1 min")
         settingValue(R.id.set_appearance, Appearance.mode(this).label)
+        settingValue(R.id.set_weekly_off, when (WorkDays.offDays) {
+            WorkDays.OffDays.SAT_SUN -> "Sat & Sun"
+            WorkDays.OffDays.SUN -> "Sunday"
+            WorkDays.OffDays.SUN_2ND_4TH_SAT -> "Sun + 2nd/4th Sat"
+        })
         settingValue(R.id.set_backup, if (Backup.autoUri(this) != null) "On" else "Off")
         settingValue(R.id.set_update, Updater.currentVersionName)
+    }
+
+    private fun chooseWeeklyOff() {
+        val options = WorkDays.OffDays.entries
+        AlertDialog.Builder(this)
+            .setTitle("Weekly off")
+            .setSingleChoiceItems(options.map { it.label }.toTypedArray(), WorkDays.offDays.ordinal) { d, which ->
+                WorkDays.set(this, options[which])
+                TaskActions.recomputeWorkdays(this) // move upcoming tasks to their new working days
+                d.dismiss()
+                refresh()
+            }
+            .show()
     }
 
     private fun testAlarm() {

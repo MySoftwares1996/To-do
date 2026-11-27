@@ -73,6 +73,19 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Work" />
+            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <include android:id="@+id/set_weekly_off" layout="@layout/item_form_row" />
+            </com.google.android.material.card.MaterialCardView>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="6dp"
+                android:text="Used by repeating tasks set to “Previous working day” or “Next working day”."
+                android:textColor="@color/ios_secondary"
+                android:textSize="13sp" />
+
             <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Look" />
             <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
                 <include android:id="@+id/set_appearance" layout="@layout/item_form_row" />

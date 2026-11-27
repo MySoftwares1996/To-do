@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper
  * ring even right after a reboot, before the phone is unlocked.
  */
 class TaskDb private constructor(private val appContext: Context) :
-    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 1) {
+    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 2) {
 
     /** Keep the home screen widget in sync with every change. */
     private fun changed() {
@@ -41,12 +41,15 @@ class TaskDb private constructor(private val appContext: Context) :
                 done INTEGER NOT NULL,
                 snooze_until INTEGER NOT NULL,
                 rang_for INTEGER NOT NULL,
-                advance_shown_for INTEGER NOT NULL
+                advance_shown_for INTEGER NOT NULL,
+                workday TEXT NOT NULL DEFAULT 'SAME_DAY'
             )"""
         )
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) db.execSQL("ALTER TABLE tasks ADD COLUMN workday TEXT NOT NULL DEFAULT 'SAME_DAY'")
+    }
 
     @Synchronized
     fun all(): List<Task> =
@@ -95,6 +98,7 @@ class TaskDb private constructor(private val appContext: Context) :
             put("snooze_until", t.snoozeUntil)
             put("rang_for", t.rangFor)
             put("advance_shown_for", t.advanceShownFor)
+            put("workday", t.workday.name)
         }
 
     @Synchronized
@@ -116,5 +120,6 @@ class TaskDb private constructor(private val appContext: Context) :
         snoozeUntil = getLong(getColumnIndexOrThrow("snooze_until")),
         rangFor = getLong(getColumnIndexOrThrow("rang_for")),
         advanceShownFor = getLong(getColumnIndexOrThrow("advance_shown_for")),
+        workday = runCatching { WorkdayRule.valueOf(getString(getColumnIndexOrThrow("workday"))) }.getOrDefault(WorkdayRule.SAME_DAY),
     )
 }

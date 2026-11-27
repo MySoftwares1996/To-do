@@ -101,6 +101,9 @@
         <item name="track">@drawable/ios_switch_track</item>
         <item name="showText">false</item>
         <item name="switchMinWidth">51dp</item>
+        <item name="thumbTint">@android:color/white</item>
+        <item name="trackTint">@color/ios_switch_track_color</item>
+        <item name="trackTintMode">src_in</item>
     </style>
 
     <!-- Section headers in the task list -->
