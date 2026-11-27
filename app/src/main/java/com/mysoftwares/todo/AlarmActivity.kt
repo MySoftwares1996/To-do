@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 
 /** Full-screen alarm shown over the lock screen. */
 class AlarmActivity : BaseActivity() {
+    override val wrapWithToolbar = false
+
     private var taskId: Long = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {

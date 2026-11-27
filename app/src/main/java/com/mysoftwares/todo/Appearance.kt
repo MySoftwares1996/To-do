@@ -4,7 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import com.google.android.material.appbar.MaterialToolbar
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.color.DynamicColors
 
@@ -29,7 +33,8 @@ object Appearance {
         WALLPAPER("Wallpaper", R.color.accent_blue, R.style.ThemeOverlay_Accent_Blue),
     }
 
-    enum class ListStyle(val label: String) { CARDS("Cards"), COMPACT("Compact") }
+    /** COMPACT = iOS inset grouped list (default); CARDS = separate rounded cards. */
+    enum class ListStyle(val label: String) { CARDS("Cards"), COMPACT("Grouped") }
 
     /** Changes every time a setting changes, so open screens know to redraw. */
     @Volatile var stamp = 0
@@ -41,7 +46,7 @@ object Appearance {
 
     fun mode(c: Context) = prefs(c)?.getString("mode", null)?.let { runCatching { Mode.valueOf(it) }.getOrNull() } ?: Mode.SYSTEM
     fun accent(c: Context) = prefs(c)?.getString("accent", null)?.let { runCatching { Accent.valueOf(it) }.getOrNull() } ?: Accent.BLUE
-    fun listStyle(c: Context) = prefs(c)?.getString("list", null)?.let { runCatching { ListStyle.valueOf(it) }.getOrNull() } ?: ListStyle.CARDS
+    fun listStyle(c: Context) = prefs(c)?.getString("list", null)?.let { runCatching { ListStyle.valueOf(it) }.getOrNull() } ?: ListStyle.COMPACT
     fun largeText(c: Context) = prefs(c)?.getBoolean("large_text", false) ?: false
 
     fun setMode(c: Context, m: Mode) { save(c) { putString("mode", m.name) }; AppCompatDelegate.setDefaultNightMode(m.night) }
@@ -71,6 +76,27 @@ object Appearance {
 /** All screens extend this so the chosen look is applied and refreshed after changes. */
 open class BaseActivity : AppCompatActivity() {
     private var appliedStamp = -1
+
+    /** Screens with their own header (main list, alarm) turn this off. */
+    protected open val wrapWithToolbar = true
+    protected var toolbar: MaterialToolbar? = null
+
+    /** Puts an iOS-style navigation bar (centred title, ‹ back) above the screen's layout. */
+    override fun setContentView(layoutResID: Int) {
+        if (!wrapWithToolbar) { super.setContentView(layoutResID); return }
+        val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val bar = MaterialToolbar(this)
+        root.addView(bar, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+        root.addView(
+            View(this).apply { setBackgroundColor(ContextCompat.getColor(context, R.color.ios_separator)) },
+            LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (resources.displayMetrics.density * 0.6f).toInt().coerceAtLeast(1))
+        )
+        val content = layoutInflater.inflate(layoutResID, root, false)
+        root.addView(content, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        super.setContentView(root)
+        setSupportActionBar(bar)
+        toolbar = bar
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Appearance.applyTo(this)

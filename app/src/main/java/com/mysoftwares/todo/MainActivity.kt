@@ -14,32 +14,32 @@ import android.view.HapticFeedbackConstants
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.card.MaterialCardView
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import com.google.android.material.appbar.CollapsingToolbarLayout
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
 import java.util.concurrent.Executors
 
 class MainActivity : BaseActivity() {
+    override val wrapWithToolbar = false
+
     private lateinit var adapter: TaskAdapter
     private lateinit var list: RecyclerView
-    private lateinit var banner: MaterialCardView
-    private lateinit var bannerText: TextView
-    private lateinit var empty: View
-    private lateinit var fab: ExtendedFloatingActionButton
+    private lateinit var collapsing: CollapsingToolbarLayout
+    private var filter = Filter.ALL
     private var askedPermission = false
     private val io = Executors.newSingleThreadExecutor()
     /** Downloaded update waiting for the user to allow "Install unknown apps". */
     private var pendingApk: File? = null
+    private val grouped by lazy { Appearance.listStyle(this) == Appearance.ListStyle.COMPACT }
 
     /** Refresh once a minute so "in 5 minutes" / overdue colours stay current. */
     private val ticker = Handler(Looper.getMainLooper())
@@ -47,41 +47,56 @@ class MainActivity : BaseActivity() {
         override fun run() { refresh(); ticker.postDelayed(this, 60_000) }
     }
 
-    private val compact by lazy { Appearance.listStyle(this) == Appearance.ListStyle.COMPACT }
+    private val backToAll = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() = setFilter(Filter.ALL)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        banner = findViewById(R.id.banner)
-        bannerText = findViewById(R.id.banner_text)
-        empty = findViewById(R.id.empty)
-        fab = findViewById(R.id.add)
+        val bar = findViewById<MaterialToolbar>(R.id.toolbar)
+        setSupportActionBar(bar)
+        supportActionBar?.setDisplayShowTitleEnabled(false) // the large collapsing title is used instead
+        collapsing = findViewById(R.id.collapsing)
         list = findViewById(R.id.list)
+        filter = savedInstanceState?.getString("filter")?.let { runCatching { Filter.valueOf(it) }.getOrNull() } ?: Filter.ALL
+        onBackPressedDispatcher.addCallback(this, backToAll)
 
-        banner.setOnClickListener { startActivity(Intent(this, SetupActivity::class.java)) }
-        fab.setOnClickListener { startActivity(Intent(this, EditTaskActivity::class.java)) }
+        findViewById<View>(R.id.add).setOnClickListener { startActivity(Intent(this, EditTaskActivity::class.java)) }
 
         adapter = TaskAdapter(
             onClick = { startActivity(Intent(this, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, it.id)) },
             onCheck = { toggleDone(it) },
-            compact = compact,
+            onFilter = { setFilter(it) },
+            onBanner = { startActivity(Intent(this, SetupActivity::class.java)) },
+            grouped = grouped,
         )
         list.layoutManager = LinearLayoutManager(this)
         list.adapter = adapter
-        if (compact) {
-            list.addItemDecoration(
-                com.google.android.material.divider.MaterialDividerItemDecoration(this, LinearLayoutManager.VERTICAL).apply {
-                    isLastItemDecorated = false
-                }
-            )
-        }
-        list.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
-                if (dy > 6 && fab.isExtended) fab.shrink() else if (dy < -6 && !fab.isExtended) fab.extend()
-            }
-        })
+        list.itemAnimator?.changeDuration = 150
         attachSwipe()
+        showTitle()
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("filter", filter.name)
+    }
+
+    private fun setFilter(f: Filter) {
+        filter = f
+        showTitle()
+        refresh()
+        list.smoothScrollToPosition(0)
+    }
+
+    private fun showTitle() {
+        collapsing.title = filter.title
+        supportActionBar?.setDisplayHomeAsUpEnabled(filter != Filter.ALL)
+        backToAll.isEnabled = filter != Filter.ALL
+    }
+
+    override fun onSupportNavigateUp(): Boolean { setFilter(Filter.ALL); return true }
 
     override fun onResume() {
         super.onResume()
@@ -117,21 +132,10 @@ class MainActivity : BaseActivity() {
 
     private fun refresh() {
         val tasks = TaskDb.get(this).all()
-        adapter.submitList(TaskAdapter.buildRows(tasks))
-        val pending = tasks.count { !it.done }
-        val overdue = tasks.count { !it.done && it.dueAt < System.currentTimeMillis() }
-        empty.visibility = if (pending == 0 && tasks.none { it.done }) View.VISIBLE else View.GONE
-        supportActionBar?.subtitle = when {
-            pending == 0 -> "All done 🎉"
-            overdue > 0 -> "$pending pending · $overdue overdue"
-            else -> "$pending pending"
-        }
-        val problems = Reliability.problemCount(this)
-        banner.visibility = if (problems > 0) View.VISIBLE else View.GONE
-        bannerText.text = getString(R.string.banner_problems, problems)
+        adapter.submitList(TaskAdapter.buildRows(tasks, filter, Reliability.problemCount(this)))
     }
 
-    // ---- Done / Undo ----
+    // ---- Done / Delete / Undo ----
 
     private fun haptic() {
         list.performHapticFeedback(
@@ -149,8 +153,8 @@ class MainActivity : BaseActivity() {
         }
         TaskActions.done(this, task.id)
         refresh()
-        val msg = if (before.repeat == Repeat.NONE) "Done: ${before.title}"
-        else "Done. Next: ${TaskAdapter.friendlyTime(TaskDb.get(this).get(task.id)?.dueAt ?: before.dueAt)}"
+        val msg = if (before.repeat == Repeat.NONE) "Completed: ${before.title}"
+        else "Completed. Next: ${TaskAdapter.friendlyTime(TaskDb.get(this).get(task.id)?.dueAt ?: before.dueAt)}"
         showUndo(msg, before)
     }
 
@@ -163,7 +167,7 @@ class MainActivity : BaseActivity() {
 
     private fun showUndo(msg: String, snapshot: Task) {
         Snackbar.make(findViewById(R.id.root), msg, Snackbar.LENGTH_LONG)
-            .setAnchorView(fab)
+            .setAnchorView(R.id.bottom_bar)
             .setAction("Undo") {
                 AlarmScheduler.schedule(this, TaskDb.get(this).restore(snapshot))
                 refresh()
@@ -171,7 +175,7 @@ class MainActivity : BaseActivity() {
             .show()
     }
 
-    /** Swipe a pending task to mark it done; swipe a completed task to delete it. */
+    /** Swipe right = Done (green), swipe left = Delete (red), like iOS swipe actions. */
     private fun attachSwipe() {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         val doneIcon = ContextCompat.getDrawable(this, R.drawable.ic_check_circle)!!.mutate()
@@ -185,11 +189,14 @@ class MainActivity : BaseActivity() {
 
             override fun onMove(rv: RecyclerView, a: RecyclerView.ViewHolder, b: RecyclerView.ViewHolder) = false
 
+            override fun getSwipeThreshold(vh: RecyclerView.ViewHolder) = 0.4f
+
             override fun onSwiped(vh: RecyclerView.ViewHolder, direction: Int) {
                 val pos = vh.bindingAdapterPosition
                 val t = adapter.taskAt(pos) ?: return
-                adapter.notifyItemChanged(pos) // slide the card back before the list updates
-                if (t.done) deleteWithUndo(t) else toggleDone(t)
+                adapter.notifyItemChanged(pos) // slide the row back before the list updates
+                if (direction == ItemTouchHelper.LEFT) deleteWithUndo(t)
+                else toggleDone(t)
             }
 
             override fun onChildDraw(
@@ -199,16 +206,20 @@ class MainActivity : BaseActivity() {
                 val t = adapter.taskAt(vh.bindingAdapterPosition)
                 if (t != null && dX != 0f) {
                     val v = vh.itemView
-                    val r = if (compact) 0f else 16 * resources.displayMetrics.density
-                    paint.color = ContextCompat.getColor(this@MainActivity, if (t.done) R.color.danger else R.color.ok)
-                    c.drawRoundRect(RectF(v.left.toFloat(), v.top.toFloat(), v.right.toFloat(), v.bottom.toFloat()), r, r, paint)
-                    val icon = if (t.done) deleteIcon else doneIcon
-                    val size = (28 * resources.displayMetrics.density).toInt()
-                    val margin = (24 * resources.displayMetrics.density).toInt()
+                    val d = resources.displayMetrics.density
+                    val left = dX > 0
+                    paint.color = ContextCompat.getColor(this@MainActivity, if (left) R.color.ios_green else R.color.ios_red)
+                    val r = 12 * d
+                    val rect = if (left) RectF(v.left.toFloat(), v.top.toFloat(), v.left + dX + r, v.bottom.toFloat())
+                    else RectF(v.right + dX - r, v.top.toFloat(), v.right.toFloat(), v.bottom.toFloat())
+                    c.drawRoundRect(rect, r, r, paint)
+                    val icon = if (left) doneIcon else deleteIcon
+                    val size = (26 * d).toInt()
+                    val margin = (22 * d).toInt()
                     val top = v.top + (v.height - size) / 2
-                    val left = if (dX > 0) v.left + margin else v.right - margin - size
-                    icon.setBounds(left, top, left + size, top + size)
-                    icon.draw(c)
+                    val x = if (left) v.left + margin else v.right - margin - size
+                    icon.setBounds(x, top, x + size, top + size)
+                    if (kotlin.math.abs(dX) > margin + size) icon.draw(c)
                 }
                 super.onChildDraw(c, rv, vh, dX, dY, actionState, isCurrentlyActive)
             }

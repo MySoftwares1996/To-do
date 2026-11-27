@@ -5,12 +5,13 @@ import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
 import java.text.DateFormat
 import java.time.Instant
@@ -18,74 +19,110 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Date
 
-/** A row in the list: either a section header or a task. */
+/** Which tasks the list shows; chosen with the tiles at the top. */
+enum class Filter(val title: String) {
+    ALL("Office To-Do"), TODAY("Today"), UPCOMING("Upcoming"), IMPORTANT("Important")
+}
+
+/** A row in the list. */
 sealed class Row {
-    data class Header(val title: String, val colorRes: Int?) : Row()
-    data class Item(val task: Task) : Row()
+    data class Banner(val problems: Int) : Row()
+    data class Tiles(val today: Int, val upcoming: Int, val important: Int, val all: Int, val filter: Filter) : Row()
+    data class Header(val key: String, val title: String, val count: Int, val colorRes: Int?) : Row()
+    data class Item(val task: Task, val first: Boolean, val last: Boolean) : Row()
+    data class Empty(val text: String) : Row()
 }
 
 class TaskAdapter(
     private val onClick: (Task) -> Unit,
     private val onCheck: (Task) -> Unit,
-    private val compact: Boolean = false,
+    private val onFilter: (Filter) -> Unit,
+    private val onBanner: () -> Unit,
+    /** true = iOS inset grouped list; false = separate rounded cards. */
+    private val grouped: Boolean = true,
 ) : ListAdapter<Row, RecyclerView.ViewHolder>(DIFF) {
 
     companion object {
-        private const val TYPE_HEADER = 0
-        private const val TYPE_TASK = 1
+        private const val T_BANNER = 0
+        private const val T_TILES = 1
+        private const val T_HEADER = 2
+        private const val T_TASK = 3
+        private const val T_EMPTY = 4
 
         private val DIFF = object : DiffUtil.ItemCallback<Row>() {
             override fun areItemsTheSame(a: Row, b: Row) = when {
-                a is Row.Header && b is Row.Header -> a.title == b.title
+                a is Row.Header && b is Row.Header -> a.key == b.key
                 a is Row.Item && b is Row.Item -> a.task.id == b.task.id
-                else -> false
+                else -> a::class == b::class && a !is Row.Item && a !is Row.Header
             }
             override fun areContentsTheSame(a: Row, b: Row) = a == b
         }
 
-        /** Groups tasks into Overdue / Today / Tomorrow / This week / Later / Completed. */
-        fun buildRows(tasks: List<Task>): List<Row> {
+        private fun day(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate()
+
+        fun matches(t: Task, f: Filter, now: Long): Boolean = when (f) {
+            Filter.ALL -> true
+            Filter.TODAY -> !t.done && (t.dueAt < now || day(t.dueAt) == LocalDate.now())
+            Filter.UPCOMING -> !t.done && t.dueAt >= now
+            Filter.IMPORTANT -> !t.done && t.important
+        }
+
+        fun buildRows(tasks: List<Task>, filter: Filter, problems: Int): List<Row> {
             val now = System.currentTimeMillis()
-            val zone = ZoneId.systemDefault()
-            val today = LocalDate.now(zone)
-            fun day(ms: Long) = Instant.ofEpochMilli(ms).atZone(zone).toLocalDate()
-
-            val groups = linkedMapOf<Row.Header, MutableList<Task>>()
-            val overdue = Row.Header("Overdue", R.color.danger)
-            val hToday = Row.Header("Today", null)
-            val hTomorrow = Row.Header("Tomorrow", null)
-            val hWeek = Row.Header("This week", null)
-            val hLater = Row.Header("Later", null)
-            val hDone = Row.Header("Completed", R.color.muted)
-            listOf(overdue, hToday, hTomorrow, hWeek, hLater, hDone).forEach { groups[it] = mutableListOf() }
-
-            for (t in tasks) {
-                val d = day(t.dueAt)
-                val h = when {
-                    t.done -> hDone
-                    t.dueAt < now -> overdue
-                    d == today -> hToday
-                    d == today.plusDays(1) -> hTomorrow
-                    d.isBefore(today.plusDays(7)) -> hWeek
-                    else -> hLater
-                }
-                groups.getValue(h).add(t)
-            }
+            val today = LocalDate.now()
             val rows = mutableListOf<Row>()
-            for ((h, list) in groups) {
-                if (list.isEmpty()) continue
-                rows += h.copy(title = "${h.title}  ·  ${list.size}")
-                val sorted = if (h == hDone) list.takeLast(30).reversed() else list.sortedBy { it.dueAt }
-                sorted.forEach { rows += Row.Item(it) }
+            if (problems > 0) rows += Row.Banner(problems)
+            rows += Row.Tiles(
+                today = tasks.count { matches(it, Filter.TODAY, now) },
+                upcoming = tasks.count { matches(it, Filter.UPCOMING, now) },
+                important = tasks.count { matches(it, Filter.IMPORTANT, now) },
+                all = tasks.count { !it.done },
+                filter = filter,
+            )
+
+            data class Sec(val key: String, val title: String, val color: Int?, val items: MutableList<Task> = mutableListOf())
+            val overdue = Sec("overdue", "Overdue", R.color.ios_red)
+            val sToday = Sec("today", "Today", null)
+            val sTomorrow = Sec("tomorrow", "Tomorrow", null)
+            val sWeek = Sec("week", "This Week", null)
+            val sLater = Sec("later", "Later", null)
+            val sDone = Sec("done", "Completed", R.color.ios_secondary)
+            val sections = listOf(overdue, sToday, sTomorrow, sWeek, sLater, sDone)
+
+            for (t in tasks.filter { matches(it, filter, now) }) {
+                val d = day(t.dueAt)
+                when {
+                    t.done -> sDone
+                    t.dueAt < now -> overdue
+                    d == today -> sToday
+                    d == today.plusDays(1) -> sTomorrow
+                    d.isBefore(today.plusDays(7)) -> sWeek
+                    else -> sLater
+                }.items.add(t)
             }
+            var any = false
+            for (s in sections) {
+                if (s.items.isEmpty()) continue
+                any = true
+                val list = if (s === sDone) s.items.takeLast(30).reversed() else s.items.sortedBy { it.dueAt }
+                rows += Row.Header(s.key, s.title, list.size, s.color)
+                list.forEachIndexed { i, t -> rows += Row.Item(t, i == 0, i == list.lastIndex) }
+            }
+            if (!any) rows += Row.Empty(
+                when (filter) {
+                    Filter.ALL -> "No Tasks"
+                    Filter.TODAY -> "Nothing due today"
+                    Filter.UPCOMING -> "Nothing upcoming"
+                    Filter.IMPORTANT -> "No important tasks"
+                }
+            )
             return rows
         }
 
-        /** "Today, 10:00 AM" / "Tomorrow, 9:30 AM" / "Mon, 1 Dec, 10:00 AM" */
+        /** "Today, 10:00 AM" / "Tomorrow, 9:30 AM" / "1 Dec 2026, 10:00 AM" */
         fun friendlyTime(ms: Long): String {
-            val zone = ZoneId.systemDefault()
-            val d = Instant.ofEpochMilli(ms).atZone(zone).toLocalDate()
-            val today = LocalDate.now(zone)
+            val d = day(ms)
+            val today = LocalDate.now()
             val time = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(ms))
             val dayText = when (d) {
                 today -> "Today"
@@ -97,80 +134,122 @@ class TaskAdapter(
         }
     }
 
-    class HeaderVH(v: View) : RecyclerView.ViewHolder(v) {
-        val text: TextView = v.findViewById(R.id.header)
+    fun taskAt(position: Int): Task? =
+        if (position in 0 until itemCount) (getItem(position) as? Row.Item)?.task else null
+
+    override fun getItemViewType(position: Int) = when (getItem(position)) {
+        is Row.Banner -> T_BANNER
+        is Row.Tiles -> T_TILES
+        is Row.Header -> T_HEADER
+        is Row.Item -> T_TASK
+        is Row.Empty -> T_EMPTY
     }
 
-    class TaskVH(v: View) : RecyclerView.ViewHolder(v) {
-        val stripe: View = v.findViewById(R.id.stripe)
-        val check: MaterialCheckBox = v.findViewById(R.id.check)
-        val title: TextView = v.findViewById(R.id.title)
-        val sub: TextView = v.findViewById(R.id.sub)
-        val repeat: TextView = v.findViewById(R.id.repeat)
-        val badge: TextView = v.findViewById(R.id.badge)
-    }
-
-    override fun getItemViewType(position: Int) =
-        if (getItem(position) is Row.Header) TYPE_HEADER else TYPE_TASK
-
-    fun taskAt(position: Int): Task? = (getItem(position) as? Row.Item)?.task
+    class VH(v: View) : RecyclerView.ViewHolder(v)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inf = LayoutInflater.from(parent.context)
-        return if (viewType == TYPE_HEADER) HeaderVH(inf.inflate(R.layout.item_header, parent, false))
-        else TaskVH(inf.inflate(if (compact) R.layout.item_task_compact else R.layout.item_task, parent, false))
+        val layout = when (viewType) {
+            T_BANNER -> R.layout.item_banner
+            T_TILES -> R.layout.item_tiles
+            T_HEADER -> R.layout.item_header
+            T_EMPTY -> R.layout.item_empty
+            else -> R.layout.item_task
+        }
+        return VH(inf.inflate(layout, parent, false))
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val v = holder.itemView
         when (val row = getItem(position)) {
-            is Row.Header -> {
-                val h = holder as HeaderVH
-                h.text.text = row.title
-                h.text.setTextColor(
-                    row.colorRes?.let { ContextCompat.getColor(h.text.context, it) }
-                        ?: MaterialColors.getColor(h.text, androidx.appcompat.R.attr.colorPrimary)
-                )
+            is Row.Banner -> {
+                (v as TextView).text = v.context.getString(R.string.banner_problems, row.problems)
+                v.setOnClickListener { onBanner() }
             }
-            is Row.Item -> bindTask(holder as TaskVH, row.task)
+            is Row.Tiles -> bindTiles(v, row)
+            is Row.Header -> {
+                val t = v.findViewById<TextView>(R.id.header)
+                t.text = row.title
+                t.setTextColor(ContextCompat.getColor(v.context, row.colorRes ?: R.color.ios_label))
+                v.findViewById<TextView>(R.id.header_count).text = row.count.toString()
+            }
+            is Row.Empty -> v.findViewById<TextView>(R.id.empty_title).text = row.text
+            is Row.Item -> bindTask(v, row)
         }
     }
 
-    private fun bindTask(h: TaskVH, t: Task) {
-        val ctx = h.itemView.context
+    private fun bindTiles(v: View, row: Row.Tiles) {
+        val ctx = v.context
+        val accent = MaterialColors.getColor(v, androidx.appcompat.R.attr.colorPrimary)
+        fun tile(id: Int, label: String, count: Int, icon: Int, color: Int, f: Filter) {
+            val card = v.findViewById<MaterialCardView>(id)
+            card.findViewById<TextView>(R.id.tile_label).text = label
+            card.findViewById<TextView>(R.id.tile_count).text = count.toString()
+            card.findViewById<ImageView>(R.id.tile_icon).apply {
+                setImageResource(icon)
+                background.mutate().setTint(color)
+            }
+            card.strokeWidth = if (row.filter == f && f != Filter.ALL) (2 * ctx.resources.displayMetrics.density).toInt() else 0
+            card.setOnClickListener { onFilter(if (row.filter == f) Filter.ALL else f) }
+        }
+        tile(R.id.tile_today, "Today", row.today, R.drawable.ic_calendar, accent, Filter.TODAY)
+        tile(R.id.tile_upcoming, "Upcoming", row.upcoming, R.drawable.ic_clock, ContextCompat.getColor(ctx, R.color.ios_red), Filter.UPCOMING)
+        tile(R.id.tile_important, "Important", row.important, R.drawable.ic_flag, ContextCompat.getColor(ctx, R.color.ios_orange), Filter.IMPORTANT)
+        tile(R.id.tile_all, "All", row.all, R.drawable.ic_tray, ContextCompat.getColor(ctx, R.color.ios_gray), Filter.ALL)
+    }
+
+    private fun bindTask(v: View, row: Row.Item) {
+        val t = row.task
+        val ctx = v.context
         val now = System.currentTimeMillis()
         val overdue = !t.done && t.dueAt < now
 
-        h.title.text = t.title
-        h.title.paintFlags = if (t.done) h.title.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-        else h.title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-        h.itemView.alpha = if (t.done) 0.55f else 1f
+        // Rounded corners only at the top/bottom of each group (iOS inset grouped list).
+        val bg = when {
+            !grouped || (row.first && row.last) -> R.drawable.bg_cell_single
+            row.first -> R.drawable.bg_cell_top
+            row.last -> R.drawable.bg_cell_bottom
+            else -> R.drawable.bg_cell_middle
+        }
+        v.setBackgroundResource(bg)
+        (v.layoutParams as? RecyclerView.LayoutParams)?.let {
+            val m = if (grouped) 0 else (5 * ctx.resources.displayMetrics.density).toInt()
+            it.topMargin = m; it.bottomMargin = m
+            v.layoutParams = it
+        }
+        v.findViewById<View>(R.id.divider).visibility = if (grouped && !row.last) View.VISIBLE else View.GONE
 
+        val title = v.findViewById<TextView>(R.id.title)
+        title.text = t.title
+        title.paintFlags = if (t.done) title.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+        else title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+        title.setTextColor(ContextCompat.getColor(ctx, if (t.done) R.color.ios_secondary else R.color.ios_label))
+
+        val sub = v.findViewById<TextView>(R.id.sub)
         val relative = DateUtils.getRelativeTimeSpanString(t.dueAt, now, DateUtils.MINUTE_IN_MILLIS)
-        h.sub.text = if (t.done) friendlyTime(t.dueAt) else "${friendlyTime(t.dueAt)}  ·  $relative"
-        h.sub.setTextColor(
-            if (overdue) ContextCompat.getColor(ctx, R.color.danger)
-            else MaterialColors.getColor(h.sub, com.google.android.material.R.attr.colorOnSurfaceVariant)
-        )
+        sub.text = if (t.done) friendlyTime(t.dueAt) else "${friendlyTime(t.dueAt)} · $relative"
+        sub.setTextColor(ContextCompat.getColor(ctx, if (overdue) R.color.ios_red else R.color.ios_secondary))
 
         val extras = mutableListOf<String>()
         if (t.repeat != Repeat.NONE) extras += "↻ " + t.repeat.label
-        if (t.snoozeUntil > 0 && !t.done) extras += "⏰ Snoozed to " + friendlyTime(t.snoozeUntil)
-        h.repeat.text = extras.joinToString("   ")
-        h.repeat.visibility = if (extras.isEmpty()) View.GONE else View.VISIBLE
+        if (t.snoozeUntil > 0 && !t.done) extras += "Snoozed to " + friendlyTime(t.snoozeUntil)
+        if (t.notes.isNotBlank()) extras += t.notes.lineSequence().first()
+        v.findViewById<TextView>(R.id.repeat).apply {
+            text = extras.joinToString("  ·  ")
+            visibility = if (extras.isEmpty()) View.GONE else View.VISIBLE
+        }
+        v.findViewById<View>(R.id.badge).visibility = if (t.important && !t.done) View.VISIBLE else View.GONE
 
-        h.badge.visibility = if (t.important && !t.done) View.VISIBLE else View.GONE
-        h.stripe.setBackgroundColor(
-            when {
-                t.done -> ContextCompat.getColor(ctx, R.color.muted)
-                overdue -> ContextCompat.getColor(ctx, R.color.danger)
-                t.important -> ContextCompat.getColor(ctx, R.color.warn)
-                else -> MaterialColors.getColor(h.stripe, androidx.appcompat.R.attr.colorPrimary)
-            }
-        )
-
-        h.check.setOnCheckedChangeListener(null)
-        h.check.isChecked = t.done
-        h.check.setOnCheckedChangeListener { _, _ -> onCheck(t) }
-        h.itemView.setOnClickListener { onClick(t) }
+        val check = v.findViewById<ImageView>(R.id.check)
+        check.setImageResource(if (t.done) R.drawable.ic_circle_checked else R.drawable.ic_circle_empty)
+        check.setOnClickListener {
+            // Fill the circle first, then let the row move – feels like iOS.
+            check.setImageResource(if (t.done) R.drawable.ic_circle_empty else R.drawable.ic_circle_checked)
+            check.animate().scaleX(1.2f).scaleY(1.2f).setDuration(120).withEndAction {
+                check.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
+            }.start()
+            check.postDelayed({ onCheck(t) }, 350)
+        }
+        v.setOnClickListener { onClick(t) }
     }
 }

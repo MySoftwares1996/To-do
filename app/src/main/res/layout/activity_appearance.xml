@@ -11,11 +11,11 @@
         android:padding="16dp">
 
         <TextView
-            style="@style/SectionHeader"
+            style="@style/IosGroupLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Theme"
-            android:textColor="?attr/colorPrimary" />
+            />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/mode_group"
@@ -51,12 +51,12 @@
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <TextView
-            style="@style/SectionHeader"
+            style="@style/IosGroupLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="Colour"
-            android:textColor="?attr/colorPrimary" />
+            />
 
         <HorizontalScrollView
             android:layout_width="match_parent"
@@ -80,12 +80,12 @@
             android:textColor="?attr/colorOnSurfaceVariant" />
 
         <TextView
-            style="@style/SectionHeader"
+            style="@style/IosGroupLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="Task list style"
-            android:textColor="?attr/colorPrimary" />
+            />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/list_group"
@@ -96,32 +96,32 @@
             app:singleSelection="true">
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/list_compact"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Grouped" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/list_cards"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Cards" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/list_compact"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Compact" />
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Cards: roomy and clear. Compact: see more tasks at once."
+            android:text="Grouped: one white list per section, like iOS. Cards: each task on its own card."
             android:textAppearance="?attr/textAppearanceBodySmall"
             android:textColor="?attr/colorOnSurfaceVariant" />
 
         <com.google.android.material.card.MaterialCardView
-            style="@style/Widget.Material3.CardView.Filled"
+            style="@style/IosGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"

@@ -13,9 +13,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
+        android:fontFamily="sans-serif-thin"
         android:textColor="@color/white"
-        android:textSize="56sp"
-        android:textStyle="bold" />
+        android:textSize="84sp" />
 
     <View
         android:layout_width="match_parent"
@@ -82,7 +82,7 @@
         android:id="@+id/done"
         android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:backgroundTint="#2E7D32"
+        android:backgroundTint="@color/ios_green"
         android:text="✔   DONE"
         android:textColor="@color/white"
         android:textSize="20sp"
@@ -96,25 +96,23 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/snooze10"
-            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="60dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
+            android:backgroundTint="@color/ios_orange"
             android:text="Snooze 10 min"
             android:textColor="@color/white"
-            app:cornerRadius="30dp"
-            app:strokeColor="#80FFFFFF" />
+            app:cornerRadius="30dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/snooze60"
-            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="60dp"
             android:layout_weight="1"
+            android:backgroundTint="#3A3A3C"
             android:text="Snooze 1 hour"
             android:textColor="@color/white"
-            app:cornerRadius="30dp"
-            app:strokeColor="#80FFFFFF" />
+            app:cornerRadius="30dp" />
     </LinearLayout>
 </LinearLayout>

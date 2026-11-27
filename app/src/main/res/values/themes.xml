@@ -1,23 +1,130 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.OfficeToDo" parent="Theme.Material3.DayNight">
+    <style name="Theme.OfficeToDo" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/brand</item>
         <item name="colorSecondary">@color/brand</item>
+        <item name="android:windowBackground">@color/ios_bg</item>
+        <item name="android:colorBackground">@color/ios_bg</item>
+        <item name="android:statusBarColor">@color/ios_bg</item>
+        <item name="android:navigationBarColor">@color/ios_bg</item>
+        <item name="android:windowLightStatusBar">@bool/light_bars</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">@bool/light_bars</item>
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
+        <item name="android:textColorPrimary">@color/ios_label</item>
+        <item name="colorOnSurfaceVariant">@color/ios_secondary</item>
+        <item name="toolbarStyle">@style/IosToolbar</item>
+        <item name="homeAsUpIndicator">@drawable/ic_chevron_left</item>
+        <item name="actionMenuTextColor">?attr/colorPrimary</item>
+        <item name="actionOverflowButtonStyle">@style/IosOverflow</item>
+        <item name="materialButtonStyle">@style/IosButton</item>
+        <item name="materialAlertDialogTheme">@style/IosDialog</item>
+        <item name="chipStyle">@style/IosChip</item>
+        <item name="bottomSheetDialogTheme">@style/IosBottomSheetDialog</item>
     </style>
 
     <style name="Theme.OfficeToDo.Alarm" parent="Theme.OfficeToDo">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
         <item name="android:windowBackground">@color/alarm_bg</item>
         <item name="android:statusBarColor">@color/alarm_bg</item>
         <item name="android:navigationBarColor">@color/alarm_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+    </style>
+
+    <!-- Navigation bar: centred bold title, ‹ back arrow in accent colour -->
+    <style name="IosToolbar" parent="Widget.Material3.Toolbar">
+        <item name="android:background">@color/ios_bg</item>
+        <item name="titleCentered">true</item>
+        <item name="titleTextAppearance">@style/IosNavTitle</item>
+        <item name="navigationIconTint">?attr/colorPrimary</item>
+    </style>
+
+    <style name="IosOverflow" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:src">@drawable/ic_more</item>
+    </style>
+
+    <style name="IosNavTitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/ios_label</item>
+    </style>
+
+    <style name="IosLargeTitle" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:textSize">34sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/ios_label</item>
+    </style>
+
+    <style name="IosButton" parent="Widget.Material3.Button">
+        <item name="cornerRadius">12dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
+    <style name="IosChip" parent="Widget.Material3.Chip.Assist">
+        <item name="chipBackgroundColor">@color/ios_cell</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="chipCornerRadius">16dp</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+
+    <style name="IosDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/IosDialogShape</item>
+        <item name="colorSurfaceContainerHigh">@color/ios_cell</item>
+    </style>
+
+    <style name="IosDialogShape" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="IosBottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/IosBottomSheet</item>
+    </style>
+
+    <style name="IosBottomSheet" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="backgroundTint">@color/ios_cell</item>
+    </style>
+
+    <!-- White rounded group (like an iOS inset grouped table) -->
+    <style name="IosGroup" parent="Widget.Material3.CardView.Filled">
+        <item name="cardBackgroundColor">@color/ios_cell</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardElevation">0dp</item>
+    </style>
+
+    <!-- iOS-style green switch -->
+    <style name="IosSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:thumb">@drawable/ios_switch_thumb</item>
+        <item name="track">@drawable/ios_switch_track</item>
+        <item name="showText">false</item>
+        <item name="switchMinWidth">51dp</item>
     </style>
 
     <!-- Section headers in the task list -->
     <style name="SectionHeader">
-        <item name="android:textSize">13sp</item>
+        <item name="android:textSize">20sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <!-- Small grey caps label above a group, like iOS form section titles -->
+    <style name="IosGroupLabel">
+        <item name="android:textSize">13sp</item>
         <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/ios_secondary</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingBottom">6dp</item>
+        <item name="android:paddingTop">20dp</item>
+    </style>
+
+    <!-- A row inside a group: title on the left, value on the right -->
+    <style name="IosRow">
+        <item name="android:minHeight">48dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
     </style>
 </resources>

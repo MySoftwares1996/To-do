@@ -5,20 +5,24 @@ payments, month-end closing, tax filing, payroll, and any other important task.
 Its main job is to **ring a real alarm and show a notification at the exact time, every time.**
 
 ## Features
+- **iOS-style design**: large bold title that shrinks on scroll, light grey background with white grouped
+  rounded lists (true black in dark mode), round tick circles, “+ New Task” bar, centred titles with ‹ back,
+  grouped form with green switches and **wheel date/time pickers**
+- **Summary tiles** at the top (Today, Upcoming, Important, All) with counts – tap to filter
 - Clean Material 3 design. **Appearance** settings (⋮ → Appearance):
   - Theme: System / Light / Dark
   - Colour: Blue, Green, Purple, Orange, Teal, Pink, or **Wallpaper colours** (Material You, Android 12+)
-  - Task list style: **Cards** (roomy) or **Compact** (see more at once)
+  - Task list style: **Grouped** (iOS inset list) or **Cards**
   - **Large text** option
 - Tasks grouped as **Overdue / Today / Tomorrow / This week / Later / Completed**, with colour stripes
   (red = overdue, orange = important) and friendly times like "Tomorrow, 10:00 AM · in 18 hours"
-- **Swipe a task to mark it done** (swipe a completed task to delete it), with **Undo**
+- **Swipe right = Done, swipe left = Delete**, with **Undo**
 - **Home screen widget**: shows your next pending tasks (overdue in red), tap ✔ to mark one done,
   tap **+** to add a task; it resizes and updates instantly when tasks change
 - **Backup & restore** (⋮ → Backup & restore): saves all tasks to a JSON file in a place you choose
   (Google Drive, phone storage…). After the first backup, the file is **updated automatically after every change**.
   Restore on the same or a new phone, either adding to or replacing current tasks. All alarms are set again.
-- Quick date chips (Today, Tomorrow, Next Monday, Month-end) and Material date/time pickers
+- Quick date chips (Today, Tomorrow, Next Monday, Month-end)
 - Add a task with a title, notes, date and time
 - Repeat: once, daily, weekly, monthly (same date), **month-end (last day of the month)**, yearly
 - Early reminder: 15 min, 1 hour, 1, 2 or 3 days, or 1 week before the due time
