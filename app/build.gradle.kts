@@ -11,8 +11,10 @@ android {
         applicationId = "com.mysoftwares.todo"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // CI sets VERSION_CODE to the build number; the in-app updater compares it.
+        val buildNumber = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionCode = buildNumber
+        versionName = "1.0.$buildNumber"
     }
 
     // A fixed signing key committed to the repo so every CI build has the same
@@ -37,6 +39,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    buildFeatures {
+        buildConfig = true
     }
     lint {
         checkReleaseBuilds = false

@@ -38,8 +38,18 @@ and lock the phone.
 > you open it again. No app can work around this, so don't do it.
 
 ## Get the APK
-Every push builds the APK with GitHub Actions: open **Actions → Build APK → latest run →
-Artifacts → OfficeToDo-apk**, download it, unzip it, and install the APK on the phone (allow "Install unknown apps").
+Download **OfficeToDo.apk** from the latest release:
+https://github.com/MySoftwares1996/To-do/releases/latest
+and install it on the phone (allow "Install unknown apps").
+
+## Over-the-air (OTA) updates
+- Every push to the default branch builds the app and publishes it as a GitHub Release
+  (`v1.0.<build number>`, with `OfficeToDo.apk` attached).
+- The app checks for a newer release when you open it (at most every 6 hours), or right away from **⋮ → Check for updates**.
+- When a new version exists, tap **Update now**: the app downloads it, verifies its SHA-256 checksum,
+  and opens the Android installer. Tap **Update**. Your tasks and alarms are kept.
+- The first time, Android asks you to allow **Install unknown apps** for Office To-Do.
+- Android always asks you to confirm an update. Silent installs are only possible for Play Store or device-owner apps.
 
 Builds are signed with the key in `app/debug.keystore`, so a newer APK installs over the old one
 and your tasks are kept.
