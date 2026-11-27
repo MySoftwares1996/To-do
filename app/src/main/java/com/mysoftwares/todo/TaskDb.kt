@@ -57,7 +57,24 @@ class TaskDb private constructor(context: Context) :
     /** Inserts (id == 0) or updates. Returns the saved task with its id. */
     @Synchronized
     fun save(t: Task): Task {
-        val v = ContentValues().apply {
+        val v = values(t)
+        return if (t.id == 0L) {
+            t.copy(id = writableDatabase.insertOrThrow("tasks", null, v))
+        } else {
+            writableDatabase.update("tasks", v, "id=?", arrayOf(t.id.toString()))
+            t
+        }
+    }
+
+    /** Puts back an exact earlier copy of a task (used by Undo, also after delete). */
+    @Synchronized
+    fun restore(t: Task): Task {
+        val v = values(t).apply { put("id", t.id) }
+        writableDatabase.insertWithOnConflict("tasks", null, v, SQLiteDatabase.CONFLICT_REPLACE)
+        return t
+    }
+
+    private fun values(t: Task) = ContentValues().apply {
             put("title", t.title)
             put("notes", t.notes)
             put("start_at", t.startAt)
@@ -70,13 +87,6 @@ class TaskDb private constructor(context: Context) :
             put("rang_for", t.rangFor)
             put("advance_shown_for", t.advanceShownFor)
         }
-        return if (t.id == 0L) {
-            t.copy(id = writableDatabase.insertOrThrow("tasks", null, v))
-        } else {
-            writableDatabase.update("tasks", v, "id=?", arrayOf(t.id.toString()))
-            t
-        }
-    }
 
     @Synchronized
     fun delete(id: Long) {

@@ -1,5 +1,8 @@
 package com.mysoftwares.todo
 
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -29,6 +32,18 @@ class AlarmActivity : AppCompatActivity() {
         findViewById<Button>(R.id.snooze10).setOnClickListener { TaskActions.snooze(this, taskId, 10); finish() }
         findViewById<Button>(R.id.snooze60).setOnClickListener { TaskActions.snooze(this, taskId, 60); finish() }
         show(intent)
+
+        // Gentle pulsing bell.
+        ObjectAnimator.ofPropertyValuesHolder(
+            findViewById<View>(R.id.bell),
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.15f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.15f),
+        ).apply {
+            duration = 600
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            start()
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -41,7 +56,7 @@ class AlarmActivity : AppCompatActivity() {
         val task = TaskDb.get(this).get(taskId)
         if (task == null || task.done) { finish(); return }
         findViewById<TextView>(R.id.title).text = task.title
-        findViewById<TextView>(R.id.due).text = "Due " + Notifications.formatTime(task.dueAt)
+        findViewById<TextView>(R.id.due).text = "Due " + TaskAdapter.friendlyTime(task.dueAt)
         findViewById<TextView>(R.id.notes).apply {
             text = task.notes
             visibility = if (task.notes.isBlank()) View.GONE else View.VISIBLE

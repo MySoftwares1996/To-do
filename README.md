@@ -5,6 +5,11 @@ payments, month-end closing, tax filing, payroll, and any other important task.
 Its main job is to **ring a real alarm and show a notification at the exact time, every time.**
 
 ## Features
+- Clean Material 3 design with light and dark mode
+- Tasks grouped as **Overdue / Today / Tomorrow / This week / Later / Completed**, with colour stripes
+  (red = overdue, orange = important) and friendly times like "Tomorrow, 10:00 AM · in 18 hours"
+- **Swipe a task to mark it done** (swipe a completed task to delete it), with **Undo**
+- Quick date chips (Today, Tomorrow, Next Monday, Month-end) and Material date/time pickers
 - Add a task with a title, notes, date and time
 - Repeat: once, daily, weekly, monthly (same date), **month-end (last day of the month)**, yearly
 - Early reminder: 15 min, 1 hour, 1, 2 or 3 days, or 1 week before the due time

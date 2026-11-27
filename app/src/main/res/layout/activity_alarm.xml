@@ -1,29 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/alarm_bg"
-    android:gravity="center"
+    android:gravity="center_horizontal"
     android:orientation="vertical"
     android:padding="28dp">
+
+    <TextClock
+        android:id="@+id/clock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:textColor="@color/white"
+        android:textSize="56sp"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <ImageView
+        android:id="@+id/bell"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:importantForAccessibility="no"
+        android:src="@drawable/ic_bell_big" />
 
     <TextView
         android:id="@+id/important"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp"
-        android:background="@color/danger"
-        android:gravity="center"
-        android:padding="12dp"
-        android:text="⚠ IMPORTANT WORK\nYou must do this now!"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_pill_danger"
+        android:paddingHorizontal="18dp"
+        android:paddingVertical="8dp"
+        android:text="⚠  IMPORTANT – do this now!"
         android:textColor="@color/white"
-        android:textSize="20sp"
+        android:textSize="16sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:gravity="center"
         android:textColor="@color/white"
         android:textSize="30sp"
@@ -33,7 +56,8 @@
         android:id="@+id/due"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="8dp"
+        android:alpha="0.85"
         android:gravity="center"
         android:textColor="@color/white"
         android:textSize="16sp" />
@@ -42,20 +66,27 @@
         android:id="@+id/notes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
+        android:alpha="0.85"
         android:gravity="center"
+        android:maxLines="5"
         android:textColor="@color/white"
-        android:textSize="16sp" />
+        android:textSize="15sp" />
 
-    <Button
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/done"
         android:layout_width="match_parent"
         android:layout_height="72dp"
-        android:layout_marginTop="40dp"
-        android:backgroundTint="@color/ok"
-        android:text="✔  DONE"
+        android:backgroundTint="#2E7D32"
+        android:text="✔   DONE"
         android:textColor="@color/white"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        app:cornerRadius="36dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -63,23 +94,27 @@
         android:layout_marginTop="12dp"
         android:orientation="horizontal">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/snooze10"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="60dp"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/white"
             android:text="Snooze 10 min"
-            android:textColor="@color/brand_dark" />
+            android:textColor="@color/white"
+            app:cornerRadius="30dp"
+            app:strokeColor="#80FFFFFF" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/snooze60"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="60dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/white"
             android:text="Snooze 1 hour"
-            android:textColor="@color/brand_dark" />
+            android:textColor="@color/white"
+            app:cornerRadius="30dp"
+            app:strokeColor="#80FFFFFF" />
     </LinearLayout>
 </LinearLayout>

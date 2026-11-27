@@ -53,10 +53,16 @@ class SetupActivity : AppCompatActivity() {
             box.addView(row)
         }
         val brand = Reliability.brandAdvice()
-        findViewById<TextView>(R.id.brand).apply {
-            text = brand ?: ""
-            visibility = if (brand == null) View.GONE else View.VISIBLE
-        }
+        findViewById<TextView>(R.id.brand).text =
+            brand ?: "Keep battery usage for this app on 'Unrestricted' and allow it to run in the background."
+
+        val problems = Reliability.problemCount(this)
+        findViewById<com.google.android.material.card.MaterialCardView>(R.id.summary_card)
+            .setCardBackgroundColor(ContextCompat.getColor(this, if (problems == 0) R.color.ok else R.color.danger))
+        findViewById<TextView>(R.id.summary_title).text =
+            if (problems == 0) "✔  All set" else "⚠  $problems thing(s) to fix"
+        findViewById<TextView>(R.id.summary_text).text =
+            if (problems == 0) "Your alarms are set up to ring reliably." else "Tap the buttons below to fix them."
     }
 
     // Volume fix happens in place, so refresh the list shortly after.

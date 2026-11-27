@@ -3,7 +3,9 @@
     <color name="brand_dark">#0F3D75</color>
     <color name="danger">#C62828</color>
     <color name="danger_bg">#FDECEA</color>
+    <color name="warn">#E65100</color>
     <color name="ok">#2E7D32</color>
+    <color name="muted">#9AA0A6</color>
     <color name="text_secondary">#5F6368</color>
     <color name="alarm_bg">#0F3D75</color>
     <color name="white">#FFFFFF</color>
