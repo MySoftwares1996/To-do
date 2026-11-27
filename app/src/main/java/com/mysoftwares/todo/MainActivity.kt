@@ -23,7 +23,6 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.appbar.CollapsingToolbarLayout
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.progressindicator.LinearProgressIndicator
@@ -35,10 +34,10 @@ class MainActivity : BaseActivity() {
 
     private lateinit var adapter: TaskAdapter
     private lateinit var list: RecyclerView
-    private lateinit var collapsing: CollapsingToolbarLayout
     private var tab = Tab.TODAY
     private var onSettings = false
     private var query = ""
+    private var searchOpen = false
     private lateinit var search: android.widget.EditText
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var settingsPage: View
@@ -63,8 +62,6 @@ class MainActivity : BaseActivity() {
         setContentView(R.layout.activity_main)
         val bar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(bar)
-        supportActionBar?.setDisplayShowTitleEnabled(false) // the large collapsing title is used instead
-        collapsing = findViewById(R.id.collapsing)
         list = findViewById(R.id.list)
         settingsPage = findViewById(R.id.settings_page)
         search = findViewById(R.id.search)
@@ -122,10 +119,10 @@ class MainActivity : BaseActivity() {
     private fun showTab(t: Tab) {
         tab = t
         onSettings = false
-        collapsing.title = t.title
+        supportActionBar?.title = t.title
         list.visibility = View.VISIBLE
         settingsPage.visibility = View.GONE
-        search.visibility = View.VISIBLE
+        search.visibility = if (searchOpen) View.VISIBLE else View.GONE
         backToToday.isEnabled = t != Tab.TODAY
         invalidateOptionsMenu()
         refresh()
@@ -134,7 +131,8 @@ class MainActivity : BaseActivity() {
 
     private fun showSettings() {
         onSettings = true
-        collapsing.title = "Settings"
+        supportActionBar?.title = "Settings"
+        supportActionBar?.subtitle = "Office To-Do ${Updater.currentVersionName}"
         list.visibility = View.GONE
         settingsPage.visibility = View.VISIBLE
         search.visibility = View.GONE
@@ -319,6 +317,7 @@ class MainActivity : BaseActivity() {
     private fun refresh() {
         val tasks = TaskDb.get(this).all()
         adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.problemCount(this), query))
+        if (!onSettings) supportActionBar?.subtitle = TaskAdapter.summary(tasks, tab, query)
         // Red badge on the Today tab = number of overdue tasks.
         val now = System.currentTimeMillis()
         val overdue = tasks.count { !it.done && it.dueAt < now }
@@ -430,11 +429,13 @@ class MainActivity : BaseActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        menu.findItem(R.id.menu_add)?.isVisible = !onSettings // "+" on task tabs only
+        menu.findItem(R.id.menu_add)?.isVisible = !onSettings // "+" and search on task tabs only
+        menu.findItem(R.id.menu_search)?.isVisible = !onSettings
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.menu_search) { toggleSearch(); return true }
         if (item.itemId == R.id.menu_add) {
             startActivity(Intent(this, EditTaskActivity::class.java)); return true
         }
@@ -442,6 +443,20 @@ class MainActivity : BaseActivity() {
     }
 
     private fun toast(msg: String) = updates.toast(msg)
+
+    /** 🔍 shows a search bar under the title; tapping it again closes and clears it. */
+    private fun toggleSearch() {
+        searchOpen = !searchOpen
+        search.visibility = if (searchOpen) View.VISIBLE else View.GONE
+        val imm = getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+        if (searchOpen) {
+            search.requestFocus()
+            imm.showSoftInput(search, 0)
+        } else {
+            imm.hideSoftInputFromWindow(search.windowToken, 0)
+            search.setText("")
+        }
+    }
 
     private fun clearCompleted() {
         val done = TaskDb.get(this).all().filter { it.done }

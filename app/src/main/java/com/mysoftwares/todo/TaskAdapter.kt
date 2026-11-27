@@ -67,7 +67,6 @@ class TaskAdapter(
                 val hits = tasks.filter {
                     it.title.contains(q, true) || it.notes.contains(q, true) || it.category.contains(q, true)
                 }.sortedWith(compareBy<Task> { it.done }.thenBy { it.dueAt })
-                rows += Row.Summary(if (hits.isEmpty()) "No results" else "${hits.size} found")
                 if (hits.isNotEmpty()) {
                     rows += Row.Header("results", "Results", hits.size, null)
                     hits.forEachIndexed { i, t -> rows += Row.Item(t, i == 0, i == hits.lastIndex) }
@@ -86,15 +85,12 @@ class TaskAdapter(
                 Tab.TODAY -> {
                     val overdue = pending.filter { it.dueAt < now }
                     val due = pending.filter { it.dueAt >= now && day(it.dueAt) == today }
-                    val dateText = java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMM").format(today)
-                    rows += Row.Summary("$dateText · ${overdue.size + due.size} to do")
                     section("overdue", "Overdue", R.color.ios_red, overdue)
                     section("today", "Today", null, due)
                     if (overdue.isEmpty() && due.isEmpty()) rows += Row.Empty("Nothing due today")
                 }
                 Tab.UPCOMING -> {
                     val future = pending.filter { it.dueAt >= now && day(it.dueAt).isAfter(today) }
-                    rows += Row.Summary("${future.size} scheduled")
                     section("tomorrow", "Tomorrow", null, future.filter { day(it.dueAt) == today.plusDays(1) })
                     section("week", "This Week", null, future.filter {
                         val d = day(it.dueAt); d.isAfter(today.plusDays(1)) && d.isBefore(today.plusDays(7))
@@ -104,12 +100,59 @@ class TaskAdapter(
                 }
                 Tab.DONE -> {
                     val done = tasks.filter { it.done }.sortedByDescending { it.dueAt }.take(30)
-                    rows += Row.Summary(if (done.isEmpty()) "No completed tasks" else "Last ${done.size} completed")
                     section("done", "Completed", R.color.ios_secondary, done)
                     if (done.isEmpty()) rows += Row.Empty("Nothing completed yet")
                 }
             }
             return rows
+        }
+
+        /** One-line summary shown under the title, e.g. "Fri, 27 Nov · 5 to do · 1 overdue". */
+        fun summary(tasks: List<Task>, tab: Tab, query: String): String {
+            val now = System.currentTimeMillis()
+            val today = LocalDate.now()
+            val q = query.trim()
+            if (q.isNotEmpty()) {
+                val n = tasks.count { it.title.contains(q, true) || it.notes.contains(q, true) || it.category.contains(q, true) }
+                return if (n == 0) "No results" else "$n found"
+            }
+            val pending = tasks.filter { !it.done }
+            val overdue = pending.count { it.dueAt < now }
+            return when (tab) {
+                Tab.TODAY -> {
+                    val due = pending.count { it.dueAt >= now && day(it.dueAt) == today }
+                    val date = java.time.format.DateTimeFormatter.ofPattern("EEE, d MMM").format(today)
+                    "$date · ${overdue + due} to do" + if (overdue > 0) " · $overdue overdue" else ""
+                }
+                Tab.UPCOMING -> "${pending.count { it.dueAt >= now && day(it.dueAt).isAfter(today) }} scheduled"
+                Tab.DONE -> {
+                    val n = tasks.count { it.done }.coerceAtMost(30)
+                    if (n == 0) "No completed tasks" else "Last $n completed"
+                }
+            }
+        }
+
+        /** Right-hand time column: "10:00 AM\nin 2 h", "Yesterday\n6:00 PM", "30 Nov\n6:00 PM". */
+        fun timeColumn(t: Task, now: Long): String {
+            val time = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.dueAt))
+            val d = day(t.dueAt)
+            val today = LocalDate.now()
+            if (!t.done && d == today && t.dueAt >= now) {
+                val mins = (t.dueAt - now) / 60_000
+                val rel = when {
+                    mins < 1 -> "now"
+                    mins < 60 -> "in $mins min"
+                    else -> "in ${mins / 60} h"
+                }
+                return "$time\n$rel"
+            }
+            val dayText = when (d) {
+                today -> "Today"
+                today.plusDays(1) -> "Tomorrow"
+                today.minusDays(1) -> "Yesterday"
+                else -> java.time.format.DateTimeFormatter.ofPattern(if (d.year == today.year) "d MMM" else "d MMM yy").format(d)
+            }
+            return "$dayText\n$time"
         }
 
         /** "Today, 10:00 AM" / "Tomorrow, 9:30 AM" / "1 Dec 2026, 10:00 AM" */
@@ -187,7 +230,7 @@ class TaskAdapter(
         }
         v.setBackgroundResource(bg)
         (v.layoutParams as? RecyclerView.LayoutParams)?.let {
-            val m = if (grouped) 0 else (5 * ctx.resources.displayMetrics.density).toInt()
+            val m = if (grouped) 0 else (3 * ctx.resources.displayMetrics.density).toInt()
             it.topMargin = m; it.bottomMargin = m
             v.layoutParams = it
         }
@@ -199,15 +242,15 @@ class TaskAdapter(
         else title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
         title.setTextColor(ContextCompat.getColor(ctx, if (t.done) R.color.ios_secondary else R.color.ios_label))
 
+        // Right-hand time column; red when overdue.
         val sub = v.findViewById<TextView>(R.id.sub)
-        val relative = DateUtils.getRelativeTimeSpanString(t.dueAt, now, DateUtils.MINUTE_IN_MILLIS)
-        sub.text = if (t.done) friendlyTime(t.dueAt) else "${friendlyTime(t.dueAt)} · $relative"
+        sub.text = timeColumn(t, now)
         sub.setTextColor(ContextCompat.getColor(ctx, if (overdue) R.color.ios_red else R.color.ios_secondary))
 
         val extras = mutableListOf<String>()
         if (t.remindType == RemindType.NOTIFICATION) extras += "🔔 Notification"
         if (t.repeat != Repeat.NONE) extras += "↻ " + t.repeat.label
-        if (t.snoozeUntil > 0 && !t.done) extras += "Snoozed to " + friendlyTime(t.snoozeUntil)
+        if (t.snoozeUntil > 0 && !t.done) extras += "⏰ Snoozed to " + DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
         if (t.notes.isNotBlank()) extras += t.notes.lineSequence().first()
         v.findViewById<TextView>(R.id.repeat).apply {
             val line = android.text.SpannableStringBuilder()

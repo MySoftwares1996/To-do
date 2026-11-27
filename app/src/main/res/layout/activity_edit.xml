@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Compact task form: everything fits on one screen without scrolling on most phones. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -9,7 +10,7 @@
     <!-- Top bar: Cancel | Title | Add -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp">
+        android:layout_height="48dp">
 
         <TextView
             android:id="@+id/bar_cancel"
@@ -18,7 +19,7 @@
             android:layout_gravity="start"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:gravity="center"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="14dp"
             android:text="@string/ui_cancel"
             android:textColor="?attr/colorPrimary"
             android:textSize="17sp" />
@@ -39,7 +40,7 @@
             android:layout_gravity="end"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:gravity="center"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="14dp"
             android:text="@string/ui_add"
             android:textColor="?attr/colorPrimary"
             android:textSize="17sp"
@@ -51,247 +52,295 @@
         android:layout_height="0.6dp"
         android:background="@color/ios_separator" />
 
-<ScrollView
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1"
-    android:fillViewport="true">
-
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:animateLayoutChanges="true"
-        android:orientation="vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="32dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
-
-        <!-- Title + notes -->
-        <com.google.android.material.card.MaterialCardView
-            style="@style/IosGroup"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp">
+            android:animateLayoutChanges="true"
+            android:orientation="vertical"
+            android:paddingHorizontal="10dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="20dp">
 
-            <LinearLayout
+            <!-- Title + notes -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/IosGroup"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_height="wrap_content">
 
-                <EditText
-                    android:id="@+id/title"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@null"
-                    android:hint="@string/ui_title"
-                    android:importantForAutofill="no"
-                    android:inputType="textCapSentences"
-                    android:minHeight="50dp"
-                    android:paddingHorizontal="16dp"
-                    android:textColor="@color/ios_label"
-                    android:textColorHint="@color/ios_secondary"
-                    android:textSize="17sp" />
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0.6dp"
-                    android:layout_marginStart="16dp"
-                    android:background="@color/ios_separator" />
-
-                <EditText
-                    android:id="@+id/notes"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@null"
-                    android:gravity="top"
-                    android:hint="@string/ui_notes_account_no_amount_steps"
-                    android:importantForAutofill="no"
-                    android:inputType="textCapSentences|textMultiLine"
-                    android:minHeight="80dp"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="14dp"
-                    android:textColor="@color/ios_label"
-                    android:textColorHint="@color/ios_secondary"
-                    android:textSize="17sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Remind with: Alarm / Notification -->
-        <TextView
-            style="@style/IosGroupLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/ui_remind_with" />
-
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/remind_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:selectionRequired="true"
-            app:singleSelection="true">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/remind_alarm"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/ui_alarm" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/remind_notification"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/ui_notification" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
-
-        <TextView
-            android:id="@+id/remind_note"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="6dp"
-            android:textColor="@color/ios_secondary"
-            android:textSize="13sp" />
-
-        <!-- Date + time -->
-        <TextView
-            style="@style/IosGroupLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/ui_alarm_2" />
-
-        <com.google.android.material.card.MaterialCardView
-            style="@style/IosGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <include android:id="@+id/row_date" layout="@layout/item_form_row" />
-                <include layout="@layout/divider_inset" />
-                <include android:id="@+id/row_time" layout="@layout/item_form_row" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-
-        <!-- Repeat + early reminder -->
-        <com.google.android.material.card.MaterialCardView
-            style="@style/IosGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <include android:id="@+id/row_repeat" layout="@layout/item_form_row" />
-
-                <!-- Shown only for repeating tasks other than Daily -->
                 <LinearLayout
-                    android:id="@+id/workday_wrap"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/title"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:hint="@string/ui_title"
+                        android:importantForAutofill="no"
+                        android:inputType="textCapSentences"
+                        android:minHeight="44dp"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="@color/ios_label"
+                        android:textColorHint="@color/ios_secondary"
+                        android:textSize="16sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.6dp"
+                        android:layout_marginStart="12dp"
+                        android:background="@color/ios_separator" />
+
+                    <EditText
+                        android:id="@+id/notes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:gravity="top"
+                        android:hint="@string/ui_notes_account_no_amount_steps"
+                        android:importantForAutofill="no"
+                        android:inputType="textCapSentences|textMultiLine"
+                        android:maxLines="5"
+                        android:minHeight="52dp"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="10dp"
+                        android:textColor="@color/ios_label"
+                        android:textColorHint="@color/ios_secondary"
+                        android:textSize="15sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- When (date + time) and Remind with -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/IosGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="44dp"
+                        android:orientation="horizontal"
+                        android:paddingStart="12dp">
+
+                        <ImageView
+                            android:id="@+id/when_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:background="@drawable/bg_icon_square"
+                            android:importantForAccessibility="no"
+                            android:padding="4dp"
+                            android:src="@drawable/ic_calendar" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/ui_when"
+                            android:textColor="@color/ios_label"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:id="@+id/when_date"
+                            android:layout_width="wrap_content"
+                            android:layout_height="44dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:paddingHorizontal="8dp"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:id="@+id/when_time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="44dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:paddingStart="6dp"
+                            android:paddingEnd="12dp"
+                            android:textColor="?attr/colorPrimary"
+                            android:textSize="16sp" />
+                    </LinearLayout>
 
                     <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/row_workday" layout="@layout/item_form_row" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:minHeight="44dp"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp">
+
+                        <ImageView
+                            android:id="@+id/remind_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:background="@drawable/bg_icon_square"
+                            android:importantForAccessibility="no"
+                            android:padding="4dp"
+                            android:src="@drawable/ic_bell_small" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:text="@string/ui_remind_with"
+                            android:textColor="@color/ios_label"
+                            android:textSize="16sp" />
+
+                        <com.google.android.material.button.MaterialButtonToggleGroup
+                            android:id="@+id/remind_group"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:selectionRequired="true"
+                            app:singleSelection="true">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/remind_alarm"
+                                style="@style/SmallToggle"
+                                android:text="@string/ui_alarm_2" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/remind_notification"
+                                style="@style/SmallToggle"
+                                android:text="@string/ui_notification_short" />
+                        </com.google.android.material.button.MaterialButtonToggleGroup>
+                    </LinearLayout>
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                <include layout="@layout/divider_inset" />
-                <include android:id="@+id/row_early" layout="@layout/item_form_row" />
-                <include layout="@layout/divider_inset" />
-                <include android:id="@+id/row_category" layout="@layout/item_form_row" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:id="@+id/workday_note"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="6dp"
-            android:textColor="@color/ios_secondary"
-            android:textSize="13sp"
-            android:visibility="gone" />
-
-        <!-- Important -->
-        <com.google.android.material.card.MaterialCardView
-            style="@style/IosGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp">
-
-            <LinearLayout
-                android:id="@+id/row_important"
-                style="@style/IosRow"
+            <!-- Repeat, working day, early reminders, category -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/IosGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_marginTop="10dp">
 
-                <ImageView
-                    android:id="@+id/important_icon"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:background="@drawable/bg_icon_square"
-                    android:importantForAccessibility="no"
-                    android:padding="5dp"
-                    android:src="@drawable/ic_flag" />
-
-                <TextView
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:paddingVertical="12dp"
-                    android:text="@string/ui_important"
-                    android:textColor="@color/ios_label"
-                    android:textSize="17sp" />
+                    android:orientation="vertical">
 
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/important"
-                    style="@style/IosSwitch"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+                    <include android:id="@+id/row_repeat" layout="@layout/item_form_row" />
 
-        <TextView
-            android:id="@+id/important_note"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="6dp"
-            android:textColor="@color/ios_secondary"
-            android:textSize="13sp" />
+                    <!-- Shown only for repeating tasks other than Daily -->
+                    <LinearLayout
+                        android:id="@+id/workday_wrap"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
 
-        <!-- Delete (edit only) -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/delete_group"
-            style="@style/IosGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="28dp"
-            android:visibility="gone">
+                        <include layout="@layout/divider_inset" />
+                        <include android:id="@+id/row_workday" layout="@layout/item_form_row" />
+                    </LinearLayout>
+
+                    <include layout="@layout/divider_inset" />
+                    <include android:id="@+id/row_early" layout="@layout/item_form_row" />
+                    <include layout="@layout/divider_inset" />
+                    <include android:id="@+id/row_category" layout="@layout/item_form_row" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Important -->
+            <com.google.android.material.card.MaterialCardView
+                style="@style/IosGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp">
+
+                <LinearLayout
+                    android:id="@+id/row_important"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="44dp"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp">
+
+                    <ImageView
+                        android:id="@+id/important_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:background="@drawable/bg_icon_square"
+                        android:importantForAccessibility="no"
+                        android:padding="4dp"
+                        android:src="@drawable/ic_flag" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="@string/ui_important"
+                        android:textColor="@color/ios_label"
+                        android:textSize="16sp" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/important"
+                        style="@style/IosSwitch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- One short help line for the whole form -->
+            <TextView
+                android:id="@+id/important_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="5dp"
+                android:textColor="@color/ios_secondary"
+                android:textSize="12sp" />
 
             <TextView
-                android:id="@+id/delete"
+                android:id="@+id/workday_note"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="?attr/selectableItemBackground"
-                android:gravity="center"
-                android:text="@string/ui_delete_task"
-                android:textColor="@color/ios_red"
-                android:textSize="17sp" />
-        </com.google.android.material.card.MaterialCardView>
-    </LinearLayout>
-</ScrollView>
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="2dp"
+                android:textColor="@color/ios_secondary"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <!-- Delete (edit only) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/delete_group"
+                style="@style/IosGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/delete"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:gravity="center"
+                    android:text="@string/ui_delete_task"
+                    android:textColor="@color/ios_red"
+                    android:textSize="16sp" />
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>

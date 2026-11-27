@@ -21,7 +21,7 @@ class IosList(private val ctx: Context, private val root: LinearLayout) {
             this.text = text.uppercase()
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setTextColor(ContextCompat.getColor(ctx, R.color.ios_secondary))
-            setPadding(dp(16), dp(20), dp(16), dp(6))
+            setPadding(dp(12), dp(14), dp(12), dp(4))
         })
     }
 
@@ -63,8 +63,8 @@ class IosList(private val ctx: Context, private val root: LinearLayout) {
             val row = LinearLayout(ctx).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = if (centered) Gravity.CENTER else Gravity.CENTER_VERTICAL
-                minimumHeight = dp(48)
-                setPadding(dp(16), dp(8), dp(16), dp(8))
+                minimumHeight = dp(44)
+                setPadding(dp(12), dp(6), dp(12), dp(6))
                 if (onClick != null) {
                     val tv = TypedValue()
                     ctx.theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
@@ -77,12 +77,12 @@ class IosList(private val ctx: Context, private val root: LinearLayout) {
             }, LinearLayout.LayoutParams(dp(14), dp(14)).apply { marginEnd = dp(14) })
             row.addView(TextView(ctx).apply {
                 text = title
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
                 setTextColor(titleColor ?: ContextCompat.getColor(ctx, R.color.ios_label))
             }, LinearLayout.LayoutParams(if (centered) LinearLayout.LayoutParams.WRAP_CONTENT else 0, LinearLayout.LayoutParams.WRAP_CONTENT, if (centered) 0f else 1f))
             if (value.isNotEmpty()) row.addView(TextView(ctx).apply {
                 text = value
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
                 setTextColor(ContextCompat.getColor(ctx, R.color.ios_secondary))
             })
             box.addView(row)

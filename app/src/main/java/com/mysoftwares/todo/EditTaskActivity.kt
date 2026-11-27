@@ -43,8 +43,8 @@ class EditTaskActivity : BaseActivity() {
     private lateinit var title: EditText
     private lateinit var notes: EditText
     private lateinit var important: SwitchCompat
-    private lateinit var rowDate: View
-    private lateinit var rowTime: View
+    private lateinit var whenDate: TextView
+    private lateinit var whenTime: TextView
     private lateinit var rowRepeat: View
     private lateinit var rowEarly: View
     private lateinit var rowWorkday: View
@@ -58,15 +58,15 @@ class EditTaskActivity : BaseActivity() {
         title = findViewById(R.id.title)
         notes = findViewById(R.id.notes)
         important = findViewById(R.id.important)
-        rowDate = findViewById(R.id.row_date)
-        rowTime = findViewById(R.id.row_time)
+        whenDate = findViewById(R.id.when_date)
+        whenTime = findViewById(R.id.when_time)
         rowRepeat = findViewById(R.id.row_repeat)
         rowEarly = findViewById(R.id.row_early)
         rowWorkday = findViewById(R.id.row_workday)
         rowCategory = findViewById(R.id.row_category)
 
-        setupRow(rowDate, R.drawable.ic_calendar, R.color.ios_red, "Date", chevron = false)
-        setupRow(rowTime, R.drawable.ic_clock, R.color.brand, "Time", chevron = false)
+        findViewById<ImageView>(R.id.when_icon).background.mutate().setTint(ContextCompat.getColor(this, R.color.ios_red))
+        findViewById<ImageView>(R.id.remind_icon).background.mutate().setTint(ContextCompat.getColor(this, R.color.brand))
         setupRow(rowRepeat, R.drawable.ic_repeat, R.color.ios_gray, "Repeat", chevron = true)
         setupRow(rowEarly, R.drawable.ic_bell_small, R.color.ios_indigo, "Early Reminders", chevron = true)
         setupRow(rowCategory, R.drawable.ic_tray, R.color.brand, "Category", chevron = true)
@@ -112,8 +112,8 @@ class EditTaskActivity : BaseActivity() {
         updateSaveEnabled()
         showSelections()
 
-        rowDate.setOnClickListener { pickDate() }
-        rowTime.setOnClickListener { pickTime() }
+        whenDate.setOnClickListener { pickDate() }
+        whenTime.setOnClickListener { pickTime() }
         rowRepeat.setOnClickListener {
             choose("Repeat", Repeat.entries.map { it.label }, repeatIndex) { repeatIndex = it; showSelections() }
         }
@@ -252,30 +252,30 @@ class EditTaskActivity : BaseActivity() {
 
     private fun showSelections() {
         val ms = whenAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val dateText = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(ms))
-        setValue(rowDate, dateText, accent = true)
-        setValue(rowTime, java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms)), accent = true)
+        whenDate.text = java.text.SimpleDateFormat("EEE, d MMM yyyy", java.util.Locale.getDefault()).format(java.util.Date(ms))
+        whenTime.text = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms))
         setValue(rowRepeat, if (repeatIndex == 0) "Never" else Repeat.entries[repeatIndex].label, accent = false)
         setValue(rowEarly, when (advances.size) {
             0 -> "None"
-            1 -> ADVANCE_OPTIONS.firstOrNull { it.first == advances.first() }?.second ?: "1 set"
-            else -> "${advances.size} set"
+            else -> advances.sorted().joinToString(", ") { m ->
+                // short labels: "1 day, 2 days"
+                ADVANCE_OPTIONS.firstOrNull { it.first == m }?.second?.removeSuffix(" before") ?: "$m min"
+            }
         }, accent = false)
         setValue(rowCategory, category.ifEmpty { "None" }, accent = false)
         rowCategory.findViewById<ImageView>(R.id.row_icon).background.mutate()
             .setTint(Categories.colorOf(this, category) ?: ContextCompat.getColor(this, R.color.ios_gray))
-        findViewById<TextView>(R.id.remind_note).text = if (remindType == RemindType.ALARM)
-            "Rings loudly with the full-screen alarm until you tap Done or Snooze."
-        else "Shows one notification with a sound, plus Done and Snooze buttons."
         findViewById<TextView>(R.id.important_note).text =
-            "Important tasks remind you again every ${AlarmPrefs.nagMinutes(this)} minutes until you mark them done."
+            (if (remindType == RemindType.ALARM) "Alarm: full-screen ringing. " else "Notification: one alert with Done / Snooze. ") +
+                "Important: reminds again every ${AlarmPrefs.nagMinutes(this)} min until Done." +
+                if (advances.isNotEmpty()) " Early reminders ring ${EarlyChime.TIMES} times." else ""
         val rep = Repeat.entries[repeatIndex]
         val showWorkday = rep.usesWorkdayRule()
         findViewById<View>(R.id.workday_wrap).visibility = if (showWorkday) View.VISIBLE else View.GONE
         setValue(rowWorkday, WorkdayRule.entries[workdayIndex].short, accent = false)
         findViewById<TextView>(R.id.workday_note).apply {
             visibility = if (showWorkday) View.VISIBLE else View.GONE
-            text = "Weekly off: ${WorkDays.offDays.label}. Change it in Settings → Weekly off."
+            text = "Weekly off: ${WorkDays.offDays.label} (Settings → Weekly off)."
         }
     }
 
