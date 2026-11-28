@@ -1,5 +1,6 @@
 package com.mysoftwares.todo
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -24,26 +25,24 @@ class BackupActivity : BaseActivity() {
         if (uri != null) restoreFrom(uri)
     }
 
+    /** "Save a copy…": writes an extra backup file without changing the automatic one. */
+    private val copyFile = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) io.execute {
+            val r = runCatching { Backup.writeTo(this, uri) }
+            runOnUiThread {
+                Toast.makeText(this, if (r.isSuccess) getString(R.string.backup_copy_saved) else getString(R.string.backup_failed, r.exceptionOrNull()?.message), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private lateinit var list: IosList
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_backup)
+        setContentView(R.layout.activity_list)
         setTitle(R.string.backup_title)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-
-        findViewById<MaterialButton>(R.id.backup_now).setOnClickListener {
-            val auto = Backup.autoUri(this)
-            if (auto != null && Backup.lastError(this) == null) backupTo(auto)
-            else createFile.launch("OfficeToDo-backup.json")
-        }
-        findViewById<MaterialButton>(R.id.backup_now).setOnLongClickListener {
-            createFile.launch("OfficeToDo-backup.json"); true // choose a different file
-        }
-        findViewById<MaterialButton>(R.id.auto_off).setOnClickListener {
-            Backup.disableAuto(this); render()
-        }
-        findViewById<MaterialButton>(R.id.restore).setOnClickListener {
-            openFile.launch(arrayOf("application/json", "text/plain", "application/octet-stream", "*/*"))
-        }
+        list = IosList(this, findViewById(R.id.content))
     }
 
     override fun onResume() {
@@ -51,23 +50,69 @@ class BackupActivity : BaseActivity() {
         render()
     }
 
+    private fun fileNameForToday() = "OfficeToDo-backup-${java.time.LocalDate.now()}.json"
+
     private fun render() {
+        list.clear()
         val auto = Backup.autoUri(this)
         val last = Backup.lastBackupAt(this)
         val error = Backup.lastError(this)
-        val ok = auto != null && error == null
+        val count = TaskDb.get(this).all().size
 
-        findViewById<MaterialCardView>(R.id.status_card)
-            .setCardBackgroundColor(ContextCompat.getColor(this, if (ok) R.color.ok else R.color.warn))
-        findViewById<TextView>(R.id.status_title).text =
-            if (ok) "✔  Automatic backup is on" else "No automatic backup"
-        findViewById<TextView>(R.id.status_text).text = when {
-            error != null -> error
-            auto != null -> "File: ${fileName(auto)}\nLast backup: " +
-                (if (last > 0) TaskAdapter.friendlyTime(last) else "not yet")
-            else -> "Tap “Back up now” and choose where to save the file."
+        // Status
+        list.label(getString(R.string.backup_status))
+        val status = list.group()
+        status.switchRow(getString(R.string.backup_auto), getString(R.string.backup_auto_hint), auto != null) { on ->
+            if (on) createFile.launch("OfficeToDo-backup.json") // choose where; then kept up to date
+            else { Backup.disableAuto(this); render() }
         }
-        findViewById<View>(R.id.auto_off).visibility = if (auto != null) View.VISIBLE else View.GONE
+        if (auto != null) {
+            status.row(getString(R.string.backup_file), fileName(auto))
+            status.row(
+                getString(R.string.backup_last),
+                if (last > 0) TaskAdapter.friendlyTime(last) else getString(R.string.backup_not_yet),
+                titleColor = null,
+            )
+        }
+        if (error != null) list.footer("⚠ $error")
+
+        // Back up
+        list.label(getString(R.string.ui_back_up))
+        val backup = list.group()
+        val accent = com.google.android.material.color.MaterialColors.getColor(findViewById<android.view.View>(R.id.content), androidx.appcompat.R.attr.colorPrimary)
+        backup.row(getString(R.string.ui_back_up_now), getString(R.string.backup_tasks_count, count), titleColor = accent) {
+            if (auto != null && error == null) backupTo(auto) else createFile.launch("OfficeToDo-backup.json")
+        }
+        backup.row(getString(R.string.backup_save_copy), titleColor = accent) { copyFile.launch(fileNameForToday()) }
+        backup.row(getString(R.string.backup_share), titleColor = accent) { share() }
+
+        // Restore
+        list.label(getString(R.string.ui_restore))
+        list.group().row(getString(R.string.backup_restore_from), titleColor = accent) {
+            openFile.launch(arrayOf("application/json", "text/plain", "application/octet-stream", "*/*"))
+        }
+        list.footer(getString(R.string.backup_footer))
+    }
+
+    /** "Share backup…": send the backup file with WhatsApp, Gmail, Drive… */
+    private fun share() {
+        io.execute {
+            val r = runCatching {
+                val dir = java.io.File(cacheDir, "reports").apply { mkdirs() }
+                val file = java.io.File(dir, fileNameForToday())
+                file.writeText(Backup.toJson(TaskDb.get(this).all()))
+                androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+            }
+            runOnUiThread {
+                r.onSuccess { uri ->
+                    startActivity(Intent.createChooser(
+                        Intent(Intent.ACTION_SEND).setType("application/json").putExtra(Intent.EXTRA_STREAM, uri)
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION),
+                        getString(R.string.backup_share)
+                    ))
+                }.onFailure { Toast.makeText(this, getString(R.string.backup_failed, it.message), Toast.LENGTH_LONG).show() }
+            }
+        }
     }
 
     private fun backupTo(uri: Uri) {

@@ -131,4 +131,18 @@
     <string name="msg_already_done">✔ Already done</string>
     <string name="appearance_system">System (follow phone)</string>
     <string name="appearance_text">Text</string>
+    <!-- Backup screen -->
+    <string name="backup_status">Status</string>
+    <string name="backup_auto">Automatic backup</string>
+    <string name="backup_auto_hint">Updates the file after every change</string>
+    <string name="backup_file">File</string>
+    <string name="backup_last">Last backup</string>
+    <string name="backup_not_yet">Not yet</string>
+    <string name="backup_tasks_count">%1$d tasks</string>
+    <string name="backup_save_copy">Save a copy…</string>
+    <string name="backup_share">Share backup…</string>
+    <string name="backup_restore_from">Restore from file…</string>
+    <string name="backup_copy_saved">Copy saved</string>
+    <string name="backup_failed">Backup failed: %1$s</string>
+    <string name="backup_footer">Tip: save the file in Google Drive so your tasks are safe if you change or lose your phone.</string>
 </resources>
