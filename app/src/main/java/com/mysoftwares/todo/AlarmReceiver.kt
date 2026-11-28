@@ -42,6 +42,7 @@ class AlarmReceiver : BroadcastReceiver() {
                     AlarmScheduler.schedule(context, task)
                     return
                 }
+                AlarmLog.record(context, task.alarmAt, now) // for Alarm health → Last 7 days
                 val rang = db.save(task.copy(rangFor = task.alarmAt))
                 if (task.remindType == RemindType.NOTIFICATION) notifyOnly(context, rang) else ring(context, task)
             }

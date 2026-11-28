@@ -126,6 +126,11 @@ object Reliability {
         }
     }
 
+    /** Battery settings for this app (where "Unrestricted" / "Don't optimise" is chosen). */
+    fun batterySettings(c: Context) {
+        if (!open(c, Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${c.packageName}")))) appDetails(c)
+    }
+
     fun appDetails(c: Context) {
         open(c, Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${c.packageName}")))
     }

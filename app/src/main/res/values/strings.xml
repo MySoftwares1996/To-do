@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Office To-Do</string>
-    <string name="setup_title">Alarm reliability</string>
+    <string name="setup_title">Alarm health</string>
     <string name="new_task">New task</string>
     <string name="edit_task">Edit task</string>
     <string name="banner_problems">⚠  %1$d setting(s) may stop your alarms. Tap to fix.</string>
@@ -146,7 +146,7 @@
     <string name="backup_failed">Backup failed: %1$s</string>
     <string name="backup_footer">Tip: save the file in Google Drive so your tasks are safe if you change or lose your phone.</string>
     <!-- Settings tab -->
-    <string name="set_alarm_check">Alarm check</string>
+    <string name="set_alarm_check">Alarm health</string>
     <string name="set_all_set">All set ›</string>
     <string name="set_to_fix">%1$d to fix ›</string>
     <string name="set_alarms_snooze">Alarms &amp; snooze</string>
@@ -179,4 +179,22 @@
     <string name="menu_delete">Delete</string>
     <string name="menu_copy_suffix">%1$s (copy)</string>
     <string name="menu_duplicated">Copy added – tap it to change the date</string>
+    <!-- Alarm health -->
+    <string name="health_title">Alarm health</string>
+    <string name="health_last7">Last 7 days</string>
+    <string name="health_no_alarms_yet">No alarms yet – tap Test alarm below</string>
+    <string name="health_all_on_time">%1$d alarms, all on time</string>
+    <string name="health_late">%1$d alarm(s) rang late (latest %2$s, %3$d min late) – the phone paused the app, often battery saver or the phone was off</string>
+    <string name="health_ok">OK</string>
+    <string name="health_checked_live">Checked live</string>
+    <string name="health_all_set">All set</string>
+    <string name="health_all_set_sub">Your alarms will ring on time</string>
+    <string name="health_score_sub">Score out of 100</string>
+    <string name="health_fix">Fix</string>
+    <string name="health_test_note">If you can hear this, alarms work. Tap Done.</string>
+    <string name="health_force_stop">Never use “Force stop” on this app – Android then cancels its alarms until you open it again.</string>
+    <plurals name="health_to_fix">
+        <item quantity="one">%d thing to fix</item>
+        <item quantity="other">%d things to fix</item>
+    </plurals>
 </resources>

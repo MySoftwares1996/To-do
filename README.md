@@ -29,6 +29,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
   **same day**, the **previous working day** or the **next working day**. Weekly off (Settings): Saturday & Sunday,
   Sunday only, or Sunday + 2nd & 4th Saturday
 - **Month-end / quarter-end without a date**: choose *Last day*, *Last day −1* … *−7* (e.g. −2 rings on 28 Nov, 26 Feb)
+- **Alarm health**: score out of 100, live checks with Fix buttons, and *Last 7 days* – warns when an alarm rang late (battery saver, phone off)
 - **Morning summary** notification (default 8:30 AM) with today's and overdue tasks
 - **Long-press a task**: Mark done · Snooze 1 hour · Duplicate · Delete
 - **Priority** per task: None / Low ! / Medium !! / High !!! – shown in the list, higher priority sorts first
@@ -54,7 +55,7 @@ Its main job is to **ring a real alarm and show a notification at the exact time
 | App killed | Every time you open the app, all alarms are re-armed |
 
 ### What you must do once on your phone
-Open **Settings → Alarm reliability** and make every item green. On Xiaomi, OPPO, vivo,
+Open **Settings → Alarm health** and make every item green. On Xiaomi, OPPO, vivo,
 realme, OnePlus, Huawei or Samsung phones, also turn on **Autostart** and set battery usage to
 **Unrestricted** (the screen shows instructions for your brand). Then tap **Test alarm**
 and lock the phone.
