@@ -24,7 +24,6 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import java.io.File
@@ -39,7 +38,7 @@ class MainActivity : BaseActivity() {
     private var query = ""
     private var searchOpen = false
     private lateinit var search: android.widget.EditText
-    private lateinit var bottomNav: BottomNavigationView
+    private lateinit var bottomNav: PillTabBar
     private lateinit var settingsPage: View
     private var askedPermission = false
     private val io = AppExecutors.io
@@ -54,7 +53,7 @@ class MainActivity : BaseActivity() {
 
     /** Back from another tab returns to Today first. */
     private val backToToday = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() { bottomNav.selectedItemId = R.id.tab_today }
+        override fun handleOnBackPressed() { bottomNav.select(R.id.tab_today) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +71,12 @@ class MainActivity : BaseActivity() {
             override fun afterTextChanged(s: android.text.Editable?) { query = s?.toString().orEmpty(); refresh() }
         })
         bottomNav = findViewById(R.id.bottom_nav)
-        bottomNav.isItemActiveIndicatorEnabled = false
+        bottomNav.setItems(listOf(
+            PillTabBar.Item(R.id.tab_today, R.drawable.ic_calendar, getString(R.string.ui_today)),
+            PillTabBar.Item(R.id.tab_upcoming, R.drawable.ic_clock, getString(R.string.ui_upcoming)),
+            PillTabBar.Item(R.id.tab_done, R.drawable.ic_check_circle, getString(R.string.ui_done_2)),
+            PillTabBar.Item(R.id.tab_settings, R.drawable.ic_settings, getString(R.string.ui_settings)),
+        ))
         onBackPressedDispatcher.addCallback(this, backToToday)
         setupSettings()
 
@@ -87,23 +91,21 @@ class MainActivity : BaseActivity() {
         list.itemAnimator?.changeDuration = 150
         attachSwipe()
 
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
+        bottomNav.onSelect = { id ->
+            when (id) {
                 R.id.tab_today -> showTab(Tab.TODAY)
                 R.id.tab_upcoming -> showTab(Tab.UPCOMING)
                 R.id.tab_done -> showTab(Tab.DONE)
                 R.id.tab_settings -> showSettings()
             }
-            true
         }
         val saved = savedInstanceState?.getString("tab")
-        bottomNav.selectedItemId = when (saved) {
+        bottomNav.select(when (saved) {
             "UPCOMING" -> R.id.tab_upcoming
             "DONE" -> R.id.tab_done
             "SETTINGS" -> R.id.tab_settings
             else -> R.id.tab_today
-        }
-        // Selecting the already-selected item fires no callback, so show the page directly too.
+        }, animate = false, notify = false)
         when (saved) {
             "UPCOMING" -> showTab(Tab.UPCOMING)
             "DONE" -> showTab(Tab.DONE)
@@ -128,6 +130,9 @@ class MainActivity : BaseActivity() {
         invalidateOptionsMenu()
         refresh()
         list.scrollToPosition(0)
+        // Live animation: the list slides in and tasks drop in one after another.
+        animateIn(list)
+        list.scheduleLayoutAnimation()
     }
 
     private fun showSettings() {
@@ -139,6 +144,7 @@ class MainActivity : BaseActivity() {
         backToToday.isEnabled = true
         invalidateOptionsMenu()
         refreshSettings()
+        animateIn(settingsPage)
     }
 
     // ---- Settings tab ----
@@ -339,11 +345,7 @@ class MainActivity : BaseActivity() {
         // Red badge on the Today tab = number of overdue tasks.
         val now = System.currentTimeMillis()
         val overdue = tasks.count { !it.done && it.dueAt < now }
-        bottomNav.getOrCreateBadge(R.id.tab_today).apply {
-            number = overdue
-            isVisible = overdue > 0
-            backgroundColor = ContextCompat.getColor(this@MainActivity, R.color.ios_red)
-        }
+        bottomNav.setBadge(R.id.tab_today, overdue)
         if (onSettings) refreshSettings()
     }
 
@@ -461,6 +463,14 @@ class MainActivity : BaseActivity() {
     }
 
     private fun toast(msg: String) = updates.toast(msg)
+
+    /** Fade + slide a page in when its tab is opened. */
+    private fun animateIn(v: View) {
+        v.alpha = 0f
+        v.translationY = 24 * resources.displayMetrics.density
+        v.animate().alpha(1f).translationY(0f).setDuration(220)
+            .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+    }
 
     /** Title and one-line summary in the top bar (null = keep the current text). */
     private fun setHeader(title: String?, subtitle: String?) {

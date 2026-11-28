@@ -86,10 +86,11 @@
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layoutAnimation="@anim/list_drop_in"
         android:clipToPadding="false"
         android:paddingHorizontal="10dp"
         android:paddingTop="4dp"
-        android:paddingBottom="96dp"
+        android:paddingBottom="84dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <!-- Settings tab content -->
@@ -99,7 +100,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:paddingTop="4dp"
-        android:paddingBottom="96dp"
+        android:paddingBottom="84dp"
         android:visibility="gone"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -188,17 +189,11 @@
     </androidx.core.widget.NestedScrollView>
 
     <!-- Bottom tabs -->
-    <com.google.android.material.bottomnavigation.BottomNavigationView
+    <!-- Bottom tabs: selected tab is a coloured pill with icon + label (animated) -->
+    <com.mysoftwares.todo.PillTabBar
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="@drawable/bg_tab_bar"
-        app:elevation="0dp"
-        app:itemIconTint="@color/tab_tint"
-        app:itemTextColor="@color/tab_tint"
-        app:itemTextAppearanceActive="@style/TabLabel"
-        app:itemTextAppearanceInactive="@style/TabLabel"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/bottom_tabs" />
+        android:background="@drawable/bg_tab_bar" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

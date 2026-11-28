@@ -147,20 +147,23 @@
                             android:src="@drawable/ic_calendar" />
 
                         <TextView
-                            android:layout_width="0dp"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
-                            android:layout_weight="1"
+                            android:maxLines="1"
                             android:text="@string/ui_when"
                             android:textColor="@color/ios_label"
                             android:textSize="16sp" />
 
                         <TextView
                             android:id="@+id/when_date"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="44dp"
+                            android:layout_weight="1"
                             android:background="?attr/selectableItemBackground"
-                            android:gravity="center"
+                            android:ellipsize="end"
+                            android:gravity="center_vertical|end"
+                            android:maxLines="1"
                             android:paddingHorizontal="8dp"
                             android:textColor="?attr/colorPrimary"
                             android:textSize="16sp" />
@@ -169,6 +172,7 @@
                             android:id="@+id/when_time"
                             android:layout_width="wrap_content"
                             android:layout_height="44dp"
+                            android:maxLines="1"
                             android:background="?attr/selectableItemBackground"
                             android:gravity="center"
                             android:paddingStart="6dp"
@@ -201,6 +205,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
                             android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:maxLines="1"
                             android:text="@string/ui_remind_with"
                             android:textColor="@color/ios_label"
                             android:textSize="16sp" />

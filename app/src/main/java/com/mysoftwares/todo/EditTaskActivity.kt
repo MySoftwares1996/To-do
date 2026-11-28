@@ -249,7 +249,9 @@ class EditTaskActivity : BaseActivity() {
 
     private fun showSelections() {
         val ms = whenAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        whenDate.text = java.text.SimpleDateFormat("EEE, d MMM yyyy", java.util.Locale.getDefault()).format(java.util.Date(ms))
+        // Short date; the year is shown only when it is not this year.
+        val pattern = if (whenAt.year == LocalDate.now().year) "EEE, d MMM" else "EEE, d MMM yyyy"
+        whenDate.text = java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(java.util.Date(ms))
         whenTime.text = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms))
         setValue(rowRepeat, if (repeatIndex == 0) "Never" else Repeat.entries[repeatIndex].label, accent = false)
         setValue(rowEarly, when (advances.size) {
