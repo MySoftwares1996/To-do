@@ -42,7 +42,7 @@
     <string name="ui_task_list_style">Task list style</string>
     <string name="ui_grouped">Grouped</string>
     <string name="ui_cards">Cards</string>
-    <string name="ui_grouped_one_white_list_per_section_like_">Grouped: one list per section. Cards: each task on its own card.</string>
+    <string name="ui_grouped_one_white_list_per_section_like_">Grouped: tasks of a section joined in one list with thin lines. Cards: every task on its own floating card with a shadow and space between.</string>
     <string name="ui_large_text">Large text</string>
     <string name="ui_bigger_task_titles_and_times">Bigger task titles and times</string>
     <string name="ui_important_do_it_now">⚠  IMPORTANT – do it now</string>

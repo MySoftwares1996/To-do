@@ -233,11 +233,15 @@ class TaskAdapter(
             else -> R.drawable.bg_cell_middle
         }
         v.setBackgroundResource(bg)
+        // Cards: each task floats on its own with a gap and a soft shadow. Grouped: one joined list.
+        val d = ctx.resources.displayMetrics.density
         (v.layoutParams as? RecyclerView.LayoutParams)?.let {
-            val m = if (grouped) 0 else (3 * ctx.resources.displayMetrics.density).toInt()
+            val m = if (grouped) 0 else (6 * d).toInt()
             it.topMargin = m; it.bottomMargin = m
+            it.leftMargin = if (grouped) 0 else (2 * d).toInt(); it.rightMargin = it.leftMargin
             v.layoutParams = it
         }
+        v.elevation = if (grouped) 0f else 3 * d
         v.findViewById<View>(R.id.divider).visibility = if (grouped && !row.last) View.VISIBLE else View.GONE
 
         val title = v.findViewById<TextView>(R.id.title)
