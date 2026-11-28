@@ -42,6 +42,7 @@ object Backup {
                 put("remindType", t.remindType.name)
                 put("priority", t.priority.name)
                 put("endOffset", t.endOffset)
+                put("autoRepeat", t.autoRepeat)
                 put("done", t.done)
                 put("snoozeUntil", t.snoozeUntil)
                 put("rangFor", t.rangFor)
@@ -79,6 +80,7 @@ object Backup {
                 remindType = runCatching { RemindType.valueOf(o.optString("remindType")) }.getOrDefault(RemindType.ALARM),
                 priority = runCatching { Priority.valueOf(o.optString("priority")) }.getOrDefault(Priority.NONE),
                 endOffset = o.optInt("endOffset"),
+                autoRepeat = o.optBoolean("autoRepeat"),
                 done = o.optBoolean("done"),
                 snoozeUntil = o.optLong("snoozeUntil"),
                 rangFor = o.optLong("rangFor"),

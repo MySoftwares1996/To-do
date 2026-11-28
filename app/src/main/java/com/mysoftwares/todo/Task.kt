@@ -74,6 +74,8 @@ data class Task(
     val priority: Priority = Priority.NONE,
     /** Month-end / quarter-end: ring this many days before the last day (0 = last day). */
     val endOffset: Int = 0,
+    /** True when snoozeUntil was set automatically (important task repeating until Done), not by the user. */
+    val autoRepeat: Boolean = false,
 ) {
     /** When the main alarm should ring. */
     val alarmAt: Long get() = if (snoozeUntil > 0) snoozeUntil else dueAt

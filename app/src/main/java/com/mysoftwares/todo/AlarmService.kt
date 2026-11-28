@@ -146,7 +146,7 @@ class AlarmService : Service() {
     private fun handleUnanswered(task: Task) {
         val db = TaskDb.get(this)
         val updated = if (task.important) {
-            db.save(task.copy(snoozeUntil = System.currentTimeMillis() + AlarmPrefs.nagMinutes(this) * 60_000L))
+            db.save(task.copy(snoozeUntil = System.currentTimeMillis() + AlarmPrefs.nagMinutes(this) * 60_000L, autoRepeat = true))
         } else task
         AlarmScheduler.schedule(this, updated)
         Notifications.showMissed(this, updated)

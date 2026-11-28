@@ -350,6 +350,7 @@ class EditTaskActivity : BaseActivity() {
                 priority = priority,
                 done = false,
                 snoozeUntil = 0,
+                autoRepeat = false,
                 rangFor = 0,
                 advanceShownFor = 0,
                 workday = rule,

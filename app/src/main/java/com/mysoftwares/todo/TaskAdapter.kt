@@ -293,7 +293,7 @@ class TaskAdapter(
             if (t.snoozeUntil > 0) {
                 val at = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
                 // Important tasks that already rang repeat automatically until Done.
-                tag(if (t.important && t.rangFor > 0) "⟳ $at" else "⏰ $at", accent)
+                tag(if (t.autoRepeat) "⟳ $at" else "⏰ $at", accent) // ⟳ = automatic repeat, ⏰ = your snooze
             }
         }
         if (t.repeat != Repeat.NONE) tag(

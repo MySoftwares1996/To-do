@@ -57,6 +57,32 @@
                     android:layout_marginStart="6dp"
                     android:textSize="15sp"
                     android:textStyle="bold" />
+
+                <!-- Time: bold time, then "in 21 min" / day in the accent colour -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:gravity="end"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/sub"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:textColor="@color/ios_label"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/sub2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:maxLines="1"
+                        android:textSize="12sp" />
+                </LinearLayout>
             </LinearLayout>
 
             <!-- Small coloured tags on ONE line (slide sideways if they don't all fit) -->
@@ -87,32 +113,6 @@
                 android:textSize="12.5sp" />
         </LinearLayout>
 
-        <!-- Time column: bold time, then "in 21 min" in the accent colour -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:gravity="end"
-            android:orientation="vertical"
-            android:paddingTop="10dp">
-
-            <TextView
-                android:id="@+id/sub"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:textColor="@color/ios_label"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/sub2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:maxLines="1"
-                android:textSize="12sp" />
-        </LinearLayout>
     </LinearLayout>
 
     <!-- Hairline divider, indented like iOS -->

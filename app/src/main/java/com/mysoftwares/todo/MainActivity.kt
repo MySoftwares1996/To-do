@@ -286,7 +286,7 @@ class MainActivity : BaseActivity() {
             val copy = TaskDb.get(this).save(
                 task.copy(
                     id = 0, title = getString(R.string.menu_copy_suffix, task.title), done = false,
-                    dueAt = nextDue, snoozeUntil = 0, advanceShownFor = 0,
+                    dueAt = nextDue, snoozeUntil = 0, advanceShownFor = 0, autoRepeat = false,
                     rangFor = if (nextDue <= now) nextDue else 0,
                 )
             )

@@ -58,7 +58,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 val db = TaskDb.get(context)
                 AlarmScheduler.schedule(
                     context,
-                    db.save(task.copy(snoozeUntil = System.currentTimeMillis() + AlarmPrefs.nagMinutes(context) * 60_000L))
+                    db.save(task.copy(snoozeUntil = System.currentTimeMillis() + AlarmPrefs.nagMinutes(context) * 60_000L, autoRepeat = true))
                 )
             }
         }

@@ -17,10 +17,10 @@ object TaskActions {
             db.logDone(t, System.currentTimeMillis()) // for the monthly report
             val next = Recurrence.nextAfter(t.startAt, t.repeat, maxOf(System.currentTimeMillis(), t.dueAt), t.workday, t.endOffset)
             val saved = if (next == null) {
-                db.save(t.copy(done = true, snoozeUntil = 0))
+                db.save(t.copy(done = true, snoozeUntil = 0, autoRepeat = false))
             } else {
                 // Repeating task: move on to the next occurrence.
-                db.save(t.copy(dueAt = next, snoozeUntil = 0, rangFor = 0, advanceShownFor = 0))
+                db.save(t.copy(dueAt = next, snoozeUntil = 0, rangFor = 0, advanceShownFor = 0, autoRepeat = false))
             }
             AlarmScheduler.schedule(context, saved)
         }
@@ -33,7 +33,7 @@ object TaskActions {
             if (!t.done) {
                 AlarmScheduler.schedule(
                     context,
-                    db.save(t.copy(snoozeUntil = System.currentTimeMillis() + minutes * 60_000L))
+                    db.save(t.copy(snoozeUntil = System.currentTimeMillis() + minutes * 60_000L, autoRepeat = false))
                 )
             }
         }
@@ -44,14 +44,14 @@ object TaskActions {
     fun snoozeUntil(context: Context, id: Long, at: Long) {
         val db = TaskDb.get(context)
         db.get(id)?.let { t ->
-            if (!t.done) AlarmScheduler.schedule(context, db.save(t.copy(snoozeUntil = at)))
+            if (!t.done) AlarmScheduler.schedule(context, db.save(t.copy(snoozeUntil = at, autoRepeat = false)))
         }
         finishAlarm(context, id)
     }
 
     fun undoDone(context: Context, id: Long) {
         val db = TaskDb.get(context)
-        db.get(id)?.let { AlarmScheduler.schedule(context, db.save(it.copy(done = false, rangFor = 0, snoozeUntil = 0))) }
+        db.get(id)?.let { AlarmScheduler.schedule(context, db.save(it.copy(done = false, rangFor = 0, snoozeUntil = 0, autoRepeat = false))) }
     }
 
     fun delete(context: Context, id: Long) {
