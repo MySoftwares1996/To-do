@@ -112,10 +112,10 @@ object Backup {
         return fromJson(text) to at
     }
 
-    /** "OfficeToDo-backup-2026-11-28_23-28.json": date and time of the backup in the file name. */
+    /** "ToDo_backup_26-11-28_113955.json": date and time of the backup in the file name. */
     fun fileNameNow(): String =
-        "OfficeToDo-backup-" + java.time.LocalDateTime.now()
-            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm")) + ".json"
+        "ToDo_backup_" + java.time.LocalDateTime.now()
+            .format(java.time.format.DateTimeFormatter.ofPattern("yy-MM-dd_HHmmss")) + ".json"
 
     /**
      * Restores tasks and re-arms their alarms.
