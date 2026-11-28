@@ -73,12 +73,24 @@ data class Task(
     /** When the main alarm should ring. */
     val alarmAt: Long get() = if (snoozeUntil > 0) snoozeUntil else dueAt
 
-    /** The next early reminder still to show for this occurrence, or null. */
-    val advanceAt: Long?
-        get() = if (done) null else advances.filter { it > 0 }
+    /** Early-reminder times of this occurrence that were not shown yet. */
+    private fun pendingAdvances(): List<Long> =
+        if (done) emptyList() else advances.filter { it > 0 }
             .map { dueAt - it * 60_000L }
             .filter { it > advanceShownFor && it < dueAt }
-            .minOrNull()
+
+    /** The next early reminder still to show for this occurrence, or null. */
+    val advanceAt: Long? get() = pendingAdvances().minOrNull()
+
+    /**
+     * The next early reminder to arm after [now]. Reminders whose time already passed
+     * (e.g. "1 week before" on a task created 2 days before) are skipped, so the later
+     * ones ("1 day before") still ring.
+     */
+    fun nextAdvanceAfter(now: Long): Long? = pendingAdvances().filter { it > now }.minOrNull()
+
+    /** The early reminder that is due at [now] (the latest one not after now + 1 min), or null. */
+    fun dueAdvance(now: Long): Long? = pendingAdvances().filter { it <= now + 60_000 }.maxOrNull()
 }
 
 object Recurrence {

@@ -20,6 +20,19 @@ class TaskLogicTest {
         assertEquals(due - 2880 * min, t.advanceAt)
     }
 
+    @Test fun pastEarlyReminderDoesNotBlockLaterOnes() {
+        // Created 2 days before due with "1 week" and "1 day" reminders: the 1-week time has passed.
+        val t = task(listOf(1440, 7 * 1440))
+        val now = due - 2 * 1440 * min
+        assertEquals(due - 1440 * min, t.nextAdvanceAfter(now))
+    }
+
+    @Test fun dueAdvancePicksLatestPassedOne() {
+        val t = task(listOf(1440, 7 * 1440))
+        assertEquals(due - 1440 * min, t.dueAdvance(due - 1440 * min + 30_000))
+        assertNull(t.dueAdvance(due - 3 * 1440 * min))
+    }
+
     @Test fun noneLeftAfterLastShown() = assertNull(task(listOf(1440), shown = due - 1440 * min).advanceAt)
 
     @Test fun noRemindersWhenDone() = assertNull(task(listOf(1440), done = true).advanceAt)

@@ -64,7 +64,7 @@ class TaskWidget : AppWidgetProvider() {
 
             for (t in pending.take(maxRows)) {
                 val row = RemoteViews(context.packageName, R.layout.widget_row)
-                row.setTextViewText(R.id.row_title, t.title)
+                row.setTextViewText(R.id.row_title, if (t.priority.marks.isEmpty()) t.title else "${t.priority.marks} ${t.title}")
                 row.setTextViewText(R.id.row_time, (if (t.dueAt < now) "Overdue · " else "") + TaskAdapter.friendlyTime(t.dueAt))
                 val color = when {
                     t.dueAt < now -> R.color.danger

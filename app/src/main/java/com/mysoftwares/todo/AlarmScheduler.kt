@@ -34,8 +34,8 @@ object AlarmScheduler {
         }
 
         // Advance ("due tomorrow") reminder, only if still in the future.
-        task.advanceAt?.let { at ->
-            if (at > now && task.snoozeUntil == 0L) {
+        task.nextAdvanceAfter(now)?.let { at ->
+            if (task.snoozeUntil == 0L) {
                 setAlarm(context, at, alarmIntent(context, task.id, ACTION_ADVANCE))
             }
         }
