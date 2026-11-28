@@ -253,7 +253,11 @@ class TaskAdapter(
         if (t.important && !t.done) extras += "⚠ Important"
         if (t.remindType == RemindType.NOTIFICATION) extras += "🔔 Notification"
         if (t.repeat != Repeat.NONE) extras += "↻ " + t.repeat.label
-        if (t.snoozeUntil > 0 && !t.done) extras += "⏰ Snoozed to " + DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
+        if (t.snoozeUntil > 0 && !t.done) {
+            val at = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
+            // Important tasks that already rang repeat automatically until Done.
+            extras += if (t.important && t.rangFor > 0) "🔁 Again at $at until Done" else "⏰ Snoozed to $at"
+        }
         if (t.notes.isNotBlank()) extras += t.notes.lineSequence().first()
         v.findViewById<TextView>(R.id.repeat).apply {
             val line = android.text.SpannableStringBuilder()

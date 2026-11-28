@@ -61,6 +61,7 @@ object TaskActions {
     }
 
     private fun finishAlarm(context: Context, id: Long) {
+        EarlyChime.stop(id)
         Notifications.cancel(context, id)
         AlarmService.stopIfRinging(context, id)
     }

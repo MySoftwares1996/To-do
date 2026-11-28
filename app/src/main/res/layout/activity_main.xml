@@ -84,6 +84,8 @@
                     <include layout="@layout/divider_inset" />
                     <include android:id="@+id/set_snooze" layout="@layout/item_form_row" />
                     <include layout="@layout/divider_inset" />
+                    <include android:id="@+id/set_morning" layout="@layout/item_form_row" />
+                    <include layout="@layout/divider_inset" />
                     <include android:id="@+id/set_nag" layout="@layout/item_form_row" />
                     <include layout="@layout/divider_inset" />
                     <include android:id="@+id/set_ring" layout="@layout/item_form_row" />

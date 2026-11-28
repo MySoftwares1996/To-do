@@ -19,9 +19,9 @@ class SetupActivity : BaseActivity() {
 
         findViewById<Button>(R.id.test).setOnClickListener {
             val at = System.currentTimeMillis() + 60_000
-            val t = TaskDb.get(this).save(Task(title = "Test alarm", notes = "If you can hear this, alarms work. Tap Done.", startAt = at, dueAt = at))
+            val t = TaskDb.get(this).save(Task(title = getString(R.string.msg_test_alarm), notes = "If you can hear this, alarms work. Tap Done.", startAt = at, dueAt = at))
             AlarmScheduler.schedule(this, t)
-            Toast.makeText(this, "Test alarm in 1 minute. Lock the phone now and wait.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.msg_test_alarm_in_1_minute_lock_the_phone_), Toast.LENGTH_LONG).show()
         }
         findViewById<Button>(R.id.app_info).setOnClickListener { Reliability.appDetails(this) }
     }

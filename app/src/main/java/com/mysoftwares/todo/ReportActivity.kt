@@ -19,7 +19,7 @@ class ReportActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_list)
-        title = "Monthly report"
+        title = getString(R.string.msg_monthly_report)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         list = IosList(this, findViewById(R.id.content))
         savedInstanceState?.getString("month")?.let { month = YearMonth.parse(it) }
@@ -39,7 +39,7 @@ class ReportActivity : BaseActivity() {
 
     private fun render() {
         list.clear()
-        list.label("Month")
+        list.label(getString(R.string.msg_month))
         val g = list.group()
         val fmt = DateTimeFormatter.ofPattern("MMMM yyyy")
         (0L until 12L).map { YearMonth.now().minusMonths(it) }.forEach { m ->
@@ -47,10 +47,17 @@ class ReportActivity : BaseActivity() {
         }
         val (from, to) = range(month)
         val done = TaskDb.get(this).history(from, to)
-        val late = done.count { it.doneAt > it.dueAt + 60 * 60_000L } // more than an hour after due
+        val late = done.count { !AlarmPrefs.isOnTime(this, it.dueAt, it.doneAt) }
         list.footer("${done.size} tasks completed in ${fmt.format(month)}" + if (late > 0) " · $late completed late." else ".")
+        list.label(getString(R.string.report_on_time_means))
+        val onTime = list.group()
+        AlarmPrefs.ON_TIME_CHOICES.forEach { (m, label) ->
+            onTime.row(label, if (AlarmPrefs.onTimeMinutes(this) == m) "✓" else "") {
+                AlarmPrefs.setOnTimeMinutes(this, m); render()
+            }
+        }
         list.group().row(
-            "Share Excel (CSV) file", titleColor = ContextCompat.getColor(this, R.color.brand), centered = true
+            getString(R.string.report_share), titleColor = ContextCompat.getColor(this, R.color.brand), centered = true
         ) { share(done) }
     }
 
@@ -62,7 +69,7 @@ class ReportActivity : BaseActivity() {
             done.forEach {
                 append(listOf(
                     q(it.title), q(dt.format(Date(it.dueAt))), q(dt.format(Date(it.doneAt))),
-                    if (it.doneAt <= it.dueAt + 60 * 60_000L) "Yes" else "No",
+                    if (AlarmPrefs.isOnTime(this, it.dueAt, it.doneAt)) "Yes" else "No",
                 ).joinToString(",")).append("\r\n")
             }
         }

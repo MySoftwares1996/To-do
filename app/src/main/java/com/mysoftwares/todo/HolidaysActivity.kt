@@ -21,7 +21,7 @@ class HolidaysActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_list)
-        title = "Holidays"
+        title = getString(R.string.msg_holidays)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         list = IosList(this, findViewById(R.id.content))
         WorkDays.pruneOld(this)
@@ -35,14 +35,14 @@ class HolidaysActivity : BaseActivity() {
         val fmt = DateTimeFormatter.ofPattern("EEE, d MMM")
         val byYear = WorkDays.holidays.toSortedMap().entries.groupBy { it.key.year }
         if (byYear.isEmpty()) {
-            list.label("Holidays")
-            list.group().row("No holidays yet", "", centered = true)
+            list.label(getString(R.string.msg_holidays))
+            list.group().row(getString(R.string.msg_no_holidays_yet), "", centered = true)
         }
         byYear.forEach { (year, items) ->
             list.label(year.toString())
             val g = list.group()
             items.forEach { (date, name) ->
-                g.row(name.ifBlank { "Holiday" }, fmt.format(date)) { confirmDelete(date, name) }
+                g.row(name.ifBlank { getString(R.string.msg_holiday) }, fmt.format(date)) { confirmDelete(date, name) }
             }
         }
         list.footer(
@@ -53,9 +53,9 @@ class HolidaysActivity : BaseActivity() {
 
     private fun confirmDelete(date: LocalDate, name: String) {
         AlertDialog.Builder(this)
-            .setTitle("Delete ${name.ifBlank { "holiday" }}?")
-            .setPositiveButton("Delete") { _, _ -> update(WorkDays.holidays - date) }
-            .setNegativeButton("Cancel", null)
+            .setTitle("Delete ${name.ifBlank { getString(R.string.msg_holiday_2) }}?")
+            .setPositiveButton(getString(R.string.msg_delete)) { _, _ -> update(WorkDays.holidays - date) }
+            .setNegativeButton(getString(R.string.ui_cancel), null)
             .show()
     }
 
@@ -66,7 +66,7 @@ class HolidaysActivity : BaseActivity() {
     }
 
     private fun addHoliday() {
-        val picker = MaterialDatePicker.Builder.datePicker().setTitleText("Holiday date").build()
+        val picker = MaterialDatePicker.Builder.datePicker().setTitleText(getString(R.string.msg_holiday_date)).build()
         attach(picker)
         picker.show(supportFragmentManager, "date")
     }
@@ -81,16 +81,16 @@ class HolidaysActivity : BaseActivity() {
     private fun askName(date: LocalDate) {
         val pad = (20 * resources.displayMetrics.density).toInt()
         val input = EditText(this).apply {
-            hint = "Name, e.g. Diwali"
+            hint = getString(R.string.msg_name_e_g_diwali)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
             setTextColor(ContextCompat.getColor(context, R.color.ios_label))
         }
         val box = FrameLayout(this).apply { setPadding(pad, pad / 2, pad, 0); addView(input) }
         AlertDialog.Builder(this)
-            .setTitle(DateTimeFormatter.ofPattern("EEEE, d MMM yyyy").format(date))
+            .setTitle(DateTimeFormatter.ofPattern(getString(R.string.msg_eeee_d_mmm_yyyy)).format(date))
             .setView(box)
-            .setPositiveButton("Add") { _, _ -> update(WorkDays.holidays + (date to input.text.toString().trim())) }
-            .setNegativeButton("Cancel", null)
+            .setPositiveButton(getString(R.string.ui_add)) { _, _ -> update(WorkDays.holidays + (date to input.text.toString().trim())) }
+            .setNegativeButton(getString(R.string.ui_cancel), null)
             .show()
     }
 

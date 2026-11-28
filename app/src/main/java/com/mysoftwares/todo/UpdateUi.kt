@@ -28,13 +28,13 @@ class UpdateUi(private val a: AppCompatActivity) {
     fun toast(msg: String) = Toast.makeText(a, msg, Toast.LENGTH_LONG).show()
 
     fun checkForUpdate(manual: Boolean): Unit = a.run<AppCompatActivity, Unit> {
-        if (manual) toast("Checking for updates…")
+        if (manual) toast(a.getString(R.string.msg_checking_for_updates))
         io.execute {
             val rel = runCatching { Updater.fetchLatest() }.getOrNull()
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
                 when {
-                    rel == null -> if (manual) toast("Could not check for updates. Please check your internet connection.")
+                    rel == null -> if (manual) toast(a.getString(R.string.msg_could_not_check_for_updates_please_che))
                     rel.versionCode > Updater.currentVersionCode -> showUpdateDialog(rel)
                     manual -> toast("You have the latest version (${Updater.currentVersionName}).")
                 }
@@ -45,7 +45,7 @@ class UpdateUi(private val a: AppCompatActivity) {
     /** The new version uses the new private signing key: a one-time reinstall is needed. */
     private fun showReinstallHelp(): Unit = a.run<AppCompatActivity, Unit> {
         AlertDialog.Builder(this)
-            .setTitle("One-time reinstall needed")
+            .setTitle(a.getString(R.string.msg_one_time_reinstall_needed))
             .setMessage(
                 "This update is signed with a new, more secure key, so Android can't install it over this version.\n\n" +
                     "1. Settings → Backup & restore → Back up now\n" +
@@ -54,26 +54,26 @@ class UpdateUi(private val a: AppCompatActivity) {
                     "4. Settings → Backup & restore → Restore from file\n\n" +
                     "After this, updates install normally again."
             )
-            .setPositiveButton("Back up now") { _, _ -> startActivity(Intent(this, BackupActivity::class.java)) }
-            .setNeutralButton("Releases page") { _, _ ->
+            .setPositiveButton(a.getString(R.string.ui_back_up_now)) { _, _ -> startActivity(Intent(this, BackupActivity::class.java)) }
+            .setNeutralButton(a.getString(R.string.msg_releases_page)) { _, _ ->
                 runCatching {
                     startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(Updater.RELEASES_PAGE)))
                 }
             }
-            .setNegativeButton("Later", null)
+            .setNegativeButton(a.getString(R.string.msg_later), null)
             .show()
     }
 
     private fun showUpdateDialog(rel: Updater.Release): Unit = a.run<AppCompatActivity, Unit> {
         val notes = rel.notes.trim().take(600)
         AlertDialog.Builder(this)
-            .setTitle("Update available")
+            .setTitle(a.getString(R.string.msg_update_available))
             .setMessage(
                 "Version ${rel.versionName} is ready (you have ${Updater.currentVersionName}).\n" +
                     "Your tasks and alarms are kept." + if (notes.isNotEmpty()) "\n\nWhat's new:\n$notes" else ""
             )
-            .setPositiveButton("Update now") { _, _ -> downloadAndInstall(rel) }
-            .setNegativeButton("Later", null)
+            .setPositiveButton(a.getString(R.string.msg_update_now)) { _, _ -> downloadAndInstall(rel) }
+            .setNegativeButton(a.getString(R.string.msg_later), null)
             .show()
     }
 
@@ -85,7 +85,7 @@ class UpdateUi(private val a: AppCompatActivity) {
             setPadding(pad, pad, pad, pad)
         }
         val dialog = AlertDialog.Builder(this)
-            .setTitle("Downloading update…")
+            .setTitle(a.getString(R.string.msg_downloading_update))
             .setView(bar)
             .setCancelable(false)
             .show()
@@ -99,7 +99,7 @@ class UpdateUi(private val a: AppCompatActivity) {
                     if (!Updater.sameSigner(this, apk)) { showReinstallHelp(); return@onSuccess }
                     if (!Updater.install(this, apk)) {
                         pendingApk = apk
-                        toast("Allow 'Install unknown apps' for Office To-Do, then press Back to continue.")
+                        toast(a.getString(R.string.msg_allow_install_unknown_apps_for_office_))
                     }
                 }.onFailure { toast("Update failed: ${it.message}") }
             }

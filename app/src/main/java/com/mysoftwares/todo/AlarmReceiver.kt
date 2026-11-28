@@ -15,7 +15,7 @@ class AlarmReceiver : BroadcastReceiver() {
         // Keep the CPU awake until the ringing service has started.
         val wl = context.getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OfficeToDo:alarm")
-        wl.acquire(60_000)
+        wl.acquire(10_000) // enough to start the ringing service, which holds its own wake lock
 
         val db = TaskDb.get(context)
         val task = db.get(id) ?: return
@@ -27,7 +27,7 @@ class AlarmReceiver : BroadcastReceiver() {
                 // Stale (task edited) – just re-arm the next one.
                 val at = task.dueAdvance(now) ?: run { AlarmScheduler.schedule(context, task); return }
                 Notifications.showAdvance(context, task) // silent notification…
-                EarlyChime.play(context, goAsync())       // …plus the sound 5 times
+                EarlyChime.play(context, task.id, goAsync())       // …plus the sound 5 times
                 // Remember which early reminder was shown; the next one (if any) is armed.
                 AlarmScheduler.schedule(context, db.save(task.copy(advanceShownFor = at)))
             }

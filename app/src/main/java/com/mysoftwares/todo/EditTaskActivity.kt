@@ -67,10 +67,10 @@ class EditTaskActivity : BaseActivity() {
 
         findViewById<ImageView>(R.id.when_icon).background.mutate().setTint(ContextCompat.getColor(this, R.color.ios_red))
         findViewById<ImageView>(R.id.remind_icon).background.mutate().setTint(ContextCompat.getColor(this, R.color.brand))
-        setupRow(rowRepeat, R.drawable.ic_repeat, R.color.ios_gray, "Repeat", chevron = true)
-        setupRow(rowEarly, R.drawable.ic_bell_small, R.color.ios_indigo, "Early Reminders", chevron = true)
-        setupRow(rowPriority, R.drawable.ic_priority, R.color.ios_red, "Priority", chevron = true)
-        setupRow(rowWorkday, R.drawable.ic_calendar, R.color.ios_green, "Working day", chevron = true)
+        setupRow(rowRepeat, R.drawable.ic_repeat, R.color.ios_gray, getString(R.string.msg_repeat), chevron = true)
+        setupRow(rowEarly, R.drawable.ic_bell_small, R.color.ios_indigo, getString(R.string.msg_early_reminders), chevron = true)
+        setupRow(rowPriority, R.drawable.ic_priority, R.color.ios_red, getString(R.string.msg_priority), chevron = true)
+        setupRow(rowWorkday, R.drawable.ic_calendar, R.color.ios_green, getString(R.string.msg_working_day), chevron = true)
         findViewById<ImageView>(R.id.important_icon).background.mutate()
             .setTint(ContextCompat.getColor(this, R.color.ios_orange))
 
@@ -79,8 +79,8 @@ class EditTaskActivity : BaseActivity() {
 
         val t = existing
         if (t != null) {
-            findViewById<TextView>(R.id.bar_title).text = "Details"
-            findViewById<TextView>(R.id.bar_save).text = "Done"
+            findViewById<TextView>(R.id.bar_title).text = getString(R.string.msg_details)
+            findViewById<TextView>(R.id.bar_save).text = getString(R.string.ui_done_2)
             if (savedInstanceState == null) {
                 title.setText(t.title)
                 notes.setText(t.notes)
@@ -95,7 +95,7 @@ class EditTaskActivity : BaseActivity() {
             findViewById<View>(R.id.delete_group).visibility = View.VISIBLE
             findViewById<View>(R.id.delete).setOnClickListener { confirmDelete() }
         } else {
-            findViewById<TextView>(R.id.bar_title).text = "New Task"
+            findViewById<TextView>(R.id.bar_title).text = getString(R.string.msg_new_task)
             if (savedInstanceState == null) important.isChecked = true
             title.requestFocus()
         }
@@ -115,14 +115,14 @@ class EditTaskActivity : BaseActivity() {
         whenDate.setOnClickListener { pickDate() }
         whenTime.setOnClickListener { pickTime() }
         rowRepeat.setOnClickListener {
-            choose("Repeat", Repeat.entries.map { it.label }, repeatIndex) { repeatIndex = it; showSelections() }
+            choose(getString(R.string.msg_repeat), Repeat.entries.map { it.label }, repeatIndex) { repeatIndex = it; showSelections() }
         }
         rowWorkday.setOnClickListener {
-            choose("If it falls on a weekly off", WorkdayRule.entries.map { it.label }, workdayIndex) { workdayIndex = it; showSelections() }
+            choose(getString(R.string.msg_if_it_falls_on_a_weekly_off), WorkdayRule.entries.map { it.label }, workdayIndex) { workdayIndex = it; showSelections() }
         }
         rowEarly.setOnClickListener { chooseAdvances() }
         rowPriority.setOnClickListener {
-            choose("Priority", Priority.entries.map { p -> if (p.marks.isEmpty()) p.label else "${p.label}   ${p.marks}" }, priority.ordinal) {
+            choose(getString(R.string.msg_priority), Priority.entries.map { p -> if (p.marks.isEmpty()) p.label else "${p.label}   ${p.marks}" }, priority.ordinal) {
                 priority = Priority.entries[it]; showSelections()
             }
         }
@@ -186,7 +186,7 @@ class EditTaskActivity : BaseActivity() {
     private fun pickDate() {
         val todayUtc = LocalDate.now().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val picker = MaterialDatePicker.Builder.datePicker()
-            .setTitleText("Select date")
+            .setTitleText(getString(R.string.msg_select_date))
             .setSelection(whenAt.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
             .setCalendarConstraints(
                 CalendarConstraints.Builder().setValidator(DateValidatorPointForward.from(todayUtc)).build()
@@ -212,7 +212,7 @@ class EditTaskActivity : BaseActivity() {
             .setInputMode(MaterialTimePicker.INPUT_MODE_CLOCK)
             .setHour(whenAt.hour)
             .setMinute(whenAt.minute)
-            .setTitleText("Select time")
+            .setTitleText(getString(R.string.msg_select_time))
             .build()
         attachTime(picker)
         picker.show(supportFragmentManager, "time")
@@ -229,14 +229,14 @@ class EditTaskActivity : BaseActivity() {
         val options = ADVANCE_OPTIONS.filter { it.first > 0 }
         val checked = options.map { it.first in advances }.toBooleanArray()
         AlertDialog.Builder(this)
-            .setTitle("Early Reminders")
+            .setTitle(getString(R.string.msg_early_reminders))
             .setMultiChoiceItems(options.map { it.second }.toTypedArray(), checked) { _, i, on -> checked[i] = on }
-            .setPositiveButton("OK") { _, _ ->
+            .setPositiveButton(getString(R.string.msg_ok)) { _, _ ->
                 advances.clear()
                 options.forEachIndexed { i, o -> if (checked[i]) advances.add(o.first) }
                 showSelections()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(getString(R.string.ui_cancel), null)
             .show()
     }
 
@@ -289,9 +289,9 @@ class EditTaskActivity : BaseActivity() {
         if (due <= now) {
             if (rep == Repeat.NONE) {
                 AlertDialog.Builder(this)
-                    .setTitle("Time has passed")
-                    .setMessage("Please pick a time in the future.")
-                    .setPositiveButton("OK", null)
+                    .setTitle(getString(R.string.msg_time_has_passed))
+                    .setMessage(getString(R.string.msg_please_pick_a_time_in_the_future))
+                    .setPositiveButton(getString(R.string.msg_ok), null)
                     .show()
                 return
             }
@@ -325,10 +325,10 @@ class EditTaskActivity : BaseActivity() {
 
     private fun confirmDelete() {
         AlertDialog.Builder(this)
-            .setTitle("Delete Task?")
-            .setMessage("This removes the task and its alarms.")
-            .setPositiveButton("Delete") { _, _ -> existing?.let { TaskActions.delete(this, it.id) }; finish() }
-            .setNegativeButton("Cancel", null)
+            .setTitle(getString(R.string.msg_delete_task))
+            .setMessage(getString(R.string.msg_this_removes_the_task_and_its_alarms))
+            .setPositiveButton(getString(R.string.msg_delete)) { _, _ -> existing?.let { TaskActions.delete(this, it.id) }; finish() }
+            .setNegativeButton(getString(R.string.ui_cancel), null)
             .show()
     }
 

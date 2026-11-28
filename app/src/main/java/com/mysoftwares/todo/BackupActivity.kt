@@ -92,29 +92,29 @@ class BackupActivity : BaseActivity() {
             val result = runCatching { Backup.readFrom(this, uri) }
             runOnUiThread {
                 result.onSuccess { tasks -> confirmRestore(tasks) }
-                    .onFailure { Toast.makeText(this, it.message ?: "Could not read the file", Toast.LENGTH_LONG).show() }
+                    .onFailure { Toast.makeText(this, it.message ?: getString(R.string.msg_could_not_read_the_file), Toast.LENGTH_LONG).show() }
             }
         }
     }
 
     private fun confirmRestore(tasks: List<Task>) {
         if (tasks.isEmpty()) {
-            Toast.makeText(this, "This backup has no tasks.", Toast.LENGTH_LONG).show(); return
+            Toast.makeText(this, getString(R.string.msg_this_backup_has_no_tasks), Toast.LENGTH_LONG).show(); return
         }
         val current = TaskDb.get(this).all().size
         val dialog = AlertDialog.Builder(this)
             .setTitle("Restore ${tasks.size} task(s)?")
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(getString(R.string.ui_cancel), null)
         if (current == 0) {
-            dialog.setMessage("All alarms will be set again.")
-                .setPositiveButton("Restore") { _, _ -> doRestore(tasks, replace = true) }
+            dialog.setMessage(getString(R.string.msg_all_alarms_will_be_set_again))
+                .setPositiveButton(getString(R.string.ui_restore)) { _, _ -> doRestore(tasks, replace = true) }
         } else {
             dialog.setMessage(
                 "You already have $current task(s).\n\n• Add: keep current tasks and add the missing ones.\n" +
                     "• Replace: delete current tasks and use the backup."
             )
-                .setPositiveButton("Add") { _, _ -> doRestore(tasks, replace = false) }
-                .setNeutralButton("Replace") { _, _ -> doRestore(tasks, replace = true) }
+                .setPositiveButton(getString(R.string.ui_add)) { _, _ -> doRestore(tasks, replace = false) }
+                .setNeutralButton(getString(R.string.msg_replace)) { _, _ -> doRestore(tasks, replace = true) }
         }
         dialog.show()
     }

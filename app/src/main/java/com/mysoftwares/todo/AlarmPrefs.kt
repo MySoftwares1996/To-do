@@ -34,6 +34,25 @@ object AlarmPrefs {
     fun ringMinutes(c: Context) = prefs(c).getInt("ring", 3)
     fun setRingMinutes(c: Context, m: Int) = prefs(c).edit().putInt("ring", m).apply()
 
+    /** Time used by "Snooze until tomorrow" (minutes after midnight, default 9:00). */
+    fun morningMinutes(c: Context) = prefs(c).getInt("morning", 9 * 60)
+    fun setMorningMinutes(c: Context, m: Int) = prefs(c).edit().putInt("morning", m).apply()
+
+    /** Report: how late a completion may be and still count as "on time" (minutes; -1 = same day). */
+    val ON_TIME_CHOICES = listOf(0 to "By the due time", 60 to "Within 1 hour", -1 to "Same day")
+    fun onTimeMinutes(c: Context) = prefs(c).getInt("on_time", 60)
+    fun setOnTimeMinutes(c: Context, m: Int) = prefs(c).edit().putInt("on_time", m).apply()
+
+    /** True if a task done at [doneAt] counts as on time for [dueAt]. */
+    fun isOnTime(c: Context, dueAt: Long, doneAt: Long): Boolean {
+        val m = onTimeMinutes(c)
+        if (m >= 0) return doneAt <= dueAt + m * 60_000L
+        val zone = java.time.ZoneId.systemDefault()
+        val dueDay = java.time.Instant.ofEpochMilli(dueAt).atZone(zone).toLocalDate()
+        val doneDay = java.time.Instant.ofEpochMilli(doneAt).atZone(zone).toLocalDate()
+        return !doneDay.isAfter(dueDay)
+    }
+
     /** "10 min", "1 hour", "2 hours" */
     fun label(minutes: Int): String = when {
         minutes < 60 -> "$minutes min"

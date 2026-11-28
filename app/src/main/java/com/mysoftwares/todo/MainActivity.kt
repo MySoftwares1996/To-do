@@ -131,7 +131,7 @@ class MainActivity : BaseActivity() {
 
     private fun showSettings() {
         onSettings = true
-        supportActionBar?.title = "Settings"
+        supportActionBar?.title = getString(R.string.ui_settings)
         supportActionBar?.subtitle = "Office To-Do ${Updater.currentVersionName}"
         list.visibility = View.GONE
         settingsPage.visibility = View.VISIBLE
@@ -158,39 +158,40 @@ class MainActivity : BaseActivity() {
     }
 
     private fun setupSettings() {
-        settingRow(R.id.set_reliability, R.drawable.ic_check_circle, R.color.ios_green, "Alarm reliability") {
+        settingRow(R.id.set_reliability, R.drawable.ic_check_circle, R.color.ios_green, getString(R.string.setup_title)) {
             startActivity(Intent(this, SetupActivity::class.java))
         }
-        settingRow(R.id.set_sound, R.drawable.ic_bell_small, R.color.ios_indigo, "Alarm sound") { pickSound() }
-        settingRow(R.id.set_vibrate, R.drawable.ic_repeat, R.color.ios_gray, "Vibrate only") {
+        settingRow(R.id.set_sound, R.drawable.ic_bell_small, R.color.ios_indigo, getString(R.string.msg_alarm_sound)) { pickSound() }
+        settingRow(R.id.set_vibrate, R.drawable.ic_repeat, R.color.ios_gray, getString(R.string.msg_vibrate_only)) {
             AlarmPrefs.setVibrateOnly(this, !AlarmPrefs.vibrateOnly(this)); refreshSettings()
         }
-        settingRow(R.id.set_snooze, R.drawable.ic_clock, R.color.ios_orange, "Snooze buttons") { chooseSnooze() }
-        settingRow(R.id.set_nag, R.drawable.ic_flag, R.color.ios_orange, "Repeat important every") {
-            pickMinutes("Repeat important every", AlarmPrefs.NAG_CHOICES, AlarmPrefs.nagMinutes(this)) {
+        settingRow(R.id.set_snooze, R.drawable.ic_clock, R.color.ios_orange, getString(R.string.msg_snooze_buttons)) { chooseSnooze() }
+        settingRow(R.id.set_morning, R.drawable.ic_clock, R.color.ios_indigo, getString(R.string.set_morning)) { pickMorning() }
+        settingRow(R.id.set_nag, R.drawable.ic_flag, R.color.ios_orange, getString(R.string.msg_repeat_important_every)) {
+            pickMinutes(getString(R.string.msg_repeat_important_every), AlarmPrefs.NAG_CHOICES, AlarmPrefs.nagMinutes(this)) {
                 AlarmPrefs.setNagMinutes(this, it); refreshSettings()
             }
         }
-        settingRow(R.id.set_ring, R.drawable.ic_bell_small, R.color.ios_red, "Ring for") {
-            pickMinutes("Ring for", AlarmPrefs.RING_CHOICES, AlarmPrefs.ringMinutes(this)) {
+        settingRow(R.id.set_ring, R.drawable.ic_bell_small, R.color.ios_red, getString(R.string.msg_ring_for)) {
+            pickMinutes(getString(R.string.msg_ring_for), AlarmPrefs.RING_CHOICES, AlarmPrefs.ringMinutes(this)) {
                 AlarmPrefs.setRingMinutes(this, it); refreshSettings()
             }
         }
-        settingRow(R.id.set_test, R.drawable.ic_bell_small, R.color.ios_red, "Test alarm") { testAlarm() }
-        settingRow(R.id.set_weekly_off, R.drawable.ic_calendar, R.color.ios_orange, "Weekly off") { chooseWeeklyOff() }
-        settingRow(R.id.set_holidays, R.drawable.ic_flag, R.color.ios_red, "Holidays") {
+        settingRow(R.id.set_test, R.drawable.ic_bell_small, R.color.ios_red, getString(R.string.msg_test_alarm)) { testAlarm() }
+        settingRow(R.id.set_weekly_off, R.drawable.ic_calendar, R.color.ios_orange, getString(R.string.msg_weekly_off)) { chooseWeeklyOff() }
+        settingRow(R.id.set_holidays, R.drawable.ic_flag, R.color.ios_red, getString(R.string.msg_holidays)) {
             startActivity(Intent(this, HolidaysActivity::class.java))
         }
-        settingRow(R.id.set_report, R.drawable.ic_check_circle, R.color.ios_green, "Monthly report") {
+        settingRow(R.id.set_report, R.drawable.ic_check_circle, R.color.ios_green, getString(R.string.msg_monthly_report)) {
             startActivity(Intent(this, ReportActivity::class.java))
         }
-        settingRow(R.id.set_appearance, R.drawable.ic_palette, R.color.brand, "Appearance") {
+        settingRow(R.id.set_appearance, R.drawable.ic_palette, R.color.brand, getString(R.string.appearance_title)) {
             startActivity(Intent(this, AppearanceActivity::class.java))
         }
-        settingRow(R.id.set_backup, R.drawable.ic_tray, R.color.ios_indigo, "Backup & restore") {
+        settingRow(R.id.set_backup, R.drawable.ic_tray, R.color.ios_indigo, getString(R.string.backup_title)) {
             startActivity(Intent(this, BackupActivity::class.java))
         }
-        settingRow(R.id.set_update, R.drawable.ic_repeat, R.color.ios_gray, "Check for updates") { updates.checkForUpdate(manual = true) }
+        settingRow(R.id.set_update, R.drawable.ic_repeat, R.color.ios_gray, getString(R.string.msg_check_for_updates)) { updates.checkForUpdate(manual = true) }
         findViewById<View>(R.id.set_clear).setOnClickListener { clearCompleted() }
         findViewById<android.widget.TextView>(R.id.set_version).text = "Office To-Do ${Updater.currentVersionName}"
     }
@@ -205,6 +206,9 @@ class MainActivity : BaseActivity() {
         settingValue(R.id.set_vibrate, if (AlarmPrefs.vibrateOnly(this)) "On" else "Off")
         settingValue(R.id.set_snooze, "${AlarmPrefs.label(AlarmPrefs.snooze1(this))} · ${AlarmPrefs.label(AlarmPrefs.snooze2(this))}")
         settingValue(R.id.set_nag, "${AlarmPrefs.nagMinutes(this)} min")
+        val mm = AlarmPrefs.morningMinutes(this)
+        settingValue(R.id.set_morning, java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(
+            java.util.Date(java.time.LocalDate.now().atTime(mm / 60, mm % 60).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())))
         settingValue(R.id.set_ring, "${AlarmPrefs.ringMinutes(this)} min")
         settingValue(R.id.set_holidays, WorkDays.holidays.size.toString())
 
@@ -252,11 +256,28 @@ class MainActivity : BaseActivity() {
             .show()
     }
 
+    /** Time used by "Snooze until tomorrow" on the alarm screen. */
+    private fun pickMorning() {
+        val m = AlarmPrefs.morningMinutes(this)
+        val picker = com.google.android.material.timepicker.MaterialTimePicker.Builder()
+            .setTimeFormat(
+                if (android.text.format.DateFormat.is24HourFormat(this)) com.google.android.material.timepicker.TimeFormat.CLOCK_24H
+                else com.google.android.material.timepicker.TimeFormat.CLOCK_12H
+            )
+            .setHour(m / 60).setMinute(m % 60)
+            .setTitleText(getString(R.string.set_morning))
+            .build()
+        picker.addOnPositiveButtonClickListener {
+            AlarmPrefs.setMorningMinutes(this, picker.hour * 60 + picker.minute); refreshSettings()
+        }
+        picker.show(supportFragmentManager, "morning")
+    }
+
     /** Pick the two quick snooze buttons shown on the alarm screen. */
     private fun chooseSnooze() {
         val choices = AlarmPrefs.SNOOZE_CHOICES
-        pickMinutes("First snooze button", choices, AlarmPrefs.snooze1(this)) { first ->
-            pickMinutes("Second snooze button", choices.filter { it != first }, AlarmPrefs.snooze2(this)) { second ->
+        pickMinutes(getString(R.string.msg_first_snooze_button), choices, AlarmPrefs.snooze1(this)) { first ->
+            pickMinutes(getString(R.string.msg_second_snooze_button), choices.filter { it != first }, AlarmPrefs.snooze2(this)) { second ->
                 AlarmPrefs.setSnooze(this, minOf(first, second), maxOf(first, second))
                 refreshSettings()
             }
@@ -266,7 +287,7 @@ class MainActivity : BaseActivity() {
     private fun chooseWeeklyOff() {
         val options = WorkDays.OffDays.entries
         AlertDialog.Builder(this)
-            .setTitle("Weekly off")
+            .setTitle(getString(R.string.msg_weekly_off))
             .setSingleChoiceItems(options.map { it.label }.toTypedArray(), WorkDays.offDays.ordinal) { d, which ->
                 WorkDays.set(this, options[which])
                 TaskActions.recomputeWorkdays(this) // move upcoming tasks to their new working days
@@ -279,10 +300,10 @@ class MainActivity : BaseActivity() {
     private fun testAlarm() {
         val at = System.currentTimeMillis() + 60_000
         val t = TaskDb.get(this).save(
-            Task(title = "Test alarm", notes = "If you can hear this, alarms work. Tap Done.", startAt = at, dueAt = at)
+            Task(title = getString(R.string.msg_test_alarm), notes = "If you can hear this, alarms work. Tap Done.", startAt = at, dueAt = at)
         )
         AlarmScheduler.schedule(this, t)
-        toast("Test alarm in 1 minute. Lock the phone now and wait.")
+        toast(getString(R.string.msg_test_alarm_in_1_minute_lock_the_phone_))
     }
 
     override fun onResume() {
@@ -457,12 +478,12 @@ class MainActivity : BaseActivity() {
 
     private fun clearCompleted() {
         val done = TaskDb.get(this).all().filter { it.done }
-        if (done.isEmpty()) { toast("No completed tasks."); return }
+        if (done.isEmpty()) { toast(getString(R.string.msg_no_completed_tasks)); return }
         AlertDialog.Builder(this)
-            .setTitle("Clear completed?")
+            .setTitle(getString(R.string.msg_clear_completed))
             .setMessage("Remove ${done.size} completed task(s) from the list.")
-            .setPositiveButton("Clear") { _, _ -> done.forEach { TaskActions.delete(this, it.id) }; refresh() }
-            .setNegativeButton("Cancel", null)
+            .setPositiveButton(getString(R.string.msg_clear)) { _, _ -> done.forEach { TaskActions.delete(this, it.id) }; refresh() }
+            .setNegativeButton(getString(R.string.ui_cancel), null)
             .show()
     }
 }

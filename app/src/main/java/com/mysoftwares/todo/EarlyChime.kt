@@ -19,7 +19,16 @@ object EarlyChime {
     const val TIMES = 5
     private const val GAP_MS = 3_000L
 
-    fun play(context: Context, pending: BroadcastReceiver.PendingResult?) {
+    /** The chime that is playing now: task id and a function that stops it. */
+    @Volatile private var current: Pair<Long, () -> Unit>? = null
+
+    /** Stops the chime for [taskId] (e.g. "Already done" was tapped). */
+    fun stop(taskId: Long) {
+        current?.takeIf { it.first == taskId }?.second?.invoke()
+    }
+
+    fun play(context: Context, taskId: Long, pending: BroadcastReceiver.PendingResult?) {
+        current?.second?.invoke() // only one chime at a time
         val app = context.applicationContext
         val wl = app.getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "OfficeToDo:early")
@@ -38,13 +47,19 @@ object EarlyChime {
         val handler = Handler(Looper.getMainLooper())
         var count = 0
 
+        var finished = false
+        lateinit var step: Runnable
         fun finish() {
+            if (finished) return
+            finished = true
+            handler.removeCallbacks(step)
+            current = null
             runCatching { ringtone?.stop() }
             if (wl.isHeld) wl.release()
             runCatching { pending?.finish() }
         }
 
-        val step = object : Runnable {
+        step = object : Runnable {
             override fun run() {
                 if (count >= TIMES) { finish(); return }
                 count++
@@ -53,6 +68,7 @@ object EarlyChime {
                 handler.postDelayed(this, GAP_MS)
             }
         }
+        current = taskId to { handler.post { finish() }; Unit }
         handler.post(step)
     }
 }

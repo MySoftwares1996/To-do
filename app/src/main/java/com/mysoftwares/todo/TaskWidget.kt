@@ -43,7 +43,9 @@ class TaskWidget : AppWidgetProvider() {
 
         private fun build(context: Context, maxRows: Int): RemoteViews {
             val now = System.currentTimeMillis()
-            val pending = TaskDb.get(context).all().filter { !it.done }.sortedBy { it.dueAt }
+            // Overdue first, then higher priority, then the nearest time.
+            val pending = TaskDb.get(context).all().filter { !it.done }
+                .sortedWith(compareByDescending<Task> { it.dueAt < now }.thenByDescending { it.priority.ordinal }.thenBy { it.dueAt })
             val overdue = pending.count { it.dueAt < now }
 
             val views = RemoteViews(context.packageName, R.layout.widget_tasks)

@@ -62,16 +62,23 @@ class AlarmActivity : BaseActivity() {
 
     /** More snooze choices: 5 min, 30 min, 2 hours, tomorrow 9 AM, or a picked time. */
     private fun moreSnooze() {
-        val labels = arrayOf("5 minutes", "30 minutes", "2 hours", "Tomorrow, 9:00 AM", "Pick a time…")
+        val morning = AlarmPrefs.morningMinutes(this)
+        val morningText = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT)
+            .format(java.util.Date(java.time.LocalDate.now().atTime(morning / 60, morning % 60)
+                .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()))
+        val labels = arrayOf(
+            getString(R.string.snooze_5_min), getString(R.string.snooze_30_min), getString(R.string.snooze_2_hours),
+            getString(R.string.snooze_tomorrow, morningText), getString(R.string.snooze_pick_time),
+        )
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Snooze until…")
+            .setTitle(getString(R.string.msg_snooze_until))
             .setItems(labels) { _, i ->
                 when (i) {
                     0 -> { TaskActions.snooze(this, taskId, 5); finish() }
                     1 -> { TaskActions.snooze(this, taskId, 30); finish() }
                     2 -> { TaskActions.snooze(this, taskId, 120); finish() }
                     3 -> {
-                        val at = java.time.LocalDate.now().plusDays(1).atTime(9, 0)
+                        val at = java.time.LocalDate.now().plusDays(1).atTime(morning / 60, morning % 60)
                             .atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
                         TaskActions.snoozeUntil(this, taskId, at); finish()
                     }
@@ -89,7 +96,7 @@ class AlarmActivity : BaseActivity() {
                 else com.google.android.material.timepicker.TimeFormat.CLOCK_12H
             )
             .setHour(now.hour).setMinute(0)
-            .setTitleText("Snooze until")
+            .setTitleText(getString(R.string.msg_snooze_until_2))
             .build()
         picker.addOnPositiveButtonClickListener {
             var at = java.time.LocalDate.now().atTime(picker.hour, picker.minute)
