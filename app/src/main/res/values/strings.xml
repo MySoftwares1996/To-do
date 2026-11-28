@@ -308,4 +308,9 @@
     <string name="health_generic_steps">App info → Battery → Unrestricted, and allow Autostart / Auto launch if your phone has it. Do not clear the app from Recents.</string>
     <string name="health_open_autostart">Open settings</string>
     <string name="health_done_this">I\'ve done this</string>
+    <!-- Checklist -->
+    <string name="chk_list_title">Checklist</string>
+    <string name="chk_list_progress">Checklist  %1$d/%2$d</string>
+    <string name="chk_item_hint">Step, e.g. Bank reconciliation</string>
+    <string name="chk_add_item">＋  Add item</string>
 </resources>

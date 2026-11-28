@@ -300,6 +300,10 @@ class TaskAdapter(
                 tag(if (t.autoRepeat) "⟳ $at" else "⏰ $at", accent) // ⟳ = automatic repeat, ⏰ = your snooze
             }
         }
+        if (t.checklist.isNotEmpty()) {
+            val n = t.checklist.count { it.done }
+            tag("☑ $n/${t.checklist.size}", if (n == t.checklist.size) ContextCompat.getColor(ctx, R.color.ios_green) else gray)
+        }
         if (t.repeat != Repeat.NONE) tag(
             "↻ " + t.repeat.label + if (t.repeat.usesEndOffset() && t.endOffset > 0) " −${t.endOffset}" else "", gray
         )

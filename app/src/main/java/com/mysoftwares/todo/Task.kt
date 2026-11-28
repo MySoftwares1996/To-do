@@ -61,6 +61,24 @@ val ADVANCE_OPTIONS: List<Pair<Int, String>>
         7 * 24 * 60 to Res.s(R.string.adv_1w),
     )
 
+/** One step of a task's checklist. */
+data class CheckItem(val text: String, val done: Boolean = false)
+
+/** Checklist ⇄ JSON text (stored in the database and in backups). */
+object Checklist {
+    fun toJson(items: List<CheckItem>): String = org.json.JSONArray().apply {
+        items.forEach { put(org.json.JSONObject().put("t", it.text).put("d", it.done)) }
+    }.toString()
+
+    fun fromJson(text: String?): List<CheckItem> {
+        if (text.isNullOrBlank()) return emptyList()
+        return runCatching {
+            val a = org.json.JSONArray(text)
+            (0 until a.length()).map { a.getJSONObject(it).let { o -> CheckItem(o.optString("t"), o.optBoolean("d")) } }
+        }.getOrDefault(emptyList())
+    }
+}
+
 data class Task(
     val id: Long = 0,
     val title: String,
@@ -89,6 +107,8 @@ data class Task(
     val endOffset: Int = 0,
     /** True when snoozeUntil was set automatically (important task repeating until Done), not by the user. */
     val autoRepeat: Boolean = false,
+    /** Steps to tick off; unticked again when a repeating task moves to its next date. */
+    val checklist: List<CheckItem> = emptyList(),
 ) {
     /** When the main alarm should ring. */
     val alarmAt: Long get() = if (snoozeUntil > 0) snoozeUntil else dueAt

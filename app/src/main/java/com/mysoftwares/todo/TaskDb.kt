@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper
  * ring even right after a reboot, before the phone is unlocked.
  */
 class TaskDb private constructor(private val appContext: Context) :
-    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 6) {
+    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 7) {
 
     /** Keep the home screen widget in sync with every change. */
     private fun changed() {
@@ -48,7 +48,8 @@ class TaskDb private constructor(private val appContext: Context) :
                 category TEXT NOT NULL DEFAULT '',
                 priority TEXT NOT NULL DEFAULT 'NONE',
                 end_offset INTEGER NOT NULL DEFAULT 0,
-                snooze_auto INTEGER NOT NULL DEFAULT 0
+                snooze_auto INTEGER NOT NULL DEFAULT 0,
+                checklist TEXT NOT NULL DEFAULT ''
             )"""
         )
         createHistory(db)
@@ -66,6 +67,7 @@ class TaskDb private constructor(private val appContext: Context) :
         if (oldVersion < 4) db.execSQL("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'NONE'")
         if (oldVersion < 5) db.execSQL("ALTER TABLE tasks ADD COLUMN end_offset INTEGER NOT NULL DEFAULT 0")
         if (oldVersion < 6) db.execSQL("ALTER TABLE tasks ADD COLUMN snooze_auto INTEGER NOT NULL DEFAULT 0")
+        if (oldVersion < 7) db.execSQL("ALTER TABLE tasks ADD COLUMN checklist TEXT NOT NULL DEFAULT ''")
     }
 
     /** One row per completed occurrence – used by the monthly report. */
@@ -168,6 +170,7 @@ class TaskDb private constructor(private val appContext: Context) :
             put("priority", t.priority.name)
             put("end_offset", t.endOffset)
             put("snooze_auto", if (t.autoRepeat) 1 else 0)
+            put("checklist", if (t.checklist.isEmpty()) "" else Checklist.toJson(t.checklist))
             put("done", if (t.done) 1 else 0)
             put("snooze_until", t.snoozeUntil)
             put("rang_for", t.rangFor)
@@ -194,6 +197,7 @@ class TaskDb private constructor(private val appContext: Context) :
         priority = runCatching { Priority.valueOf(getString(getColumnIndexOrThrow("priority"))) }.getOrDefault(Priority.NONE),
         endOffset = getInt(getColumnIndexOrThrow("end_offset")),
         autoRepeat = getInt(getColumnIndexOrThrow("snooze_auto")) == 1,
+        checklist = Checklist.fromJson(getString(getColumnIndexOrThrow("checklist"))),
         done = getInt(getColumnIndexOrThrow("done")) == 1,
         snoozeUntil = getLong(getColumnIndexOrThrow("snooze_until")),
         rangFor = getLong(getColumnIndexOrThrow("rang_for")),

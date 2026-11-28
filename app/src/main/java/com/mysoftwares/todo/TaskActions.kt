@@ -20,7 +20,10 @@ object TaskActions {
                 db.save(t.copy(done = true, snoozeUntil = 0, autoRepeat = false))
             } else {
                 // Repeating task: move on to the next occurrence.
-                db.save(t.copy(dueAt = next, snoozeUntil = 0, rangFor = 0, advanceShownFor = 0, autoRepeat = false))
+                db.save(t.copy(
+                    dueAt = next, snoozeUntil = 0, rangFor = 0, advanceShownFor = 0, autoRepeat = false,
+                    checklist = t.checklist.map { it.copy(done = false) }, // fresh checklist for the next date
+                ))
             }
             AlarmScheduler.schedule(context, saved)
         }

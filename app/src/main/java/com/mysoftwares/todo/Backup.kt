@@ -43,6 +43,7 @@ object Backup {
                 put("priority", t.priority.name)
                 put("endOffset", t.endOffset)
                 put("autoRepeat", t.autoRepeat)
+                put("checklist", Checklist.toJson(t.checklist))
                 put("done", t.done)
                 put("snoozeUntil", t.snoozeUntil)
                 put("rangFor", t.rangFor)
@@ -81,6 +82,7 @@ object Backup {
                 priority = runCatching { Priority.valueOf(o.optString("priority")) }.getOrDefault(Priority.NONE),
                 endOffset = o.optInt("endOffset"),
                 autoRepeat = o.optBoolean("autoRepeat"),
+                checklist = Checklist.fromJson(o.optString("checklist")),
                 done = o.optBoolean("done"),
                 snoozeUntil = o.optLong("snoozeUntil"),
                 rangFor = o.optLong("rangFor"),

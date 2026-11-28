@@ -41,6 +41,8 @@ class EditTaskActivity : BaseActivity() {
     private var workdayIndex = 0
     /** Month-end / quarter-end: days before the last day (0 = last day). */
     private var endOffset = 0
+    /** Checklist being edited. */
+    private val items = mutableListOf<CheckItem>()
 
     private lateinit var title: EditText
     private lateinit var notes: EditText
@@ -95,6 +97,7 @@ class EditTaskActivity : BaseActivity() {
             priority = t.priority
             workdayIndex = t.workday.ordinal
             endOffset = t.endOffset
+            if (savedInstanceState == null) items.addAll(t.checklist)
             findViewById<View>(R.id.delete_group).visibility = View.VISIBLE
             findViewById<View>(R.id.delete).setOnClickListener { confirmDelete() }
         } else {
@@ -110,10 +113,12 @@ class EditTaskActivity : BaseActivity() {
             priority = runCatching { Priority.valueOf(it.getString("priority") ?: "") }.getOrDefault(Priority.NONE)
             workdayIndex = it.getInt("workday")
             endOffset = it.getInt("endOffset")
+            items.clear(); items.addAll(Checklist.fromJson(it.getString("checklist")))
         }
         findViewById<View>(R.id.bar_cancel).setOnClickListener { finish() }
         findViewById<View>(R.id.bar_save).setOnClickListener { save() }
         updateSaveEnabled()
+        renderChecklist()
         showSelections()
 
         whenDate.setOnClickListener {
@@ -160,6 +165,7 @@ class EditTaskActivity : BaseActivity() {
         outState.putString("priority", priority.name)
         outState.putInt("workday", workdayIndex)
         outState.putInt("endOffset", endOffset)
+        outState.putString("checklist", Checklist.toJson(items))
     }
 
     /** "Add" is greyed out until a title is typed. */
@@ -297,6 +303,95 @@ class EditTaskActivity : BaseActivity() {
         }
     }
 
+    // ---- Checklist ----
+
+    private fun renderChecklist(focusLast: Boolean = false) {
+        val box = findViewById<android.widget.LinearLayout>(R.id.checklist_box)
+        box.removeAllViews()
+        val d = resources.displayMetrics.density
+        fun dp(v: Int) = (v * d).toInt()
+        fun divider() = box.addView(View(this).apply {
+            setBackgroundColor(ContextCompat.getColor(context, R.color.ios_separator))
+        }, android.widget.LinearLayout.LayoutParams(android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { marginStart = dp(44) })
+
+        // Header row: "Checklist  2/5"
+        box.addView(TextView(this).apply {
+            text = if (items.isEmpty()) getString(R.string.chk_list_title)
+            else getString(R.string.chk_list_progress, items.count { it.done }, items.size)
+            setTextColor(ContextCompat.getColor(context, R.color.ios_secondary))
+            textSize = 12f
+            isAllCaps = true
+            setPadding(dp(12), dp(10), dp(12), dp(4))
+        })
+
+        items.forEachIndexed { i, item ->
+            val row = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                minimumHeight = dp(44)
+                setPadding(dp(4), 0, dp(4), 0)
+            }
+            row.addView(ImageView(this).apply {
+                setImageResource(if (item.done) R.drawable.ic_circle_checked else R.drawable.ic_circle_empty)
+                setPadding(dp(9), dp(9), dp(9), dp(9))
+                contentDescription = getString(R.string.ui_mark_done)
+                setOnClickListener {
+                    items[i] = items[i].copy(done = !items[i].done); renderChecklist()
+                    animate().scaleX(1.2f).scaleY(1.2f).setDuration(100).withEndAction { animate().scaleX(1f).scaleY(1f).setDuration(100).start() }.start()
+                }
+            }, android.widget.LinearLayout.LayoutParams(dp(40), dp(40)))
+            val edit = EditText(this).apply {
+                setText(item.text)
+                hint = getString(R.string.chk_item_hint)
+                background = null
+                textSize = 15f
+                inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+                setTextColor(ContextCompat.getColor(context, if (item.done) R.color.ios_secondary else R.color.ios_label))
+                setHintTextColor(ContextCompat.getColor(context, R.color.ios_secondary))
+                paintFlags = if (item.done) paintFlags or android.graphics.Paint.STRIKE_THRU_TEXT_FLAG
+                else paintFlags and android.graphics.Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+                    override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+                    override fun afterTextChanged(s: Editable?) {
+                        if (i < items.size) items[i] = items[i].copy(text = s?.toString().orEmpty())
+                    }
+                })
+                // "Next" on the keyboard adds another step
+                imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_NEXT
+                setOnEditorActionListener { _, _, _ -> items.add(CheckItem("")); renderChecklist(focusLast = true); true }
+            }
+            row.addView(edit, android.widget.LinearLayout.LayoutParams(0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            row.addView(TextView(this).apply {
+                text = "✕"
+                gravity = android.view.Gravity.CENTER
+                setTextColor(ContextCompat.getColor(context, R.color.ios_secondary))
+                contentDescription = getString(R.string.menu_delete)
+                setOnClickListener { items.removeAt(i); renderChecklist() }
+            }, android.widget.LinearLayout.LayoutParams(dp(40), dp(40)))
+            box.addView(row)
+            divider()
+            if (focusLast && i == items.lastIndex) edit.post {
+                edit.requestFocus()
+                getSystemService(android.view.inputmethod.InputMethodManager::class.java).showSoftInput(edit, 0)
+            }
+        }
+
+        // "+ Add item"
+        box.addView(TextView(this).apply {
+            text = getString(R.string.chk_add_item)
+            setTextColor(com.google.android.material.color.MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary))
+            textSize = 15f
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            minHeight = dp(44)
+            setPadding(dp(14), 0, dp(12), 0)
+            val tv = android.util.TypedValue()
+            theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
+            setBackgroundResource(tv.resourceId)
+            setOnClickListener { items.add(CheckItem("")); renderChecklist(focusLast = true) }
+        })
+    }
+
     /** "Last day", "Last day −2" */
     private fun endOffsetLabel(n: Int) = if (n == 0) getString(R.string.end_last_day) else getString(R.string.end_last_day_minus, n)
 
@@ -351,6 +446,7 @@ class EditTaskActivity : BaseActivity() {
                 done = false,
                 snoozeUntil = 0,
                 autoRepeat = false,
+                checklist = items.map { it.copy(text = it.text.trim()) }.filter { it.text.isNotEmpty() },
                 rangFor = 0,
                 advanceShownFor = 0,
                 workday = rule,
