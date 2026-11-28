@@ -184,7 +184,7 @@
     <string name="health_last7">Last 7 days</string>
     <string name="health_no_alarms_yet">No alarms yet – tap Test alarm below</string>
     <string name="health_all_on_time">%1$d alarms, all on time</string>
-    <string name="health_late">%1$d alarm(s) rang late (latest %2$s, %3$d min late) – the phone paused the app, often battery saver or the phone was off</string>
+    <string name="health_late">%1$d alarm(s) rang late (latest %2$s, %3$d min late). The phone stopped the app, so the alarm rang only when the app was opened again.</string>
     <string name="health_ok">OK</string>
     <string name="health_checked_live">Checked live</string>
     <string name="health_all_set">All set</string>
@@ -303,4 +303,9 @@
     <string name="brand_vivo">vivo/iQOO: Settings → Battery → Background power consumption → allow this app. Enable Autostart.</string>
     <string name="brand_huawei">Huawei/Honor: Battery → App launch → this app → Manage manually, turn ON all three switches.</string>
     <string name="brand_samsung">Samsung: Battery → Background usage limits → make sure this app is NOT in \'Sleeping\' or \'Deep sleeping\' apps. Set battery to \'Unrestricted\'.</string>
+    <string name="health_late_title">Stop the phone from closing the app</string>
+    <string name="health_late_explain">Your phone stopped Office To-Do (for example when it was cleared from Recents, or by its battery manager). Android then cancels the app\'s alarms. Allow the app to start and run in the background:</string>
+    <string name="health_generic_steps">App info → Battery → Unrestricted, and allow Autostart / Auto launch if your phone has it. Do not clear the app from Recents.</string>
+    <string name="health_open_autostart">Open settings</string>
+    <string name="health_done_this">I\'ve done this</string>
 </resources>

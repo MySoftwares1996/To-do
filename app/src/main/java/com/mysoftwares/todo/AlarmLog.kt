@@ -26,6 +26,15 @@ object AlarmLog {
         prefs(c).edit().putString("log", keep.takeLast(200).joinToString(";") { "${it.scheduled},${it.rang}" }).apply()
     }
 
+    /** The user fixed the phone settings: hide late alarms that happened before now. */
+    fun acknowledge(c: Context) = prefs(c).edit().putLong("ack", System.currentTimeMillis()).apply()
+
+    /** Late alarms the user has not acknowledged yet. */
+    fun unacknowledgedLate(c: Context): List<Entry> {
+        val ack = prefs(c).getLong("ack", 0)
+        return entries(c).filter { it.late && it.rang > ack }
+    }
+
     /** Alarms of the last 7 days, oldest first. */
     fun entries(c: Context): List<Entry> {
         val now = System.currentTimeMillis()

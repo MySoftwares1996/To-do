@@ -11,5 +11,5 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="10dp"
-        android:paddingBottom="32dp" />
+        android:paddingBottom="64dp" />
 </ScrollView>

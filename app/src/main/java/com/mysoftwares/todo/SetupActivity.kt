@@ -41,7 +41,7 @@ class SetupActivity : BaseActivity() {
         list.clear()
         val checks = Reliability.checks(this)
         val log = AlarmLog.entries(this)
-        val late = log.filter { it.late }
+        val late = AlarmLog.unacknowledgedLate(this)
 
         // "Last 7 days" from the alarm log
         val history = if (late.isEmpty()) Item(
@@ -54,7 +54,7 @@ class SetupActivity : BaseActivity() {
             Item(
                 getString(R.string.health_last7), false,
                 getString(R.string.health_late, late.size, fmt.format(Date(worst.scheduled)), (worst.lateBy / 60_000).toInt()),
-                true, { Reliability.batterySettings(this) },
+                true, { lateAlarmHelp() },
             )
         }
         val items = listOf(history) + checks.map { c -> Item(c.title, c.ok, if (c.ok) getString(R.string.health_ok) else c.explain, false) { c.fix(this) } }
@@ -82,6 +82,18 @@ class SetupActivity : BaseActivity() {
             Toast.makeText(this, getString(R.string.msg_test_alarm_in_1_minute_lock_the_phone_), Toast.LENGTH_LONG).show()
         }
         list.footer(getString(R.string.health_force_stop))
+    }
+
+    /** Fix for late alarms: brand steps, open the phone's auto-launch screen, then "I've done this". */
+    private fun lateAlarmHelp() {
+        val steps = Reliability.brandAdvice() ?: getString(R.string.health_generic_steps)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(getString(R.string.health_late_title))
+            .setMessage(getString(R.string.health_late_explain) + "\n\n" + steps)
+            .setPositiveButton(getString(R.string.health_open_autostart)) { _, _ -> Reliability.openAutostart(this) }
+            .setNeutralButton(getString(R.string.health_done_this)) { _, _ -> AlarmLog.acknowledge(this); render() }
+            .setNegativeButton(getString(R.string.ui_cancel), null)
+            .show()
     }
 
     private fun scoreCard(score: Int, problems: Int): View {

@@ -126,6 +126,35 @@ object Reliability {
         }
     }
 
+    /**
+     * Opens the phone maker's own "Auto launch / Autostart / Background" screen, which plain
+     * Android cannot check. Tries the known screens for each brand, then falls back to App info.
+     */
+    fun openAutostart(c: Context) {
+        val candidates = listOf(
+            // OPPO / realme / OnePlus (ColorOS / OxygenOS)
+            "com.coloros.safecenter" to "com.coloros.safecenter.permission.startup.StartupAppListActivity",
+            "com.coloros.safecenter" to "com.coloros.safecenter.startupapp.StartupAppListActivity",
+            "com.oplus.battery" to "com.oplus.startupapp.view.StartupAppListActivity",
+            "com.oppo.safe" to "com.oppo.safe.permission.startup.StartupAppListActivity",
+            // Xiaomi / Redmi / POCO
+            "com.miui.securitycenter" to "com.miui.permcenter.autostart.AutoStartManagementActivity",
+            // vivo / iQOO
+            "com.vivo.permissionmanager" to "com.vivo.permissionmanager.activity.BgStartUpManagerActivity",
+            "com.iqoo.secure" to "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity",
+            // Huawei / Honor
+            "com.huawei.systemmanager" to "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity",
+            "com.huawei.systemmanager" to "com.huawei.systemmanager.optimize.process.ProtectActivity",
+        )
+        for ((pkg, cls) in candidates) {
+            try {
+                c.startActivity(Intent().setComponent(android.content.ComponentName(pkg, cls)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                return
+            } catch (_: Exception) { /* not this brand / version */ }
+        }
+        appDetails(c)
+    }
+
     /** Battery settings for this app (where "Unrestricted" / "Don't optimise" is chosen). */
     fun batterySettings(c: Context) {
         if (!open(c, Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${c.packageName}")))) appDetails(c)
