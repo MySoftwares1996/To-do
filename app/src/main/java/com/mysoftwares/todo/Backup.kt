@@ -102,11 +102,20 @@ object Backup {
         out.use { it.write(json.toByteArray()) }
     }
 
-    fun readFrom(context: Context, uri: Uri): List<Task> {
+    fun readFrom(context: Context, uri: Uri): List<Task> = readWithDate(context, uri).first
+
+    /** Tasks in the file and when the backup was made (0 if unknown). */
+    fun readWithDate(context: Context, uri: Uri): Pair<List<Task>, Long> {
         val text = context.contentResolver.openInputStream(uri)?.use { it.bufferedReader().readText() }
             ?: throw IllegalStateException("Cannot open the file")
-        return fromJson(text)
+        val at = runCatching { JSONObject(text).optLong("exportedAt", 0) }.getOrDefault(0)
+        return fromJson(text) to at
     }
+
+    /** "OfficeToDo-backup-2026-11-28_23-28.json": date and time of the backup in the file name. */
+    fun fileNameNow(): String =
+        "OfficeToDo-backup-" + java.time.LocalDateTime.now()
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm")) + ".json"
 
     /**
      * Restores tasks and re-arms their alarms.

@@ -50,8 +50,6 @@ class BackupActivity : BaseActivity() {
         render()
     }
 
-    private fun fileNameForToday() = "OfficeToDo-backup-${java.time.LocalDate.now()}.json"
-
     private fun render() {
         list.clear()
         val auto = Backup.autoUri(this)
@@ -63,7 +61,7 @@ class BackupActivity : BaseActivity() {
         list.label(getString(R.string.backup_status))
         val status = list.group()
         status.switchRow(getString(R.string.backup_auto), getString(R.string.backup_auto_hint), auto != null) { on ->
-            if (on) createFile.launch("OfficeToDo-backup.json") // choose where; then kept up to date
+            if (on) createFile.launch(Backup.fileNameNow()) // choose where; then kept up to date
             else { Backup.disableAuto(this); render() }
         }
         if (auto != null) {
@@ -81,9 +79,9 @@ class BackupActivity : BaseActivity() {
         val backup = list.group()
         val accent = com.google.android.material.color.MaterialColors.getColor(findViewById<android.view.View>(R.id.content), androidx.appcompat.R.attr.colorPrimary)
         backup.row(getString(R.string.ui_back_up_now), getString(R.string.backup_tasks_count, count), titleColor = accent) {
-            if (auto != null && error == null) backupTo(auto) else createFile.launch("OfficeToDo-backup.json")
+            if (auto != null && error == null) backupTo(auto) else createFile.launch(Backup.fileNameNow())
         }
-        backup.row(getString(R.string.backup_save_copy), titleColor = accent) { copyFile.launch(fileNameForToday()) }
+        backup.row(getString(R.string.backup_save_copy), titleColor = accent) { copyFile.launch(Backup.fileNameNow()) }
         backup.row(getString(R.string.backup_share), titleColor = accent) { share() }
 
         // Restore
@@ -99,7 +97,7 @@ class BackupActivity : BaseActivity() {
         io.execute {
             val r = runCatching {
                 val dir = java.io.File(cacheDir, "reports").apply { mkdirs() }
-                val file = java.io.File(dir, fileNameForToday())
+                val file = java.io.File(dir, Backup.fileNameNow())
                 file.writeText(Backup.toJson(TaskDb.get(this).all()))
                 androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
             }
@@ -134,28 +132,33 @@ class BackupActivity : BaseActivity() {
 
     private fun restoreFrom(uri: Uri) {
         io.execute {
-            val result = runCatching { Backup.readFrom(this, uri) }
+            val result = runCatching { Backup.readWithDate(this, uri) }
             runOnUiThread {
-                result.onSuccess { tasks -> confirmRestore(tasks) }
+                result.onSuccess { (tasks, at) -> confirmRestore(tasks, at) }
                     .onFailure { Toast.makeText(this, it.message ?: getString(R.string.msg_could_not_read_the_file), Toast.LENGTH_LONG).show() }
             }
         }
     }
 
-    private fun confirmRestore(tasks: List<Task>) {
+    private fun confirmRestore(tasks: List<Task>, backupAt: Long = 0) {
         if (tasks.isEmpty()) {
             Toast.makeText(this, getString(R.string.msg_this_backup_has_no_tasks), Toast.LENGTH_LONG).show(); return
         }
         val current = TaskDb.get(this).all().size
+        // "Backup from 28 Nov 2026, 11:28 pm" so an old file is not restored by mistake.
+        val from = if (backupAt > 0) getString(
+            R.string.backup_made_at,
+            java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT).format(java.util.Date(backupAt))
+        ) + "\n\n" else ""
         val dialog = AlertDialog.Builder(this)
             .setTitle("Restore ${tasks.size} task(s)?")
             .setNegativeButton(getString(R.string.ui_cancel), null)
         if (current == 0) {
-            dialog.setMessage(getString(R.string.msg_all_alarms_will_be_set_again))
+            dialog.setMessage(from + getString(R.string.msg_all_alarms_will_be_set_again))
                 .setPositiveButton(getString(R.string.ui_restore)) { _, _ -> doRestore(tasks, replace = true) }
         } else {
             dialog.setMessage(
-                "You already have $current task(s).\n\n• Add: keep current tasks and add the missing ones.\n" +
+                from + "You already have $current task(s).\n\n• Add: keep current tasks and add the missing ones.\n" +
                     "• Replace: delete current tasks and use the backup."
             )
                 .setPositiveButton(getString(R.string.ui_add)) { _, _ -> doRestore(tasks, replace = false) }
