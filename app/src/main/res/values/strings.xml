@@ -160,4 +160,7 @@
     <string name="set_important_tasks">Important tasks</string>
     <string name="set_remind_again_every">Remind again every</string>
     <string name="set_alarm_footer">Alarms play on the alarm volume, so you hear them even in silent mode.</string>
+    <string name="end_last_day">Last day</string>
+    <string name="end_last_day_minus">Last day −%1$d</string>
+    <string name="end_which_day">Ring on</string>
 </resources>

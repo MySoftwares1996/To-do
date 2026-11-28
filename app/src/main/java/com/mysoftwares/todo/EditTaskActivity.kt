@@ -39,6 +39,8 @@ class EditTaskActivity : BaseActivity() {
     private var remindType = RemindType.ALARM
     private var priority = Priority.NONE
     private var workdayIndex = 0
+    /** Month-end / quarter-end: days before the last day (0 = last day). */
+    private var endOffset = 0
 
     private lateinit var title: EditText
     private lateinit var notes: EditText
@@ -92,6 +94,7 @@ class EditTaskActivity : BaseActivity() {
             remindType = t.remindType
             priority = t.priority
             workdayIndex = t.workday.ordinal
+            endOffset = t.endOffset
             findViewById<View>(R.id.delete_group).visibility = View.VISIBLE
             findViewById<View>(R.id.delete).setOnClickListener { confirmDelete() }
         } else {
@@ -106,13 +109,16 @@ class EditTaskActivity : BaseActivity() {
             remindType = RemindType.valueOf(it.getString("remind") ?: "ALARM")
             priority = runCatching { Priority.valueOf(it.getString("priority") ?: "") }.getOrDefault(Priority.NONE)
             workdayIndex = it.getInt("workday")
+            endOffset = it.getInt("endOffset")
         }
         findViewById<View>(R.id.bar_cancel).setOnClickListener { finish() }
         findViewById<View>(R.id.bar_save).setOnClickListener { save() }
         updateSaveEnabled()
         showSelections()
 
-        whenDate.setOnClickListener { pickDate() }
+        whenDate.setOnClickListener {
+            if (Repeat.entries[repeatIndex].usesEndOffset()) chooseEndOffset() else pickDate()
+        }
         whenTime.setOnClickListener { pickTime() }
         rowRepeat.setOnClickListener {
             choose(getString(R.string.msg_repeat), Repeat.entries.map { it.label }, repeatIndex) { repeatIndex = it; showSelections() }
@@ -153,6 +159,7 @@ class EditTaskActivity : BaseActivity() {
         outState.putString("remind", remindType.name)
         outState.putString("priority", priority.name)
         outState.putInt("workday", workdayIndex)
+        outState.putInt("endOffset", endOffset)
     }
 
     /** "Add" is greyed out until a title is typed. */
@@ -251,7 +258,9 @@ class EditTaskActivity : BaseActivity() {
         val ms = whenAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         // Short date; the year is shown only when it is not this year.
         val pattern = if (whenAt.year == LocalDate.now().year) "EEE, d MMM" else "EEE, d MMM yyyy"
-        whenDate.text = java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(java.util.Date(ms))
+        val rep0 = Repeat.entries[repeatIndex]
+        whenDate.text = if (rep0.usesEndOffset()) endOffsetLabel(endOffset)
+        else java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(java.util.Date(ms))
         whenTime.text = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(ms))
         setValue(rowRepeat, if (repeatIndex == 0) "Never" else Repeat.entries[repeatIndex].label, accent = false)
         setValue(rowEarly, when (advances.size) {
@@ -262,7 +271,13 @@ class EditTaskActivity : BaseActivity() {
             }
         }, accent = false)
         setValue(rowPriority, if (priority == Priority.NONE) "None" else "${priority.label} ${priority.marks}", accent = false)
-        findViewById<TextView>(R.id.important_note).text =
+        // For month-end / quarter-end show the next actual date, e.g. "Next: Fri, 28 Nov".
+        val nextText = if (rep0.usesEndOffset()) {
+            val rule = if (rep0.usesWorkdayRule()) WorkdayRule.entries[workdayIndex] else WorkdayRule.SAME_DAY
+            val next = Recurrence.nextAfter(startFor(rep0), rep0, System.currentTimeMillis(), rule, endOffset)
+            next?.let { "Next: " + java.text.SimpleDateFormat("EEE, d MMM", java.util.Locale.getDefault()).format(java.util.Date(it)) + ". " }.orEmpty()
+        } else ""
+        findViewById<TextView>(R.id.important_note).text = nextText +
             (if (remindType == RemindType.ALARM) "Alarm: full-screen ringing. " else "Notification: one alert with Done / Snooze. ") +
                 "Important: reminds again every ${AlarmPrefs.nagMinutes(this)} min until Done." +
                 if (advances.isNotEmpty()) " Early reminders ring ${EarlyChime.TIMES} times." else ""
@@ -272,22 +287,37 @@ class EditTaskActivity : BaseActivity() {
         setValue(rowWorkday, WorkdayRule.entries[workdayIndex].short, accent = false)
         findViewById<TextView>(R.id.workday_note).apply {
             visibility = if (showWorkday) View.VISIBLE else View.GONE
-            text = "Weekly off: ${WorkDays.offDays.label} (Settings → Weekly off)."
+            text = "Weekly off: ${WorkDays.offDays.label} (Settings → Work days & holidays)."
         }
+    }
+
+    /** "Last day", "Last day −2" */
+    private fun endOffsetLabel(n: Int) = if (n == 0) getString(R.string.end_last_day) else getString(R.string.end_last_day_minus, n)
+
+    private fun chooseEndOffset() {
+        val options = (0..7).toList()
+        choose(getString(R.string.end_which_day), options.map { endOffsetLabel(it) }, endOffset) { endOffset = options[it]; showSelections() }
+    }
+
+    /**
+     * First occurrence to count from. Month-end / quarter-end tasks need no date: they count from
+     * this month at the chosen time; the "last day −N" is applied by the repeat rule.
+     */
+    private fun startFor(rep: Repeat): Long {
+        val start = if (rep.usesEndOffset()) LocalDate.now().withDayOfMonth(1).atTime(whenAt.toLocalTime()) else whenAt
+        return start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
 
     private fun save() {
         val name = title.text?.toString()?.trim().orEmpty()
         if (name.isEmpty()) { title.requestFocus(); return }
         val rep = Repeat.entries[repeatIndex]
-        var start = whenAt
-        if (rep == Repeat.MONTH_END) start = start.with(TemporalAdjusters.lastDayOfMonth())
-        val startMs = start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val startMs = startFor(rep)
         val now = System.currentTimeMillis()
 
         val rule = if (rep.usesWorkdayRule()) WorkdayRule.entries[workdayIndex] else WorkdayRule.SAME_DAY
         // First occurrence (moved to a working day if asked) that is still in the future.
-        var due = if (rep == Repeat.NONE) startMs else Recurrence.nextAfter(startMs, rep, now - 1, rule)!!
+        var due = if (rep == Repeat.NONE) startMs else Recurrence.nextAfter(startMs, rep, now - 1, rule, endOffset)!!
         if (due <= now) {
             if (rep == Repeat.NONE) {
                 AlertDialog.Builder(this)
@@ -297,7 +327,7 @@ class EditTaskActivity : BaseActivity() {
                     .show()
                 return
             }
-            due = Recurrence.nextAfter(startMs, rep, now, rule)!!
+            due = Recurrence.nextAfter(startMs, rep, now, rule, endOffset)!!
         }
 
         val base = existing ?: Task(title = name, startAt = startMs, dueAt = due)
@@ -317,6 +347,7 @@ class EditTaskActivity : BaseActivity() {
                 rangFor = 0,
                 advanceShownFor = 0,
                 workday = rule,
+                endOffset = if (rep.usesEndOffset()) endOffset else 0,
             )
         )
         Notifications.cancel(this, task.id)

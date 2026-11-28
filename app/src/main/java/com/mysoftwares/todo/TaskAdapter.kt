@@ -287,7 +287,9 @@ class TaskAdapter(
                 tag(if (t.important && t.rangFor > 0) "🔁 Again $at" else "⏰ $at", accent)
             }
         }
-        if (t.repeat != Repeat.NONE) tag("↻ " + t.repeat.label, gray)
+        if (t.repeat != Repeat.NONE) tag(
+            "↻ " + t.repeat.label + if (t.repeat.usesEndOffset() && t.endOffset > 0) " −${t.endOffset}" else "", gray
+        )
         if (t.remindType == RemindType.NOTIFICATION) tag("🔔 Notification", gray)
         tags.visibility = if (tags.childCount == 0) View.GONE else View.VISIBLE
 

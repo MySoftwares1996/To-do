@@ -15,7 +15,7 @@ object TaskActions {
         val t = db.get(id)
         if (t != null && !t.done && (expectedDue == null || expectedDue == t.dueAt)) {
             db.logDone(t, System.currentTimeMillis()) // for the monthly report
-            val next = Recurrence.nextAfter(t.startAt, t.repeat, maxOf(System.currentTimeMillis(), t.dueAt), t.workday)
+            val next = Recurrence.nextAfter(t.startAt, t.repeat, maxOf(System.currentTimeMillis(), t.dueAt), t.workday, t.endOffset)
             val saved = if (next == null) {
                 db.save(t.copy(done = true, snoozeUntil = 0))
             } else {
@@ -72,7 +72,7 @@ object TaskActions {
         val now = System.currentTimeMillis()
         db.all().filter { !it.done && it.repeat.usesWorkdayRule() && it.workday != WorkdayRule.SAME_DAY && it.dueAt > now }
             .forEach { t ->
-                val due = Recurrence.nextAfter(t.startAt, t.repeat, now, t.workday) ?: return@forEach
+                val due = Recurrence.nextAfter(t.startAt, t.repeat, now, t.workday, t.endOffset) ?: return@forEach
                 if (due != t.dueAt) AlarmScheduler.schedule(context, db.save(t.copy(dueAt = due, rangFor = 0, advanceShownFor = 0)))
             }
     }

@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper
  * ring even right after a reboot, before the phone is unlocked.
  */
 class TaskDb private constructor(private val appContext: Context) :
-    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 4) {
+    SQLiteOpenHelper(appContext.createDeviceProtectedStorageContext(), "tasks.db", null, 5) {
 
     /** Keep the home screen widget in sync with every change. */
     private fun changed() {
@@ -46,7 +46,8 @@ class TaskDb private constructor(private val appContext: Context) :
                 advance_list TEXT NOT NULL DEFAULT '',
                 remind_type TEXT NOT NULL DEFAULT 'ALARM',
                 category TEXT NOT NULL DEFAULT '',
-                priority TEXT NOT NULL DEFAULT 'NONE'
+                priority TEXT NOT NULL DEFAULT 'NONE',
+                end_offset INTEGER NOT NULL DEFAULT 0
             )"""
         )
         createHistory(db)
@@ -62,6 +63,7 @@ class TaskDb private constructor(private val appContext: Context) :
             createHistory(db)
         }
         if (oldVersion < 4) db.execSQL("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'NONE'")
+        if (oldVersion < 5) db.execSQL("ALTER TABLE tasks ADD COLUMN end_offset INTEGER NOT NULL DEFAULT 0")
     }
 
     /** One row per completed occurrence – used by the monthly report. */
@@ -162,6 +164,7 @@ class TaskDb private constructor(private val appContext: Context) :
             put("remind_type", t.remindType.name)
             put("category", "") // categories were removed; column kept for old databases
             put("priority", t.priority.name)
+            put("end_offset", t.endOffset)
             put("done", if (t.done) 1 else 0)
             put("snooze_until", t.snoozeUntil)
             put("rang_for", t.rangFor)
@@ -186,6 +189,7 @@ class TaskDb private constructor(private val appContext: Context) :
         advances = parseAdvances(getString(getColumnIndexOrThrow("advance_list")), getInt(getColumnIndexOrThrow("advance_min"))),
         remindType = runCatching { RemindType.valueOf(getString(getColumnIndexOrThrow("remind_type"))) }.getOrDefault(RemindType.ALARM),
         priority = runCatching { Priority.valueOf(getString(getColumnIndexOrThrow("priority"))) }.getOrDefault(Priority.NONE),
+        endOffset = getInt(getColumnIndexOrThrow("end_offset")),
         done = getInt(getColumnIndexOrThrow("done")) == 1,
         snoozeUntil = getLong(getColumnIndexOrThrow("snooze_until")),
         rangFor = getLong(getColumnIndexOrThrow("rang_for")),

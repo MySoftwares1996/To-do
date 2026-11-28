@@ -31,6 +31,9 @@ enum class Priority(val label: String, val marks: String) {
 /** How the task reminds at its due time. */
 enum class RemindType(val label: String) { ALARM("Alarm"), NOTIFICATION("Notification") }
 
+/** Month-end and quarter-end tasks are set as "last day minus N" instead of a date. */
+fun Repeat.usesEndOffset() = this == Repeat.MONTH_END || this == Repeat.QUARTER_END
+
 /** The working-day rule applies to repeating tasks except Daily. */
 fun Repeat.usesWorkdayRule() = this != Repeat.NONE && this != Repeat.DAILY
 
@@ -69,6 +72,8 @@ data class Task(
     /** Ring a full alarm, or only show a notification. */
     val remindType: RemindType = RemindType.ALARM,
     val priority: Priority = Priority.NONE,
+    /** Month-end / quarter-end: ring this many days before the last day (0 = last day). */
+    val endOffset: Int = 0,
 ) {
     /** When the main alarm should ring. */
     val alarmAt: Long get() = if (snoozeUntil > 0) snoozeUntil else dueAt
@@ -95,18 +100,18 @@ data class Task(
 
 object Recurrence {
     /** Occurrence number [k] (0 = start) of a repeating task, before working-day adjustment. */
-    fun occurrence(start: Long, repeat: Repeat, k: Long): Long {
+    fun occurrence(start: Long, repeat: Repeat, k: Long, endOffset: Int = 0): Long {
         val s = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start), ZoneId.systemDefault())
         val z = when (repeat) {
             Repeat.NONE -> s
             Repeat.DAILY -> s.plusDays(k)
             Repeat.WEEKLY -> s.plusWeeks(k)
             Repeat.MONTHLY -> s.plusMonths(k) // clamps 31st -> 30th/28th without drifting
-            Repeat.MONTH_END -> s.plusMonths(k).with(TemporalAdjusters.lastDayOfMonth())
+            Repeat.MONTH_END -> s.plusMonths(k).with(TemporalAdjusters.lastDayOfMonth()).minusDays(endOffset.toLong())
             Repeat.QUARTERLY -> s.plusMonths(3 * k) // same date every 3 months, clamped like monthly
             Repeat.QUARTER_END -> { // last day of Mar / Jun / Sep / Dec
                 val first = s.plusMonths(((3 - s.monthValue % 3) % 3).toLong()) // move to the quarter's last month
-                first.plusMonths(3 * k).with(TemporalAdjusters.lastDayOfMonth())
+                first.plusMonths(3 * k).with(TemporalAdjusters.lastDayOfMonth()).minusDays(endOffset.toLong())
             }
             Repeat.YEARLY -> s.plusYears(k)
         }
@@ -125,11 +130,13 @@ object Recurrence {
     }
 
     /** First (adjusted) occurrence strictly after [after], counting from k = 0. Null for one-time tasks. */
-    fun nextAfter(start: Long, repeat: Repeat, after: Long, rule: WorkdayRule = WorkdayRule.SAME_DAY): Long? {
+    fun nextAfter(
+        start: Long, repeat: Repeat, after: Long, rule: WorkdayRule = WorkdayRule.SAME_DAY, endOffset: Int = 0,
+    ): Long? {
         if (repeat == Repeat.NONE) return null
         var k = 0L
         while (true) {
-            val t = adjust(occurrence(start, repeat, k), repeat, rule)
+            val t = adjust(occurrence(start, repeat, k, endOffset), repeat, rule)
             if (t > after) return t
             k++
         }

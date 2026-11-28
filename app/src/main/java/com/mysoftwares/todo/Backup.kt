@@ -41,6 +41,7 @@ object Backup {
                 put("advances", JSONArray(t.advances))
                 put("remindType", t.remindType.name)
                 put("priority", t.priority.name)
+                put("endOffset", t.endOffset)
                 put("done", t.done)
                 put("snoozeUntil", t.snoozeUntil)
                 put("rangFor", t.rangFor)
@@ -77,6 +78,7 @@ object Backup {
                     ?: listOf(o.optInt("advanceMinutes")).filter { it > 0 },
                 remindType = runCatching { RemindType.valueOf(o.optString("remindType")) }.getOrDefault(RemindType.ALARM),
                 priority = runCatching { Priority.valueOf(o.optString("priority")) }.getOrDefault(Priority.NONE),
+                endOffset = o.optInt("endOffset"),
                 done = o.optBoolean("done"),
                 snoozeUntil = o.optLong("snoozeUntil"),
                 rangFor = o.optLong("rangFor"),

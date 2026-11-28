@@ -68,6 +68,31 @@ class RecurrenceTest {
         assertEquals(LocalDate.of(2027, 6, 30), occ(ms(2027, 4, 1), Repeat.QUARTER_END, 0).toLocalDate())
     }
 
+    @Test fun monthEndMinusDays() {
+        val start = ms(2026, 11, 1)
+        // Last day −2: Nov 28, Dec 29, Feb 26 (2027)
+        assertEquals(LocalDate.of(2026, 11, 28), date(Recurrence.occurrence(start, Repeat.MONTH_END, 0, 2)).toLocalDate())
+        assertEquals(LocalDate.of(2026, 12, 29), date(Recurrence.occurrence(start, Repeat.MONTH_END, 1, 2)).toLocalDate())
+        assertEquals(LocalDate.of(2027, 2, 26), date(Recurrence.occurrence(start, Repeat.MONTH_END, 3, 2)).toLocalDate())
+    }
+
+    @Test fun quarterEndMinusDays() {
+        // Last day of the quarter −3: 28 Mar, 27 Jun
+        val start = ms(2027, 1, 10)
+        assertEquals(LocalDate.of(2027, 3, 28), date(Recurrence.occurrence(start, Repeat.QUARTER_END, 0, 3)).toLocalDate())
+        assertEquals(LocalDate.of(2027, 6, 27), date(Recurrence.occurrence(start, Repeat.QUARTER_END, 1, 3)).toLocalDate())
+    }
+
+    @Test fun monthEndMinusThenWorkingDay() {
+        // Jul 2027: last day 31 (Sat), −1 = 30 Fri (working) → stays 30
+        val start = ms(2027, 7, 1)
+        val t = Recurrence.nextAfter(start, Repeat.MONTH_END, ms(2027, 7, 1), WorkdayRule.PREVIOUS, 1)!!
+        assertEquals(LocalDate.of(2027, 7, 30), date(t).toLocalDate())
+        // Aug 2027: last day 31 (Tue), −2 = 29 Sun → previous working day Fri 27
+        val t2 = Recurrence.nextAfter(ms(2027, 8, 1), Repeat.MONTH_END, ms(2027, 8, 1), WorkdayRule.PREVIOUS, 2)!!
+        assertEquals(LocalDate.of(2027, 8, 27), date(t2).toLocalDate())
+    }
+
     @Test fun yearlyFinancialYearEnd() =
         assertEquals(LocalDate.of(2028, 3, 31), occ(ms(2027, 3, 31), Repeat.YEARLY, 1).toLocalDate())
 
