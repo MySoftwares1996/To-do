@@ -81,6 +81,7 @@ class MainActivity : BaseActivity() {
         adapter = TaskAdapter(
             onClick = { startActivity(Intent(this, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, it.id)) },
             onCheck = { toggleDone(it) },
+            onLongPress = { showTaskMenu(it) },
             onBanner = { open ->
                 Reliability.markSeen(this) // don't show it again after updates
                 if (open) startActivity(Intent(this, SetupActivity::class.java)) else refresh()
@@ -265,6 +266,39 @@ class MainActivity : BaseActivity() {
         val msg = if (before.repeat == Repeat.NONE) "Completed: ${before.title}"
         else "Completed. Next: ${TaskAdapter.friendlyTime(TaskDb.get(this).get(task.id)?.dueAt ?: before.dueAt)}"
         showUndo(msg, before, undoesDone = true)
+    }
+
+    /** Long-press menu on a task. */
+    private fun showTaskMenu(task: Task) {
+        haptic()
+        val actions = mutableListOf<Pair<String, () -> Unit>>()
+        actions += (if (task.done) getString(R.string.menu_mark_not_done) else getString(R.string.menu_mark_done)) to { toggleDone(task) }
+        if (!task.done) actions += getString(R.string.menu_snooze_hour) to {
+            TaskActions.snooze(this, task.id, 60); refresh()
+        }
+        actions += getString(R.string.menu_duplicate) to {
+            // Same settings, new task; the user can change the date afterwards.
+            // A copy of a past task must not ring straight away: repeating tasks move to their next
+            // date; one-time tasks keep their date but are marked as already rung (edit to change it).
+            val now = System.currentTimeMillis()
+            val nextDue = if (task.dueAt > now) task.dueAt
+            else Recurrence.nextAfter(task.startAt, task.repeat, now, task.workday, task.endOffset) ?: task.dueAt
+            val copy = TaskDb.get(this).save(
+                task.copy(
+                    id = 0, title = getString(R.string.menu_copy_suffix, task.title), done = false,
+                    dueAt = nextDue, snoozeUntil = 0, advanceShownFor = 0,
+                    rangFor = if (nextDue <= now) nextDue else 0,
+                )
+            )
+            AlarmScheduler.schedule(this, copy)
+            refresh()
+            toast(getString(R.string.menu_duplicated))
+        }
+        actions += getString(R.string.menu_delete) to { deleteWithUndo(task) }
+        AlertDialog.Builder(this)
+            .setTitle(task.title)
+            .setItems(actions.map { it.first }.toTypedArray()) { _, i -> actions[i].second() }
+            .show()
     }
 
     private fun deleteWithUndo(task: Task) {

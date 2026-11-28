@@ -34,6 +34,12 @@ object AlarmPrefs {
     fun ringMinutes(c: Context) = prefs(c).getInt("ring", 3)
     fun setRingMinutes(c: Context, m: Int) = prefs(c).edit().putInt("ring", m).apply()
 
+    /** Morning summary notification: on/off and time (minutes after midnight, default 8:30). */
+    fun summaryOn(c: Context) = prefs(c).getBoolean("summary_on", true)
+    fun setSummaryOn(c: Context, on: Boolean) = prefs(c).edit().putBoolean("summary_on", on).apply()
+    fun summaryMinutes(c: Context) = prefs(c).getInt("summary_at", 8 * 60 + 30)
+    fun setSummaryMinutes(c: Context, m: Int) = prefs(c).edit().putInt("summary_at", m).apply()
+
     /** Time used by "Snooze until tomorrow" (minutes after midnight, default 9:00). */
     fun morningMinutes(c: Context) = prefs(c).getInt("morning", 9 * 60)
     fun setMorningMinutes(c: Context, m: Int) = prefs(c).edit().putInt("morning", m).apply()

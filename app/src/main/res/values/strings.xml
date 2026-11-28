@@ -163,4 +163,20 @@
     <string name="end_last_day">Last day</string>
     <string name="end_last_day_minus">Last day −%1$d</string>
     <string name="end_which_day">Ring on</string>
+    <!-- Morning summary -->
+    <string name="summary_section">Morning summary</string>
+    <string name="summary_switch">Daily summary</string>
+    <string name="summary_hint">One notification with today\'s tasks</string>
+    <string name="summary_time">Time</string>
+    <string name="summary_title">Today: %1$d tasks</string>
+    <string name="summary_overdue"> · %1$d overdue</string>
+    <string name="summary_more">+%1$d more</string>
+    <!-- Long-press menu -->
+    <string name="menu_mark_done">Mark done</string>
+    <string name="menu_mark_not_done">Mark not done</string>
+    <string name="menu_snooze_hour">Snooze 1 hour</string>
+    <string name="menu_duplicate">Duplicate</string>
+    <string name="menu_delete">Delete</string>
+    <string name="menu_copy_suffix">%1$s (copy)</string>
+    <string name="menu_duplicated">Copy added – tap it to change the date</string>
 </resources>

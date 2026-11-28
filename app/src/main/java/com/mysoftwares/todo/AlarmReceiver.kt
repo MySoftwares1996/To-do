@@ -10,6 +10,11 @@ import androidx.core.content.ContextCompat
 /** Receives the system alarm and starts ringing. */
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == AlarmScheduler.ACTION_SUMMARY) {
+            Notifications.showSummary(context)
+            AlarmScheduler.scheduleSummary(context) // tomorrow
+            return
+        }
         val id = intent.getLongExtra(AlarmScheduler.EXTRA_TASK_ID, -1)
         if (id < 0) return
         // Keep the CPU awake until the ringing service has started.

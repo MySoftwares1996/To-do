@@ -33,6 +33,8 @@ sealed class Row {
 class TaskAdapter(
     private val onClick: (Task) -> Unit,
     private val onCheck: (Task) -> Unit,
+    /** Long-press: Mark done / Snooze / Duplicate / Delete menu. */
+    private val onLongPress: (Task) -> Unit,
     /** Banner tapped (open = true) or closed with ✕ (open = false). */
     private val onBanner: (open: Boolean) -> Unit,
     /** true = iOS inset grouped list; false = separate rounded cards. */
@@ -339,5 +341,6 @@ class TaskAdapter(
             check.postDelayed({ onCheck(t) }, 460)
         }
         v.setOnClickListener { onClick(t) }
+        v.setOnLongClickListener { onLongPress(t); true }
     }
 }

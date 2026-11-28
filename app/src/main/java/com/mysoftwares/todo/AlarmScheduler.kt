@@ -19,6 +19,7 @@ object AlarmScheduler {
     private const val TAG = "AlarmScheduler"
     const val ACTION_ALARM = "com.mysoftwares.todo.ALARM"
     const val ACTION_ADVANCE = "com.mysoftwares.todo.ADVANCE"
+    const val ACTION_SUMMARY = "com.mysoftwares.todo.SUMMARY"
     const val EXTRA_TASK_ID = "task_id"
 
     fun schedule(context: Context, task: Task) {
@@ -51,8 +52,31 @@ object AlarmScheduler {
     fun rescheduleAll(context: Context) {
         try {
             TaskDb.get(context).all().forEach { schedule(context, it) }
+            scheduleSummary(context)
         } catch (e: Exception) {
             Log.e(TAG, "rescheduleAll failed", e)
+        }
+    }
+
+    /** Arms tomorrow's (or today's) morning summary, or cancels it when switched off. */
+    fun scheduleSummary(context: Context) {
+        val am = context.getSystemService(AlarmManager::class.java)
+        val pi = PendingIntent.getBroadcast(
+            context, Int.MAX_VALUE - 3,
+            Intent(context, AlarmReceiver::class.java).setAction(ACTION_SUMMARY),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        am.cancel(pi)
+        if (!AlarmPrefs.summaryOn(context)) return
+        val m = AlarmPrefs.summaryMinutes(context)
+        var at = java.time.LocalDate.now().atTime(m / 60, m % 60)
+        if (!at.isAfter(java.time.LocalDateTime.now())) at = at.plusDays(1)
+        val ms = at.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        try {
+            if (canScheduleExact(context)) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, ms, pi)
+            else am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, ms, pi)
+        } catch (e: SecurityException) {
+            am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, ms, pi)
         }
     }
 

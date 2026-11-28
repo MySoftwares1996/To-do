@@ -158,6 +158,38 @@ object Notifications {
         notify(context, task.id.toInt(), n)
     }
 
+    /** Morning summary: "Today: 3 tasks · 1 overdue" with the task names. Nothing if the day is empty. */
+    fun showSummary(context: Context) {
+        val now = System.currentTimeMillis()
+        val endOfDay = java.time.LocalDate.now().plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val due = TaskDb.get(context).all().filter { !it.done && it.dueAt < endOfDay }
+            .sortedWith(compareByDescending<Task> { it.dueAt < now }.thenByDescending { it.priority.ordinal }.thenBy { it.dueAt })
+        if (due.isEmpty()) return
+        val overdue = due.count { it.dueAt < now }
+        val title = context.getString(R.string.summary_title, due.size) +
+            if (overdue > 0) context.getString(R.string.summary_overdue, overdue) else ""
+        val style = NotificationCompat.InboxStyle()
+        due.take(6).forEach { t ->
+            val time = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(t.dueAt))
+            style.addLine((if (t.dueAt < now) "⚠ " else "") + "$time  ${t.priority.marks} ${t.title}".replace("  ", " "))
+        }
+        if (due.size > 6) style.setSummaryText(context.getString(R.string.summary_more, due.size - 6))
+        val open = PendingIntent.getActivity(
+            context, 7, Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val n = NotificationCompat.Builder(context, CH_REMINDER)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(title)
+            .setContentText(due.first().title)
+            .setStyle(style)
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+        notify(context, Int.MAX_VALUE - 4, n)
+    }
+
     fun showAdvance(context: Context, task: Task) {
         val open = PendingIntent.getActivity(
             context, task.id.toInt(),

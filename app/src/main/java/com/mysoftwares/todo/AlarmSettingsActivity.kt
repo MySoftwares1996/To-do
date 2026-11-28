@@ -59,6 +59,28 @@ class AlarmSettingsActivity : BaseActivity() {
                 AlarmPrefs.setNagMinutes(this, it); render()
             }
         }
+        list.label(getString(R.string.summary_section))
+        val summary = list.group()
+        summary.switchRow(getString(R.string.summary_switch), getString(R.string.summary_hint), AlarmPrefs.summaryOn(this)) { on ->
+            AlarmPrefs.setSummaryOn(this, on); AlarmScheduler.scheduleSummary(this); render()
+        }
+        if (AlarmPrefs.summaryOn(this)) summary.row(getString(R.string.summary_time), timeText(AlarmPrefs.summaryMinutes(this)) + " ›") {
+            val m = AlarmPrefs.summaryMinutes(this)
+            val picker = com.google.android.material.timepicker.MaterialTimePicker.Builder()
+                .setTimeFormat(
+                    if (android.text.format.DateFormat.is24HourFormat(this)) com.google.android.material.timepicker.TimeFormat.CLOCK_24H
+                    else com.google.android.material.timepicker.TimeFormat.CLOCK_12H
+                )
+                .setHour(m / 60).setMinute(m % 60)
+                .setTitleText(getString(R.string.summary_time))
+                .build()
+            picker.addOnPositiveButtonClickListener {
+                AlarmPrefs.setSummaryMinutes(this, picker.hour * 60 + picker.minute)
+                AlarmScheduler.scheduleSummary(this); render()
+            }
+            picker.show(supportFragmentManager, "summary")
+        }
+
         list.footer(getString(R.string.set_alarm_footer))
     }
 
