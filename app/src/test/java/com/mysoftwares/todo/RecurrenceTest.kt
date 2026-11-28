@@ -93,6 +93,19 @@ class RecurrenceTest {
         assertEquals(LocalDate.of(2027, 8, 27), date(t2).toLocalDate())
     }
 
+    @Test fun previousWorkingDayAlreadyPassedKeepsThisMonth() {
+        WorkDays.setForTest(WorkDays.OffDays.SUN, emptySet())
+        // Month-end −1 in Nov 2026 = Sun 29 → previous working day Sat 28 9:00.
+        // Saved on Sat 28 at 9:15: don't skip to December, ring on Sun 29 9:00.
+        val start = ms(2026, 11, 1, 9, 0)
+        val now = ms(2026, 11, 28, 9, 15)
+        val t = Recurrence.nextAfter(start, Repeat.MONTH_END, now, WorkdayRule.PREVIOUS, 1, keepThisPeriod = true)!!
+        assertEquals(LocalDateTime.of(2026, 11, 29, 9, 0), date(t))
+        // After that one is done, the next is December: 31 −1 = Wed 30 Dec
+        val next = Recurrence.nextAfter(start, Repeat.MONTH_END, t, WorkdayRule.PREVIOUS, 1)!!
+        assertEquals(LocalDate.of(2026, 12, 30), date(next).toLocalDate())
+    }
+
     @Test fun yearlyFinancialYearEnd() =
         assertEquals(LocalDate.of(2028, 3, 31), occ(ms(2027, 3, 31), Repeat.YEARLY, 1).toLocalDate())
 

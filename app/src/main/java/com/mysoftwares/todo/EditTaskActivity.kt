@@ -274,7 +274,7 @@ class EditTaskActivity : BaseActivity() {
         // For month-end / quarter-end show the next actual date, e.g. "Next: Fri, 28 Nov".
         val nextText = if (rep0.usesEndOffset()) {
             val rule = if (rep0.usesWorkdayRule()) WorkdayRule.entries[workdayIndex] else WorkdayRule.SAME_DAY
-            val next = Recurrence.nextAfter(startFor(rep0), rep0, System.currentTimeMillis(), rule, endOffset)
+            val next = Recurrence.nextAfter(startFor(rep0), rep0, System.currentTimeMillis(), rule, endOffset, keepThisPeriod = true)
             next?.let { "Next: " + java.text.SimpleDateFormat("EEE, d MMM", java.util.Locale.getDefault()).format(java.util.Date(it)) + ". " }.orEmpty()
         } else ""
         findViewById<TextView>(R.id.important_note).text = nextText +
@@ -317,7 +317,7 @@ class EditTaskActivity : BaseActivity() {
 
         val rule = if (rep.usesWorkdayRule()) WorkdayRule.entries[workdayIndex] else WorkdayRule.SAME_DAY
         // First occurrence (moved to a working day if asked) that is still in the future.
-        var due = if (rep == Repeat.NONE) startMs else Recurrence.nextAfter(startMs, rep, now - 1, rule, endOffset)!!
+        var due = if (rep == Repeat.NONE) startMs else Recurrence.nextAfter(startMs, rep, now - 1, rule, endOffset, keepThisPeriod = true)!!
         if (due <= now) {
             if (rep == Repeat.NONE) {
                 AlertDialog.Builder(this)

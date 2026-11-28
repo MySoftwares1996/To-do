@@ -130,14 +130,22 @@ object Recurrence {
     }
 
     /** First (adjusted) occurrence strictly after [after], counting from k = 0. Null for one-time tasks. */
+    /**
+     * [keepThisPeriod]: used when a task is saved. If "Previous working day" moved this
+     * period's date into the past (e.g. Sun 29 → Sat 28 9:00 and it is already 9:15), ring on
+     * the real date instead of skipping the whole month.
+     */
     fun nextAfter(
         start: Long, repeat: Repeat, after: Long, rule: WorkdayRule = WorkdayRule.SAME_DAY, endOffset: Int = 0,
+        keepThisPeriod: Boolean = false,
     ): Long? {
         if (repeat == Repeat.NONE) return null
         var k = 0L
         while (true) {
-            val t = adjust(occurrence(start, repeat, k, endOffset), repeat, rule)
+            val nominal = occurrence(start, repeat, k, endOffset)
+            val t = adjust(nominal, repeat, rule)
             if (t > after) return t
+            if (keepThisPeriod && rule == WorkdayRule.PREVIOUS && nominal > after) return nominal
             k++
         }
     }
