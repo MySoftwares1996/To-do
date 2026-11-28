@@ -62,6 +62,7 @@ class MainActivity : BaseActivity() {
         setContentView(R.layout.activity_main)
         val bar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(bar)
+        supportActionBar?.setDisplayShowTitleEnabled(false) // own title + summary views (never cut off)
         list = findViewById(R.id.list)
         settingsPage = findViewById(R.id.settings_page)
         search = findViewById(R.id.search)
@@ -119,7 +120,7 @@ class MainActivity : BaseActivity() {
     private fun showTab(t: Tab) {
         tab = t
         onSettings = false
-        supportActionBar?.title = t.title
+        setHeader(t.title, null)
         list.visibility = View.VISIBLE
         settingsPage.visibility = View.GONE
         search.visibility = if (searchOpen) View.VISIBLE else View.GONE
@@ -131,8 +132,7 @@ class MainActivity : BaseActivity() {
 
     private fun showSettings() {
         onSettings = true
-        supportActionBar?.title = getString(R.string.ui_settings)
-        supportActionBar?.subtitle = "Office To-Do ${Updater.currentVersionName}"
+        setHeader(getString(R.string.ui_settings), "Office To-Do ${Updater.currentVersionName}")
         list.visibility = View.GONE
         settingsPage.visibility = View.VISIBLE
         search.visibility = View.GONE
@@ -335,7 +335,7 @@ class MainActivity : BaseActivity() {
     private fun refresh() {
         val tasks = TaskDb.get(this).all()
         adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.problemCount(this), query))
-        if (!onSettings) supportActionBar?.subtitle = TaskAdapter.summary(tasks, tab, query)
+        if (!onSettings) setHeader(null, TaskAdapter.summary(tasks, tab, query))
         // Red badge on the Today tab = number of overdue tasks.
         val now = System.currentTimeMillis()
         val overdue = tasks.count { !it.done && it.dueAt < now }
@@ -461,6 +461,12 @@ class MainActivity : BaseActivity() {
     }
 
     private fun toast(msg: String) = updates.toast(msg)
+
+    /** Title and one-line summary in the top bar (null = keep the current text). */
+    private fun setHeader(title: String?, subtitle: String?) {
+        title?.let { findViewById<android.widget.TextView>(R.id.header_title).text = it }
+        subtitle?.let { findViewById<android.widget.TextView>(R.id.header_subtitle).text = it }
+    }
 
     /** 🔍 shows a search bar under the title; tapping it again closes and clears it. */
     private fun toggleSearch() {

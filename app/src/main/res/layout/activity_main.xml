@@ -16,15 +16,48 @@
         app:liftOnScroll="true">
 
         <!-- One-line title bar: title + summary on the left, search and + on the right -->
+        <!-- Title bar: grows with the phone's text size so nothing is cut off -->
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="wrap_content"
+            android:minHeight="56dp"
             android:background="@color/ios_bg"
-            android:paddingStart="4dp"
-            app:subtitleTextAppearance="@style/IosToolbarSubtitle"
-            app:titleCentered="false"
-            app:titleTextAppearance="@style/IosToolbarTitle" />
+            app:contentInsetStart="16dp"
+            app:titleCentered="false">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|start"
+                android:orientation="vertical"
+                android:paddingVertical="6dp">
+
+                <TextView
+                    android:id="@+id/header_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:textColor="@color/ios_label"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/header_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/ios_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </com.google.android.material.appbar.MaterialToolbar>
+
+        <!-- Hairline under the title bar so scrolled content never looks cut -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0.6dp"
+            android:background="@color/ios_separator" />
 
         <!-- Search bar (task tabs only) -->
         <EditText
@@ -32,6 +65,7 @@
             android:layout_width="match_parent"
             android:layout_height="38dp"
             android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="6dp"
             android:layout_marginBottom="6dp"
             android:background="@drawable/bg_search"
             android:drawableStart="@drawable/ic_search"
@@ -54,7 +88,8 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:paddingHorizontal="10dp"
-        android:paddingBottom="72dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="96dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <!-- Settings tab content -->
@@ -63,7 +98,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="72dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="96dp"
         android:visibility="gone"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -155,12 +191,14 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="@drawable/bg_tab_bar"
         app:elevation="0dp"
         app:itemIconTint="@color/tab_tint"
         app:itemTextColor="@color/tab_tint"
+        app:itemTextAppearanceActive="@style/TabLabel"
+        app:itemTextAppearanceInactive="@style/TabLabel"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/bottom_tabs" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

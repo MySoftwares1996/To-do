@@ -58,6 +58,10 @@
         <item name="android:textColor">@color/ios_secondary</item>
     </style>
 
+    <style name="TabLabel" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">11sp</item>
+    </style>
+
     <style name="IosLargeTitle" parent="TextAppearance.Material3.DisplaySmall">
         <item name="android:textSize">34sp</item>
         <item name="android:textStyle">bold</item>

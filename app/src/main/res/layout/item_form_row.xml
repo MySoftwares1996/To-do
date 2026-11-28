@@ -27,6 +27,8 @@
             android:id="@+id/row_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textColor="@color/ios_label"
             android:textSize="16sp" />
 
@@ -43,6 +45,8 @@
         android:id="@+id/row_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:layout_marginStart="8dp"
         android:gravity="end"
         android:maxWidth="200dp"

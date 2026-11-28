@@ -4,7 +4,7 @@
     <string name="new_task">New task</string>
     <string name="edit_task">Edit task</string>
     <string name="banner_problems">⚠  %1$d setting(s) may stop your alarms. Tap to fix.</string>
-    <string name="empty">Tap “New task” to add a bank due date, month-end closing or any important work.</string>
+    <string name="empty">Tap + to add a bank due date, month-end closing or any important work.</string>
     <string name="widget_description">Your next pending tasks. Tap ✔ to mark one done.</string>
     <string name="backup_title">Backup &amp; restore</string>
     <string name="appearance_title">Appearance</string>
@@ -69,14 +69,14 @@
     <string name="snooze_2_hours">2 hours</string>
     <string name="snooze_tomorrow">Tomorrow, %1$s</string>
     <string name="snooze_pick_time">Pick a time…</string>
-    <string name="set_morning">\"Tomorrow\" snooze time</string>
+    <string name="set_morning">Tomorrow snooze at</string>
     <string name="report_on_time_means">Counts as on time</string>
     <string name="report_share">Share Excel (CSV) file</string>
     <!-- Messages and dialogs (moved out of the Kotlin code) -->
     <string name="msg_alarm_sound">Alarm sound</string>
     <string name="msg_vibrate_only">Vibrate only</string>
-    <string name="msg_snooze_buttons">Snooze buttons</string>
-    <string name="msg_repeat_important_every">Repeat important every</string>
+    <string name="msg_snooze_buttons">Snooze</string>
+    <string name="msg_repeat_important_every">Repeat important</string>
     <string name="msg_ring_for">Ring for</string>
     <string name="msg_test_alarm">Test alarm</string>
     <string name="msg_weekly_off">Weekly off</string>
