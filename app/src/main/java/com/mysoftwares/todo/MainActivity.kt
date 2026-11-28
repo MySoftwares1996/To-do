@@ -174,7 +174,7 @@ class MainActivity : BaseActivity() {
 
         list.spacer()
         val data = list.group()
-        data.row(getString(R.string.backup_title), if (Backup.autoUri(this) != null) "On ›" else "Off ›",
+        data.row(getString(R.string.backup_title), if (Backup.isOn(this)) "On ›" else "Off ›",
             dot = ContextCompat.getColor(this, R.color.ios_indigo)) { startActivity(Intent(this, BackupActivity::class.java)) }
         data.row(getString(R.string.msg_monthly_report), "›", dot = ContextCompat.getColor(this, R.color.ios_green)) {
             startActivity(Intent(this, ReportActivity::class.java))
