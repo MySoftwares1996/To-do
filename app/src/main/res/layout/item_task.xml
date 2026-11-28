@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Compact task row: tick | title + details | time. The adapter sets the rounded background. -->
+<!-- Task row: tick | title, tags, note | time. The adapter sets the rounded background. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cell"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -10,16 +11,16 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:minHeight="48dp"
+        android:minHeight="52dp"
         android:orientation="horizontal"
         android:paddingStart="4dp"
         android:paddingEnd="12dp">
 
         <ImageView
             android:id="@+id/check"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="4dp"
             android:contentDescription="@string/ui_mark_done"
             android:padding="8dp"
             android:src="@drawable/ic_circle_empty" />
@@ -29,7 +30,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:paddingVertical="6dp">
+            android:paddingTop="9dp"
+            android:paddingBottom="9dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -37,47 +39,73 @@
                 android:gravity="top"
                 android:orientation="horizontal">
 
-                <!-- Full title, wraps onto more lines (never cut off with "…") -->
+                <!-- Full title, wraps onto more lines -->
                 <TextView
                     android:id="@+id/title"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:fontFamily="sans-serif-medium"
+                    android:lineSpacingExtra="1dp"
                     android:textColor="@color/ios_label"
-                    android:textSize="15sp" />
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/badge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="!!"
-                    android:textColor="@color/ios_orange"
+                    android:layout_marginStart="6dp"
                     android:textSize="15sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- Small coloured tags: Important, Monthly, Notification, Snoozed -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/tags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                app:chipSpacingHorizontal="5dp"
+                app:chipSpacingVertical="4dp" />
+
+            <!-- First line of the notes -->
             <TextView
                 android:id="@+id/repeat"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:ellipsize="end"
-                android:maxLines="2"
+                android:maxLines="1"
                 android:textColor="@color/ios_secondary"
-                android:textSize="12sp" />
+                android:textSize="12.5sp" />
         </LinearLayout>
 
-        <!-- Time column, e.g. "10:00 AM / in 2 h" -->
-        <TextView
-            android:id="@+id/sub"
+        <!-- Time column: bold time, then "in 21 min" in the accent colour -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="10dp"
             android:gravity="end"
-            android:lineSpacingExtra="1dp"
-            android:maxLines="2"
-            android:textColor="@color/ios_secondary"
-            android:textSize="12.5sp" />
+            android:orientation="vertical"
+            android:paddingTop="10dp">
+
+            <TextView
+                android:id="@+id/sub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textColor="@color/ios_label"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/sub2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:maxLines="1"
+                android:textSize="12sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Hairline divider, indented like iOS -->
@@ -85,6 +113,6 @@
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="0.6dp"
-        android:layout_marginStart="42dp"
+        android:layout_marginStart="44dp"
         android:background="@color/ios_separator" />
 </LinearLayout>

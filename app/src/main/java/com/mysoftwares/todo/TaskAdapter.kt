@@ -33,7 +33,8 @@ sealed class Row {
 class TaskAdapter(
     private val onClick: (Task) -> Unit,
     private val onCheck: (Task) -> Unit,
-    private val onBanner: () -> Unit,
+    /** Banner tapped (open = true) or closed with ✕ (open = false). */
+    private val onBanner: (open: Boolean) -> Unit,
     /** true = iOS inset grouped list; false = separate rounded cards. */
     private val grouped: Boolean = true,
 ) : ListAdapter<Row, RecyclerView.ViewHolder>(DIFF) {
@@ -201,8 +202,9 @@ class TaskAdapter(
         val v = holder.itemView
         when (val row = getItem(position)) {
             is Row.Banner -> {
-                (v as TextView).text = v.context.getString(R.string.banner_problems, row.problems)
-                v.setOnClickListener { onBanner() }
+                v.findViewById<TextView>(R.id.banner_text).text = v.context.getString(R.string.banner_problems, row.problems)
+                v.setOnClickListener { onBanner(true) }
+                v.findViewById<View>(R.id.banner_close).setOnClickListener { onBanner(false) }
             }
             is Row.Summary -> (v as TextView).text = row.text
             is Row.Header -> {
@@ -244,27 +246,57 @@ class TaskAdapter(
         else title.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
         title.setTextColor(ContextCompat.getColor(ctx, if (t.done) R.color.ios_secondary else R.color.ios_label))
 
-        // Right-hand time column; red when overdue.
-        val sub = v.findViewById<TextView>(R.id.sub)
-        sub.text = timeColumn(t, now)
-        sub.setTextColor(ContextCompat.getColor(ctx, if (overdue) R.color.ios_red else R.color.ios_secondary))
+        // Time column: bold time, then "in 21 min" / date in the accent colour (red when overdue).
+        val (line1, line2) = timeColumn(t, now).split("\n").let { it[0] to it.getOrElse(1) { "" } }
+        val accent = MaterialColors.getColor(v, androidx.appcompat.R.attr.colorPrimary)
+        val red = ContextCompat.getColor(ctx, R.color.ios_red)
+        val gray = ContextCompat.getColor(ctx, R.color.ios_secondary)
+        // For today: line1 = time, line2 = "in 2 h". Otherwise line1 = day, line2 = time.
+        val todayStyle = line2.startsWith("in ") || line2 == "now"
+        v.findViewById<TextView>(R.id.sub).apply {
+            text = if (todayStyle) line1 else line2
+            setTextColor(if (overdue) red else if (t.done) gray else ContextCompat.getColor(ctx, R.color.ios_label))
+        }
+        v.findViewById<TextView>(R.id.sub2).apply {
+            text = if (todayStyle) line2 else line1
+            setTextColor(if (overdue) red else if (t.done) gray else accent)
+        }
 
-        val extras = mutableListOf<String>()
-        if (t.important && !t.done) extras += "⚠ Important"
-        if (t.remindType == RemindType.NOTIFICATION) extras += "🔔 Notification"
-        if (t.repeat != Repeat.NONE) extras += "↻ " + t.repeat.label
-        if (t.snoozeUntil > 0 && !t.done) {
-            val at = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
-            // Important tasks that already rang repeat automatically until Done.
-            extras += if (t.important && t.rangFor > 0) "🔁 Again at $at until Done" else "⏰ Snoozed to $at"
+        // Small coloured tags
+        val tags = v.findViewById<ViewGroup>(R.id.tags)
+        tags.removeAllViews()
+        fun tag(text: String, color: Int) {
+            tags.addView(TextView(ctx).apply {
+                this.text = text
+                textSize = 11.5f
+                setTextColor(color)
+                val d = ctx.resources.displayMetrics.density
+                setPadding((7 * d).toInt(), (2 * d).toInt(), (7 * d).toInt(), (2 * d).toInt())
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    cornerRadius = 8 * d
+                    setColor(androidx.core.graphics.ColorUtils.setAlphaComponent(color, 0x26))
+                }
+            })
         }
-        if (t.notes.isNotBlank()) extras += t.notes.lineSequence().first()
+        if (!t.done) {
+            if (overdue) tag("Overdue", red)
+            if (t.important) tag("⚠ Important", ContextCompat.getColor(ctx, R.color.ios_orange))
+            if (t.snoozeUntil > 0) {
+                val at = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
+                // Important tasks that already rang repeat automatically until Done.
+                tag(if (t.important && t.rangFor > 0) "🔁 Again $at" else "⏰ $at", accent)
+            }
+        }
+        if (t.repeat != Repeat.NONE) tag("↻ " + t.repeat.label, gray)
+        if (t.remindType == RemindType.NOTIFICATION) tag("🔔 Notification", gray)
+        tags.visibility = if (tags.childCount == 0) View.GONE else View.VISIBLE
+
+        // First line of the notes
         v.findViewById<TextView>(R.id.repeat).apply {
-            val line = android.text.SpannableStringBuilder()
-            line.append(extras.joinToString("  ·  "))
-            text = line
-            visibility = if (line.isEmpty()) View.GONE else View.VISIBLE
+            text = t.notes.lineSequence().firstOrNull().orEmpty()
+            visibility = if (t.notes.isBlank()) View.GONE else View.VISIBLE
         }
+
         // Priority marks: !!! red, !! orange, ! grey
         v.findViewById<TextView>(R.id.badge).apply {
             text = t.priority.marks
@@ -276,6 +308,9 @@ class TaskAdapter(
             }))
         }
 
+        // rows are reused: undo any slide-away animation
+        v.animate().cancel(); v.alpha = 1f; v.translationX = 0f
+
         val check = v.findViewById<ImageView>(R.id.check)
         check.setImageResource(if (t.done) R.drawable.ic_circle_checked else R.drawable.ic_circle_empty)
         check.isEnabled = true
@@ -286,7 +321,10 @@ class TaskAdapter(
             check.animate().scaleX(1.2f).scaleY(1.2f).setDuration(120).withEndAction {
                 check.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
             }.start()
-            check.postDelayed({ onCheck(t) }, 350)
+            // Live animation: the row slides away and fades, then the list updates.
+            v.animate().translationX(48 * ctx.resources.displayMetrics.density).alpha(0.25f)
+                .setStartDelay(180).setDuration(260).start()
+            check.postDelayed({ onCheck(t) }, 460)
         }
         v.setOnClickListener { onClick(t) }
     }

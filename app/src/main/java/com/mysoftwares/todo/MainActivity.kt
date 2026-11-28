@@ -83,7 +83,10 @@ class MainActivity : BaseActivity() {
         adapter = TaskAdapter(
             onClick = { startActivity(Intent(this, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, it.id)) },
             onCheck = { toggleDone(it) },
-            onBanner = { startActivity(Intent(this, SetupActivity::class.java)) },
+            onBanner = { open ->
+                Reliability.markSeen(this) // don't show it again after updates
+                if (open) startActivity(Intent(this, SetupActivity::class.java)) else refresh()
+            },
             grouped = grouped,
         )
         list.layoutManager = LinearLayoutManager(this)
@@ -319,10 +322,13 @@ class MainActivity : BaseActivity() {
         TaskWidget.refresh(this)
         ticker.removeCallbacks(tick)
         tick.run()
-        if (!askedPermission && Build.VERSION.SDK_INT >= 33 &&
+        // Ask for the notification permission once (at install), not after every update.
+        val asked = getSharedPreferences("main", MODE_PRIVATE)
+        if (!askedPermission && !asked.getBoolean("asked_notifications", false) && Build.VERSION.SDK_INT >= 33 &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
             askedPermission = true
+            asked.edit().putBoolean("asked_notifications", true).apply()
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }
         updates.onResume()
@@ -340,7 +346,7 @@ class MainActivity : BaseActivity() {
 
     private fun refresh() {
         val tasks = TaskDb.get(this).all()
-        adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.problemCount(this), query))
+        adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.newProblemCount(this), query))
         if (!onSettings) setHeader(null, TaskAdapter.summary(tasks, tab, query))
         // Red badge on the Today tab = number of overdue tasks.
         val now = System.currentTimeMillis()

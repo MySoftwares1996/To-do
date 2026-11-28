@@ -102,6 +102,8 @@ class PillTabBar @JvmOverloads constructor(context: Context, attrs: AttributeSet
         tabs.forEach { t ->
             val on = t.item.id == id
             t.label.visibility = if (on) View.VISIBLE else View.GONE
+            // the selected tab gets more room so its full label fits ("Today", "Upcoming")
+            (t.root.layoutParams as? LayoutParams)?.let { lp -> lp.weight = if (on) 2.2f else 1f; t.root.layoutParams = lp }
             t.label.setTextColor(accent)
             t.icon.imageTintList = ColorStateList.valueOf(if (on) accent else gray)
             t.pill.background = if (on) GradientDrawable().apply {

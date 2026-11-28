@@ -89,6 +89,25 @@ object Reliability {
 
     fun problemCount(c: Context) = checks(c).count { !it.ok }
 
+    private fun prefs(c: Context) = try {
+        c.applicationContext.getSharedPreferences("reliability", Context.MODE_PRIVATE)
+    } catch (_: Exception) { null }
+
+    /**
+     * Problems the user has not been told about yet. The banner on the Today tab shows only
+     * these: after install, or when a new problem appears – not again after every update.
+     */
+    fun newProblemCount(c: Context): Int {
+        val seen = prefs(c)?.getStringSet("seen", emptySet()) ?: emptySet()
+        return checks(c).count { !it.ok && it.title !in seen }
+    }
+
+    /** The user saw the banner (tapped or closed it): remember the current problems. */
+    fun markSeen(c: Context) {
+        val failing = checks(c).filter { !it.ok }.map { it.title }.toSet()
+        prefs(c)?.edit()?.putStringSet("seen", failing)?.apply()
+    }
+
     /** Extra advice for phone brands known to kill background apps. */
     fun brandAdvice(): String? {
         val m = Build.MANUFACTURER.lowercase()
