@@ -268,10 +268,14 @@ class TaskAdapter(
         fun tag(text: String, color: Int) {
             tags.addView(TextView(ctx).apply {
                 this.text = text
-                textSize = 11.5f
+                textSize = 11f
+                maxLines = 1
                 setTextColor(color)
                 val d = ctx.resources.displayMetrics.density
-                setPadding((7 * d).toInt(), (2 * d).toInt(), (7 * d).toInt(), (2 * d).toInt())
+                setPadding((6 * d).toInt(), (1 * d).toInt(), (6 * d).toInt(), (1 * d).toInt())
+                layoutParams = android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { marginEnd = (5 * d).toInt() }
                 background = android.graphics.drawable.GradientDrawable().apply {
                     cornerRadius = 8 * d
                     setColor(androidx.core.graphics.ColorUtils.setAlphaComponent(color, 0x26))
@@ -283,14 +287,17 @@ class TaskAdapter(
             if (t.snoozeUntil > 0) {
                 val at = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
                 // Important tasks that already rang repeat automatically until Done.
-                tag(if (t.important && t.rangFor > 0) "⟳ Again $at" else "Snoozed to $at", accent)
+                tag(if (t.important && t.rangFor > 0) "⟳ $at" else "⏰ $at", accent)
             }
         }
         if (t.repeat != Repeat.NONE) tag(
             "↻ " + t.repeat.label + if (t.repeat.usesEndOffset() && t.endOffset > 0) " −${t.endOffset}" else "", gray
         )
-        if (t.remindType == RemindType.NOTIFICATION) tag("🔔 Notification", gray)
-        tags.visibility = if (tags.childCount == 0) View.GONE else View.VISIBLE
+        if (t.remindType == RemindType.NOTIFICATION) tag("🔔", gray)
+        v.findViewById<View>(R.id.tags_scroll).apply {
+            visibility = if (tags.childCount == 0) View.GONE else View.VISIBLE
+            scrollTo(0, 0) // rows are reused
+        }
 
         // First line of the notes
         v.findViewById<TextView>(R.id.repeat).apply {
