@@ -203,10 +203,6 @@ class TaskAdapter(
         }
     }
 
-    /** True for a completed date of a repeating task (no swipe actions). */
-    fun isHistory(position: Int): Boolean =
-        position in 0 until itemCount && (getItem(position) as? Row.Item)?.history != null
-
     fun taskAt(position: Int): Task? =
         if (position in 0 until itemCount) (getItem(position) as? Row.Item)?.task else null
 
