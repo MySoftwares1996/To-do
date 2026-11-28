@@ -50,6 +50,42 @@ class IosList(private val ctx: Context, private val root: LinearLayout) {
     }
 
     inner class Group(private val box: LinearLayout) {
+        /** Adds any custom view as a row (e.g. a grid of colour swatches). */
+        fun custom(view: View) {
+            if (box.childCount > 0) box.addView(View(ctx).apply {
+                setBackgroundColor(ContextCompat.getColor(ctx, R.color.ios_separator))
+            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1).apply { marginStart = dp(12) })
+            box.addView(view)
+        }
+
+        /** Title (+ optional subtitle) with an iOS-style switch on the right. */
+        fun switchRow(title: String, subtitle: String?, checked: Boolean, onChange: (Boolean) -> Unit) {
+            val row = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                minimumHeight = dp(48)
+                setPadding(dp(12), dp(6), dp(12), dp(6))
+            }
+            val texts = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL }
+            texts.addView(TextView(ctx).apply {
+                text = title
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+                setTextColor(ContextCompat.getColor(ctx, R.color.ios_label))
+            })
+            if (subtitle != null) texts.addView(TextView(ctx).apply {
+                text = subtitle
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                setTextColor(ContextCompat.getColor(ctx, R.color.ios_secondary))
+            })
+            row.addView(texts, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            val sw = android.view.LayoutInflater.from(ctx).inflate(R.layout.ios_switch, row, false) as androidx.appcompat.widget.SwitchCompat
+            sw.isChecked = checked
+            sw.setOnCheckedChangeListener { _, on -> onChange(on) }
+            row.addView(sw)
+            row.setOnClickListener { sw.toggle() }
+            custom(row)
+        }
+
         /** A row: optional colour dot, title, value on the right. Returns the row view. */
         fun row(
             title: String, value: String = "", dot: Int? = null, titleColor: Int? = null,
@@ -82,8 +118,11 @@ class IosList(private val ctx: Context, private val root: LinearLayout) {
             }, LinearLayout.LayoutParams(if (centered) LinearLayout.LayoutParams.WRAP_CONTENT else 0, LinearLayout.LayoutParams.WRAP_CONTENT, if (centered) 0f else 1f))
             if (value.isNotEmpty()) row.addView(TextView(ctx).apply {
                 text = value
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-                setTextColor(ContextCompat.getColor(ctx, R.color.ios_secondary))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, if (value == "✓") 18f else 16f)
+                setTextColor(
+                    if (value == "✓") com.google.android.material.color.MaterialColors.getColor(this, androidx.appcompat.R.attr.colorPrimary)
+                    else ContextCompat.getColor(ctx, R.color.ios_secondary)
+                )
             })
             box.addView(row)
             return row

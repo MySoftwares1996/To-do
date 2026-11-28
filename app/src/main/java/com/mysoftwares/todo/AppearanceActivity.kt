@@ -1,106 +1,127 @@
 package com.mysoftwares.todo
 
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Gravity
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.color.MaterialColors
-import com.google.android.material.materialswitch.MaterialSwitch
 
-/** Choose theme (light/dark), colour, list style and text size. Changes apply instantly. */
+/** Settings → Appearance: theme, colour, task list style and text size, in grouped rows. */
 class AppearanceActivity : BaseActivity() {
+    private lateinit var list: IosList
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_appearance)
+        setContentView(R.layout.activity_list)
         setTitle(R.string.appearance_title)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        list = IosList(this, findViewById(R.id.content))
+        render()
+    }
 
-        // Theme mode
-        val modeGroup = findViewById<MaterialButtonToggleGroup>(R.id.mode_group)
-        val modeIds = mapOf(
-            Appearance.Mode.SYSTEM to R.id.mode_system,
-            Appearance.Mode.LIGHT to R.id.mode_light,
-            Appearance.Mode.DARK to R.id.mode_dark,
-        )
-        modeGroup.check(modeIds.getValue(Appearance.mode(this)))
-        modeGroup.addOnButtonCheckedListener { _, id, checked ->
-            if (!checked) return@addOnButtonCheckedListener
-            val m = modeIds.entries.first { it.value == id }.key
-            if (m != Appearance.mode(this)) Appearance.setMode(this, m) // the system redraws screens
-        }
+    private fun render() {
+        list.clear()
 
-        // List style
-        val listGroup = findViewById<MaterialButtonToggleGroup>(R.id.list_group)
-        listGroup.check(if (Appearance.listStyle(this) == Appearance.ListStyle.COMPACT) R.id.list_compact else R.id.list_cards)
-        listGroup.addOnButtonCheckedListener { _, id, checked ->
-            if (!checked) return@addOnButtonCheckedListener
-            Appearance.setListStyle(this, if (id == R.id.list_compact) Appearance.ListStyle.COMPACT else Appearance.ListStyle.CARDS)
-        }
-
-        // Large text
-        findViewById<MaterialSwitch>(R.id.large_text).apply {
-            isChecked = Appearance.largeText(this@AppearanceActivity)
-            setOnCheckedChangeListener { _, on ->
-                Appearance.setLargeText(this@AppearanceActivity, on)
-                recreate()
+        // Theme
+        list.label(getString(R.string.ui_theme))
+        val theme = list.group()
+        listOf(
+            Appearance.Mode.SYSTEM to getString(R.string.appearance_system),
+            Appearance.Mode.LIGHT to getString(R.string.ui_light),
+            Appearance.Mode.DARK to getString(R.string.ui_dark),
+        ).forEach { (mode, label) ->
+            theme.row(label, if (Appearance.mode(this) == mode) "✓" else "") {
+                if (mode != Appearance.mode(this)) Appearance.setMode(this, mode) // the system redraws the screen
             }
         }
 
-        buildSwatches()
+        // Colour
+        list.label(getString(R.string.ui_colour))
+        list.group().custom(swatchGrid())
+
+        // Task list style
+        list.label(getString(R.string.ui_task_list_style))
+        val style = list.group()
+        listOf(
+            Appearance.ListStyle.COMPACT to getString(R.string.ui_grouped),
+            Appearance.ListStyle.CARDS to getString(R.string.ui_cards),
+        ).forEach { (s, label) ->
+            style.row(label, if (Appearance.listStyle(this) == s) "✓" else "") {
+                Appearance.setListStyle(this, s); render()
+            }
+        }
+        list.footer(getString(R.string.ui_grouped_one_white_list_per_section_like_))
+
+        // Text
+        list.label(getString(R.string.appearance_text))
+        list.group().switchRow(
+            getString(R.string.ui_large_text), getString(R.string.ui_bigger_task_titles_and_times), Appearance.largeText(this)
+        ) { on -> Appearance.setLargeText(this, on); recreate() }
     }
 
-    private fun buildSwatches() {
-        val box = findViewById<LinearLayout>(R.id.swatches)
+    /** Colour circles in rows of 4 with their names; the selected one has a ✓ and a ring. */
+    private fun swatchGrid(): View {
+        val d = resources.displayMetrics.density
+        fun dp(v: Int) = (v * d).toInt()
         val current = Appearance.accent(this)
-        val density = resources.displayMetrics.density
-        val size = (52 * density).toInt()
-        val gap = (10 * density).toInt()
-
-        Appearance.Accent.entries
-            .filter { it != Appearance.Accent.WALLPAPER || Appearance.wallpaperSupported }
-            .forEach { accent ->
-                val card = MaterialCardView(this).apply {
-                    layoutParams = LinearLayout.LayoutParams(size, size).apply { marginEnd = gap }
-                    radius = size / 2f
-                    cardElevation = 0f
+        val accents = Appearance.Accent.entries.filter { it != Appearance.Accent.WALLPAPER || Appearance.wallpaperSupported }
+        val grid = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(12), dp(8), dp(8))
+        }
+        accents.chunked(4).forEach { rowItems ->
+            val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            rowItems.forEach { accent ->
+                val cell = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.CENTER_HORIZONTAL
+                    setPadding(0, 0, 0, dp(8))
                     contentDescription = accent.label
-                    if (accent == Appearance.Accent.WALLPAPER) {
-                        setCardBackgroundColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant))
-                    } else {
-                        setCardBackgroundColor(ContextCompat.getColor(context, accent.colorRes))
+                    setOnClickListener {
+                        if (accent != Appearance.accent(this@AppearanceActivity)) {
+                            Appearance.setAccent(this@AppearanceActivity, accent); recreate()
+                        }
                     }
-                    strokeWidth = if (accent == current) (3 * density).toInt() else 0
-                    strokeColor = MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface)
+                }
+                val circle = MaterialCardView(this).apply {
+                    radius = dp(22).toFloat()
+                    cardElevation = 0f
+                    setCardBackgroundColor(
+                        if (accent == Appearance.Accent.WALLPAPER) MaterialColors.getColor(this, com.google.android.material.R.attr.colorSurfaceVariant)
+                        else ContextCompat.getColor(context, accent.colorRes)
+                    )
+                    strokeWidth = if (accent == current) dp(3) else 0
+                    strokeColor = ContextCompat.getColor(context, R.color.ios_label)
                     addView(TextView(context).apply {
-                        layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
                         gravity = Gravity.CENTER
-                        textSize = 20f
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                        setTextColor(ContextCompat.getColor(context, R.color.white))
                         text = when {
                             accent == current -> "✓"
                             accent == Appearance.Accent.WALLPAPER -> "🎨"
                             else -> ""
                         }
-                        setTextColor(ContextCompat.getColor(context, R.color.white))
-                        if (accent == Appearance.Accent.WALLPAPER && accent == current) {
-                            setTextColor(MaterialColors.getColor(this, com.google.android.material.R.attr.colorOnSurface))
-                        }
-                    })
-                    setOnClickListener {
-                        if (accent != Appearance.accent(this@AppearanceActivity)) {
-                            Appearance.setAccent(this@AppearanceActivity, accent)
-                            recreate()
-                        }
-                    }
+                    }, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
                 }
-                box.addView(card)
+                cell.addView(circle, LinearLayout.LayoutParams(dp(44), dp(44)))
+                cell.addView(TextView(this).apply {
+                    text = accent.label
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                    setTextColor(ContextCompat.getColor(context, if (accent == current) R.color.ios_label else R.color.ios_secondary))
+                    maxLines = 1
+                }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(4) })
+                row.addView(cell, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             }
-        findViewById<TextView>(R.id.accent_name).text =
-            if (current == Appearance.Accent.WALLPAPER) "Wallpaper colours (Material You)" else current.label
+            // keep columns aligned when the last row is short
+            repeat(4 - rowItems.size) { row.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f)) }
+            grid.addView(row)
+        }
+        return grid
     }
 
     override fun onSupportNavigateUp(): Boolean { finish(); return true }

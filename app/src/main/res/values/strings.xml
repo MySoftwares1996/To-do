@@ -42,7 +42,7 @@
     <string name="ui_task_list_style">Task list style</string>
     <string name="ui_grouped">Grouped</string>
     <string name="ui_cards">Cards</string>
-    <string name="ui_grouped_one_white_list_per_section_like_">Grouped: one white list per section, like iOS. Cards: each task on its own card.</string>
+    <string name="ui_grouped_one_white_list_per_section_like_">Grouped: one list per section. Cards: each task on its own card.</string>
     <string name="ui_large_text">Large text</string>
     <string name="ui_bigger_task_titles_and_times">Bigger task titles and times</string>
     <string name="ui_important_do_it_now">⚠  IMPORTANT – do it now</string>
@@ -129,4 +129,6 @@
     <string name="msg_done">✔ Done</string>
     <string name="msg_snooze_1_hour">Snooze 1 hour</string>
     <string name="msg_already_done">✔ Already done</string>
+    <string name="appearance_system">System (follow phone)</string>
+    <string name="appearance_text">Text</string>
 </resources>
