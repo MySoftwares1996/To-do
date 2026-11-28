@@ -30,7 +30,10 @@ class TaskLogicTest {
     @Test fun dueAdvancePicksLatestPassedOne() {
         val t = task(listOf(1440, 7 * 1440))
         assertEquals(due - 1440 * min, t.dueAdvance(due - 1440 * min + 30_000))
-        assertNull(t.dueAdvance(due - 3 * 1440 * min))
+        // 3 days before: the "1 week" reminder was not shown yet (e.g. phone off) → show it now.
+        assertEquals(due - 7 * 1440 * min, t.dueAdvance(due - 3 * 1440 * min))
+        // 8 days before: nothing is due yet.
+        assertNull(t.dueAdvance(due - 8 * 1440 * min))
     }
 
     @Test fun noneLeftAfterLastShown() = assertNull(task(listOf(1440), shown = due - 1440 * min).advanceAt)
