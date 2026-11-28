@@ -69,7 +69,7 @@ class ReportActivity : BaseActivity() {
             done.forEach {
                 append(listOf(
                     q(it.title), q(dt.format(Date(it.dueAt))), q(dt.format(Date(it.doneAt))),
-                    if (AlarmPrefs.isOnTime(this, it.dueAt, it.doneAt)) "Yes" else "No",
+                    if (AlarmPrefs.isOnTime(this@ReportActivity, it.dueAt, it.doneAt)) "Yes" else "No",
                 ).joinToString(",")).append("\r\n")
             }
         }
