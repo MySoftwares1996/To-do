@@ -48,12 +48,17 @@ class PillTabBar @JvmOverloads constructor(context: Context, attrs: AttributeSet
         orientation = HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         setPadding(dp(8), dp(8), dp(8), dp(10))
+        clipChildren = false // let the overdue bubble draw outside the icon
+        clipToPadding = false
     }
 
     fun setItems(items: List<Item>) {
         removeAllViews(); tabs.clear()
         items.forEach { item ->
             val t = Tab(item)
+            t.root.clipChildren = false
+            t.pill.clipChildren = false
+            t.pill.clipToPadding = false
             t.pill.apply {
                 orientation = HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL

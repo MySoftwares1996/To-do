@@ -279,12 +279,11 @@ class TaskAdapter(
             })
         }
         if (!t.done) {
-            if (overdue) tag("Overdue", red)
             if (t.important) tag("⚠ Important", ContextCompat.getColor(ctx, R.color.ios_orange))
             if (t.snoozeUntil > 0) {
                 val at = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(t.snoozeUntil))
                 // Important tasks that already rang repeat automatically until Done.
-                tag(if (t.important && t.rangFor > 0) "🔁 Again $at" else "⏰ $at", accent)
+                tag(if (t.important && t.rangFor > 0) "⟳ Again $at" else "Snoozed to $at", accent)
             }
         }
         if (t.repeat != Repeat.NONE) tag(
