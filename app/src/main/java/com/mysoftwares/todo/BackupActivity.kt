@@ -17,12 +17,8 @@ import com.google.android.material.card.MaterialCardView
 class BackupActivity : BaseActivity() {
     private val io = AppExecutors.io
 
-    /** Folder for automatic backups: a new file each time, old ones deleted. */
-    private val pickFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { tree ->
-        if (tree != null) {
-            Backup.enableFolder(this, tree)
-            backupNow(tree)
-        } else render()
+    private val createFile = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) backupTo(uri)
     }
 
     private val openFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -57,7 +53,6 @@ class BackupActivity : BaseActivity() {
     private fun render() {
         list.clear()
         val auto = Backup.autoUri(this)
-        val tree = Backup.autoTree(this)
         val last = Backup.lastBackupAt(this)
         val error = Backup.lastError(this)
         val count = TaskDb.get(this).all().size
@@ -65,22 +60,11 @@ class BackupActivity : BaseActivity() {
         // Status
         list.label(getString(R.string.backup_status))
         val status = list.group()
-        status.switchRow(getString(R.string.backup_auto), getString(R.string.backup_auto_hint), tree != null || auto != null) { on ->
-            if (on) pickFolder.launch(null) // choose a folder; a new file is made each time
-            else { Backup.disableFolder(this); Backup.disableAuto(this); render() }
+        status.switchRow(getString(R.string.backup_auto), getString(R.string.backup_auto_hint), auto != null) { on ->
+            if (on) createFile.launch(Backup.fileNameNow()) // choose where; then kept up to date
+            else { Backup.disableAuto(this); render() }
         }
-        if (tree != null) {
-            status.row(getString(R.string.backup_folder), Backup.folderName(this, tree)) { pickFolder.launch(tree) }
-            val keep = Backup.keepCount(this)
-            status.row(getString(R.string.backup_keep), getString(R.string.backup_keep_value, keep)) { chooseKeep(tree) }
-            Backup.lastFileName(this)?.let { status.row(getString(R.string.backup_latest_file), it) }
-            status.row(
-                getString(R.string.backup_last),
-                if (last > 0) TaskAdapter.friendlyTime(last) else getString(R.string.backup_not_yet),
-                titleColor = null,
-            )
-        } else if (auto != null) {
-            // Older setting: one file that is replaced each time. Offer the folder instead.
+        if (auto != null) {
             status.row(getString(R.string.backup_file), fileName(auto))
             status.row(
                 getString(R.string.backup_last),
@@ -89,15 +73,13 @@ class BackupActivity : BaseActivity() {
             )
         }
         if (error != null) list.footer("⚠ $error")
-        else if (tree == null && auto != null) list.footer(getString(R.string.backup_old_single_file))
-        else if (tree != null) list.footer(getString(R.string.backup_folder_footer, Backup.keepCount(this)))
 
         // Back up
         list.label(getString(R.string.ui_back_up))
         val backup = list.group()
         val accent = com.google.android.material.color.MaterialColors.getColor(findViewById<android.view.View>(R.id.content), androidx.appcompat.R.attr.colorPrimary)
         backup.row(getString(R.string.ui_back_up_now), getString(R.string.backup_tasks_count, count), titleColor = accent) {
-            if (tree != null && error == null) backupNow(tree) else pickFolder.launch(tree)
+            if (auto != null && error == null) backupTo(auto) else createFile.launch(Backup.fileNameNow())
         }
         backup.row(getString(R.string.backup_save_copy), titleColor = accent) { copyFile.launch(Backup.fileNameNow()) }
         backup.row(getString(R.string.backup_share), titleColor = accent) { share() }
@@ -131,38 +113,21 @@ class BackupActivity : BaseActivity() {
         }
     }
 
-    private fun backupNow(tree: Uri) {
+    private fun backupTo(uri: Uri) {
         io.execute {
-            val result = runCatching { Backup.backupToFolder(this, tree) }
+            val result = runCatching { Backup.writeTo(this, uri) }
             runOnUiThread {
-                result.onSuccess { name ->
+                result.onSuccess {
+                    Backup.enableAuto(this, uri)
                     Backup.markDone(this)
-                    Toast.makeText(this, getString(R.string.backup_saved_as, name), Toast.LENGTH_SHORT).show()
+                    val n = TaskDb.get(this).all().size
+                    Toast.makeText(this, "Backed up $n task(s)", Toast.LENGTH_SHORT).show()
                 }.onFailure {
-                    Toast.makeText(this, getString(R.string.backup_failed, it.message), Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Backup failed: ${it.message}", Toast.LENGTH_LONG).show()
                 }
                 render()
             }
         }
-    }
-
-    private fun chooseKeep(tree: Uri) {
-        val opts = Backup.KEEP_OPTIONS
-        val current = opts.indexOf(Backup.keepCount(this)).coerceAtLeast(0)
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.backup_keep))
-            .setSingleChoiceItems(opts.map { getString(R.string.backup_keep_value, it) }.toTypedArray(), current) { d, i ->
-                d.dismiss()
-                Backup.setKeepCount(this, opts[i])
-                io.execute {
-                    val n = runCatching { Backup.prune(this, tree) }.getOrDefault(0)
-                    runOnUiThread {
-                        if (n > 0) Toast.makeText(this, getString(R.string.backup_deleted_old, n), Toast.LENGTH_SHORT).show()
-                        render()
-                    }
-                }
-            }
-            .show()
     }
 
     private fun restoreFrom(uri: Uri) {

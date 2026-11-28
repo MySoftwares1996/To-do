@@ -131,7 +131,7 @@
     <!-- Backup screen -->
     <string name="backup_status">Status</string>
     <string name="backup_auto">Automatic backup</string>
-    <string name="backup_auto_hint">A new file after every change, in the folder you choose</string>
+    <string name="backup_auto_hint">Updates the file after every change</string>
     <string name="backup_file">File</string>
     <string name="backup_last">Last backup</string>
     <string name="backup_not_yet">Not yet</string>
@@ -329,12 +329,4 @@
     <string name="done_undo_only_latest">Only the latest completed date of this task can be undone</string>
     <string name="done_clear_msg">Remove %1$d completed item(s) from the list. Repeating tasks stay on their next date, and the monthly report keeps them.</string>
     <string name="backup_made_at">Backup from %1$s</string>
-    <string name="backup_folder">Folder</string>
-    <string name="backup_keep">Keep last</string>
-    <string name="backup_keep_value">%1$d backups</string>
-    <string name="backup_latest_file">Latest file</string>
-    <string name="backup_saved_as">Saved %1$s</string>
-    <string name="backup_deleted_old">Deleted %1$d old backup(s)</string>
-    <string name="backup_folder_footer">Each backup is a new file. Only the newest %1$d are kept; older ones are deleted automatically. Changes made within a minute go into one file.</string>
-    <string name="backup_old_single_file">This file is replaced at every backup. Tap “Back up now” to choose a folder instead, so each backup is kept as a new file.</string>
 </resources>
