@@ -317,4 +317,10 @@
     <string name="alarm_tag_priority">%1$s priority</string>
     <string name="alarm_due">Due %1$s</string>
     <string name="alarm_checklist">%1$d of %2$d steps done</string>
+    <string name="msg_saved">Saved</string>
+    <string name="msg_alarm_set">Alarm set: %1$s</string>
+    <string name="chk_all_done_title">All steps done</string>
+    <string name="chk_all_done_msg">Mark the whole task as done?</string>
+    <string name="chk_all_done_yes">Mark done</string>
+    <string name="chk_all_done_no">Keep pending</string>
 </resources>

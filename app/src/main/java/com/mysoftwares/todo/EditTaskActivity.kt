@@ -409,7 +409,7 @@ class EditTaskActivity : BaseActivity() {
         return start.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
 
-    private fun save() {
+    private fun save(markDone: Boolean? = null) {
         val name = title.text?.toString()?.trim().orEmpty()
         if (name.isEmpty()) { title.requestFocus(); return }
         val rep = Repeat.entries[repeatIndex]
@@ -417,6 +417,49 @@ class EditTaskActivity : BaseActivity() {
         val now = System.currentTimeMillis()
 
         val rule = if (rep.usesWorkdayRule()) WorkdayRule.entries[workdayIndex] else WorkdayRule.SAME_DAY
+        val offset = if (rep.usesEndOffset()) endOffset else 0
+        val checklist = items.map { it.copy(text = it.text.trim()) }.filter { it.text.isNotEmpty() }
+        val old = existing
+
+        // Every step ticked: ask once whether the task itself is finished.
+        if (markDone == null && old != null && !old.done && checklist.isNotEmpty() && checklist.all { it.done } &&
+            !old.checklist.all { it.done }
+        ) {
+            AlertDialog.Builder(this)
+                .setTitle(getString(R.string.chk_all_done_title))
+                .setMessage(getString(R.string.chk_all_done_msg))
+                .setPositiveButton(getString(R.string.chk_all_done_yes)) { _, _ -> save(markDone = true) }
+                .setNegativeButton(getString(R.string.chk_all_done_no)) { _, _ -> save(markDone = false) }
+                .show()
+            return
+        }
+
+        // Only the text, checklist, priority… changed (not the date, time or repeat):
+        // keep the task on its current date, even if that is already past, so it
+        // stays pending instead of jumping to the next month.
+        val oldWhen = old?.let { LocalDateTime.ofInstant(Instant.ofEpochMilli(it.dueAt), ZoneId.systemDefault()) }
+        val sameWhen = oldWhen != null && (if (rep.usesEndOffset()) oldWhen.toLocalTime() == whenAt.toLocalTime() else oldWhen == whenAt)
+        if (old != null && !old.done && sameWhen && old.repeat == rep &&
+            (!rep.usesWorkdayRule() || old.workday == rule) && old.endOffset == offset
+        ) {
+            val task = TaskDb.get(this).save(
+                old.copy(
+                    title = name,
+                    notes = notes.text?.toString()?.trim().orEmpty(),
+                    important = important.isChecked,
+                    advances = advances.sorted(),
+                    remindType = remindType,
+                    priority = priority,
+                    checklist = checklist,
+                )
+            )
+            AlarmScheduler.schedule(this, task)
+            if (markDone == true) TaskActions.done(this, task.id, task.dueAt)
+            else Toast.makeText(this, getString(R.string.msg_saved), Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         // First occurrence (moved to a working day if asked) that is still in the future.
         var due = if (rep == Repeat.NONE) startMs else Recurrence.nextAfter(startMs, rep, now - 1, rule, endOffset, keepThisPeriod = true)!!
         if (due <= now) {
@@ -446,16 +489,17 @@ class EditTaskActivity : BaseActivity() {
                 done = false,
                 snoozeUntil = 0,
                 autoRepeat = false,
-                checklist = items.map { it.copy(text = it.text.trim()) }.filter { it.text.isNotEmpty() },
+                checklist = checklist,
                 rangFor = 0,
                 advanceShownFor = 0,
                 workday = rule,
-                endOffset = if (rep.usesEndOffset()) endOffset else 0,
+                endOffset = offset,
             )
         )
         Notifications.cancel(this, task.id)
         AlarmScheduler.schedule(this, task)
-        Toast.makeText(this, "Alarm set: ${TaskAdapter.friendlyTime(task.dueAt)}", Toast.LENGTH_SHORT).show()
+        if (markDone == true) TaskActions.done(this, task.id, task.dueAt)
+        else Toast.makeText(this, getString(R.string.msg_alarm_set, TaskAdapter.friendlyTime(task.dueAt)), Toast.LENGTH_SHORT).show()
         finish()
     }
 
