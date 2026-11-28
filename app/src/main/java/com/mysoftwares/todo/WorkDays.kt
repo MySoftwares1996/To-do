@@ -9,10 +9,12 @@ import java.time.LocalDate
  * Stored in device-protected storage so alarms can be computed before first unlock.
  */
 object WorkDays {
-    enum class OffDays(val label: String) {
-        SAT_SUN("Saturday & Sunday"),
-        SUN("Sunday only"),
-        SUN_2ND_4TH_SAT("Sunday + 2nd & 4th Saturday"),
+    enum class OffDays(private val labelRes: Int) {
+        SAT_SUN(R.string.off_sat_sun),
+        SUN(R.string.off_sun),
+        SUN_2ND_4TH_SAT(R.string.off_sun_24);
+
+        val label: String get() = Res.s(labelRes)
     }
 
     @Volatile var offDays: OffDays = OffDays.SAT_SUN

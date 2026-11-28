@@ -30,8 +30,8 @@ object Notifications {
             .build()
 
         nm.createNotificationChannel(
-            NotificationChannel(CH_ALARM, "Task alarms", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Rings when a task is due"
+            NotificationChannel(CH_ALARM, context.getString(R.string.ch_alarm), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = context.getString(R.string.ch_alarm_desc)
                 setSound(null, null)
                 enableVibration(false)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
@@ -39,8 +39,8 @@ object Notifications {
             }
         )
         nm.createNotificationChannel(
-            NotificationChannel(CH_ALARM_FALLBACK, "Task alarms (backup)", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Backup alarm used if the main alarm could not start"
+            NotificationChannel(CH_ALARM_FALLBACK, context.getString(R.string.ch_backup), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = context.getString(R.string.ch_backup_desc)
                 setSound(alarmSound(), alarmAudio)
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 800, 400, 800)
@@ -49,16 +49,16 @@ object Notifications {
             }
         )
         nm.createNotificationChannel(
-            NotificationChannel(CH_EARLY, "Early reminders", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Reminders before the due time (the app rings 5 times)"
+            NotificationChannel(CH_EARLY, context.getString(R.string.ch_early), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = context.getString(R.string.ch_early_desc)
                 setSound(null, null)
                 enableVibration(false)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
         )
         nm.createNotificationChannel(
-            NotificationChannel(CH_REMINDER, "Reminders", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Advance reminders and missed tasks"
+            NotificationChannel(CH_REMINDER, context.getString(R.string.ch_reminder), NotificationManager.IMPORTANCE_HIGH).apply {
+                description = context.getString(R.string.ch_reminder_desc)
                 enableVibration(true)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
@@ -74,8 +74,8 @@ object Notifications {
         DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(millis))
 
     fun alarmText(task: Task): String =
-        if (task.important) "IMPORTANT – you must do this now! Due ${formatTime(task.dueAt)}"
-        else "Due ${formatTime(task.dueAt)}"
+        if (task.important) Res.f(R.string.n_important_due, formatTime(task.dueAt))
+        else Res.f(R.string.n_due, formatTime(task.dueAt))
 
     /** The ringing notification: full-screen alarm over the lock screen + Done/Snooze buttons. */
     fun buildAlarm(context: Context, task: Task, fallback: Boolean): Notification {
@@ -100,7 +100,7 @@ object Notifications {
             .setFullScreenIntent(fullScreen, true)
             .setContentIntent(fullScreen)
             .addAction(0, context.getString(R.string.msg_done), ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE, task.dueAt))
-            .addAction(0, "Snooze " + AlarmPrefs.label(AlarmPrefs.snooze1(context)), ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE))
+            .addAction(0, context.getString(R.string.n_snooze, AlarmPrefs.label(AlarmPrefs.snooze1(context))), ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE))
         if (fallback) {
             b.setSound(alarmSound(), android.media.AudioManager.STREAM_ALARM)
             b.setVibrate(longArrayOf(0, 800, 400, 800))
@@ -118,11 +118,12 @@ object Notifications {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val text = if (task.important) "Not done yet! It will remind you again in ${AlarmPrefs.nagMinutes(context)} minutes." else "Not done yet."
+        val text = if (task.important) context.getString(R.string.n_not_done_again, AlarmPrefs.nagMinutes(context))
+            else context.getString(R.string.n_not_done)
         val n = NotificationCompat.Builder(context, CH_REMINDER)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Pending: ${task.title}")
-            .setContentText("$text Due ${formatTime(task.dueAt)}")
+            .setContentTitle(context.getString(R.string.n_pending, task.title))
+            .setContentText(text + " " + context.getString(R.string.n_due, formatTime(task.dueAt)))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setOngoing(task.important)
@@ -153,7 +154,7 @@ object Notifications {
             .setOngoing(task.important)
             .setContentIntent(open)
             .addAction(0, context.getString(R.string.msg_done), ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_DONE, task.dueAt))
-            .addAction(0, "Snooze " + AlarmPrefs.label(AlarmPrefs.snooze1(context)), ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE))
+            .addAction(0, context.getString(R.string.n_snooze, AlarmPrefs.label(AlarmPrefs.snooze1(context))), ActionReceiver.intent(context, task.id, ActionReceiver.ACTION_SNOOZE))
             .build()
         notify(context, task.id.toInt(), n)
     }
@@ -198,8 +199,8 @@ object Notifications {
         )
         val n = NotificationCompat.Builder(context, CH_EARLY)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Coming up: ${task.title}")
-            .setContentText("Due ${formatTime(task.dueAt)}" + if (task.important) " – IMPORTANT, plan for it" else "")
+            .setContentTitle(context.getString(R.string.n_coming, task.title))
+            .setContentText(context.getString(R.string.n_due, formatTime(task.dueAt)) + if (task.important) context.getString(R.string.n_plan) else "")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setContentIntent(open)

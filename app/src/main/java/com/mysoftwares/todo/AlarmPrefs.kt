@@ -45,7 +45,8 @@ object AlarmPrefs {
     fun setMorningMinutes(c: Context, m: Int) = prefs(c).edit().putInt("morning", m).apply()
 
     /** Report: how late a completion may be and still count as "on time" (minutes; -1 = same day). */
-    val ON_TIME_CHOICES = listOf(0 to "By the due time", 60 to "Within 1 hour", -1 to "Same day")
+    val ON_TIME_CHOICES: List<Pair<Int, String>>
+        get() = listOf(0 to Res.s(R.string.ontime_due), 60 to Res.s(R.string.ontime_hour), -1 to Res.s(R.string.ontime_day))
     fun onTimeMinutes(c: Context) = prefs(c).getInt("on_time", 60)
     fun setOnTimeMinutes(c: Context, m: Int) = prefs(c).edit().putInt("on_time", m).apply()
 
@@ -61,9 +62,9 @@ object AlarmPrefs {
 
     /** "10 min", "1 hour", "2 hours" */
     fun label(minutes: Int): String = when {
-        minutes < 60 -> "$minutes min"
-        minutes == 60 -> "1 hour"
-        minutes % 60 == 0 -> "${minutes / 60} hours"
-        else -> "${minutes / 60} h ${minutes % 60} min"
+        minutes < 60 -> Res.f(R.string.dur_min, minutes)
+        minutes == 60 -> Res.s(R.string.dur_1h)
+        minutes % 60 == 0 -> Res.f(R.string.dur_hours, minutes / 60)
+        else -> Res.f(R.string.dur_h_min, minutes / 60, minutes % 60)
     }
 }

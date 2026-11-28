@@ -28,17 +28,17 @@ object Reliability {
         val channelsOk = listOf(Notifications.CH_ALARM, Notifications.CH_ALARM_FALLBACK, Notifications.CH_REMINDER, Notifications.CH_EARLY)
             .all { (nm.getNotificationChannel(it)?.importance ?: 1) != NotificationManager.IMPORTANCE_NONE }
         list += Check(
-            "Notifications allowed",
+            c.getString(R.string.chk_notif),
             NotificationManagerCompat.from(c).areNotificationsEnabled() && channelsOk,
-            "Needed to show the alarm and the Done / Snooze buttons.",
-            "Allow"
+            c.getString(R.string.chk_notif_exp),
+            c.getString(R.string.chk_allow)
         ) { open(it, Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, it.packageName)) }
 
         list += Check(
-            "Exact alarms allowed",
+            c.getString(R.string.chk_exact),
             AlarmScheduler.canScheduleExact(c),
-            "Lets the alarm ring at the exact minute, even when the phone is idle.",
-            "Allow"
+            c.getString(R.string.chk_exact_exp),
+            c.getString(R.string.chk_allow)
         ) {
             if (Build.VERSION.SDK_INT >= 31)
                 open(it, Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${it.packageName}")))
@@ -46,18 +46,18 @@ object Reliability {
 
         if (Build.VERSION.SDK_INT >= 34) {
             list += Check(
-                "Full-screen alarm allowed",
+                c.getString(R.string.chk_full),
                 nm.canUseFullScreenIntent(),
-                "Shows the alarm screen over the lock screen.",
-                "Allow"
+                c.getString(R.string.chk_full_exp),
+                c.getString(R.string.chk_allow)
             ) { open(it, Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:${it.packageName}"))) }
         }
 
         list += Check(
-            "Battery optimisation off",
+            c.getString(R.string.chk_batt),
             c.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(c.packageName),
-            "Stops Android from putting this app to sleep.",
-            "Turn off"
+            c.getString(R.string.chk_batt_exp),
+            c.getString(R.string.chk_turn_off)
         ) {
             if (!open(it, Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${it.packageName}"))))
                 open(it, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
@@ -65,19 +65,19 @@ object Reliability {
 
         if (Build.VERSION.SDK_INT >= 28) {
             list += Check(
-                "Background activity allowed",
+                c.getString(R.string.chk_bg),
                 !c.getSystemService(ActivityManager::class.java).isBackgroundRestricted,
-                "If 'Restricted' battery mode is on, alarms can be blocked. Set battery usage to 'Unrestricted'.",
-                "Open"
+                c.getString(R.string.chk_bg_exp),
+                c.getString(R.string.chk_open)
             ) { appDetails(it) }
         }
 
         val audio = c.getSystemService(AudioManager::class.java)
         list += Check(
-            "Alarm volume is up",
+            c.getString(R.string.chk_vol),
             audio.getStreamVolume(AudioManager.STREAM_ALARM) > 0,
-            "Alarm volume is muted. (The app will raise it while ringing, but please turn it up.)",
-            "Raise volume"
+            c.getString(R.string.chk_vol_exp),
+            c.getString(R.string.chk_raise)
         ) {
             val am = it.getSystemService(AudioManager::class.java)
             try {
@@ -113,15 +113,15 @@ object Reliability {
         val m = Build.MANUFACTURER.lowercase()
         return when {
             m.contains("xiaomi") || m.contains("redmi") || m.contains("poco") ->
-                "Xiaomi/Redmi/POCO: App info → Autostart: ON, Battery saver: No restrictions. In Recents, long-press this app and tap the lock icon."
+                Res.s(R.string.brand_xiaomi)
             m.contains("oppo") || m.contains("realme") || m.contains("oneplus") ->
-                "OPPO/realme/OnePlus: App info → Battery → Allow background activity and Allow auto launch. Lock the app in Recents."
+                Res.s(R.string.brand_oppo)
             m.contains("vivo") || m.contains("iqoo") ->
-                "vivo/iQOO: Settings → Battery → Background power consumption → allow this app. Enable Autostart."
+                Res.s(R.string.brand_vivo)
             m.contains("huawei") || m.contains("honor") ->
-                "Huawei/Honor: Battery → App launch → this app → Manage manually, turn ON all three switches."
+                Res.s(R.string.brand_huawei)
             m.contains("samsung") ->
-                "Samsung: Battery → Background usage limits → make sure this app is NOT in 'Sleeping' or 'Deep sleeping' apps. Set battery to 'Unrestricted'."
+                Res.s(R.string.brand_samsung)
             else -> null
         }
     }

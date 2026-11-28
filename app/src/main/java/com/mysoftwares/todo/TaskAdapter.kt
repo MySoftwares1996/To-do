@@ -19,7 +19,11 @@ import java.time.ZoneId
 import java.util.Date
 
 /** The task tabs at the bottom of the main screen (Settings is a separate page). */
-enum class Tab(val title: String) { TODAY("Today"), UPCOMING("Upcoming"), DONE("Done") }
+enum class Tab(private val titleRes: Int) {
+    TODAY(R.string.ui_today), UPCOMING(R.string.ui_upcoming), DONE(R.string.ui_done_2);
+
+    val title: String get() = Res.s(titleRes)
+}
 
 /** A row in the list. */
 sealed class Row {
@@ -71,9 +75,9 @@ class TaskAdapter(
                     it.title.contains(q, true) || it.notes.contains(q, true)
                 }.sortedWith(compareBy<Task> { it.done }.thenByDescending { it.priority.ordinal }.thenBy { it.dueAt })
                 if (hits.isNotEmpty()) {
-                    rows += Row.Header("results", "Results", hits.size, null)
+                    rows += Row.Header("results", Res.s(R.string.sec_results), hits.size, null)
                     hits.forEachIndexed { i, t -> rows += Row.Item(t, i == 0, i == hits.lastIndex) }
-                } else rows += Row.Empty("Nothing matches “$q”")
+                } else rows += Row.Empty(Res.f(R.string.empty_search, q))
                 return rows
             }
             if (problems > 0 && tab == Tab.TODAY) rows += Row.Banner(problems)
@@ -90,23 +94,23 @@ class TaskAdapter(
                 Tab.TODAY -> {
                     val overdue = pending.filter { it.dueAt < now }
                     val due = pending.filter { it.dueAt >= now && day(it.dueAt) == today }
-                    section("overdue", "Overdue", R.color.ios_red, overdue)
-                    section("today", "Today", null, due)
-                    if (overdue.isEmpty() && due.isEmpty()) rows += Row.Empty("Nothing due today")
+                    section("overdue", Res.s(R.string.sec_overdue), R.color.ios_red, overdue)
+                    section("today", Res.s(R.string.ui_today), null, due)
+                    if (overdue.isEmpty() && due.isEmpty()) rows += Row.Empty(Res.s(R.string.empty_today))
                 }
                 Tab.UPCOMING -> {
                     val future = pending.filter { it.dueAt >= now && day(it.dueAt).isAfter(today) }
-                    section("tomorrow", "Tomorrow", null, future.filter { day(it.dueAt) == today.plusDays(1) })
-                    section("week", "This Week", null, future.filter {
+                    section("tomorrow", Res.s(R.string.sec_tomorrow), null, future.filter { day(it.dueAt) == today.plusDays(1) })
+                    section("week", Res.s(R.string.sec_week), null, future.filter {
                         val d = day(it.dueAt); d.isAfter(today.plusDays(1)) && d.isBefore(today.plusDays(7))
                     })
-                    section("later", "Later", null, future.filter { !day(it.dueAt).isBefore(today.plusDays(7)) })
-                    if (future.isEmpty()) rows += Row.Empty("Nothing upcoming")
+                    section("later", Res.s(R.string.sec_later), null, future.filter { !day(it.dueAt).isBefore(today.plusDays(7)) })
+                    if (future.isEmpty()) rows += Row.Empty(Res.s(R.string.empty_upcoming))
                 }
                 Tab.DONE -> {
                     val done = tasks.filter { it.done }.sortedByDescending { it.dueAt }.take(30)
-                    section("done", "Completed", R.color.ios_secondary, done)
-                    if (done.isEmpty()) rows += Row.Empty("Nothing completed yet")
+                    section("done", Res.s(R.string.sec_completed), R.color.ios_secondary, done)
+                    if (done.isEmpty()) rows += Row.Empty(Res.s(R.string.empty_done))
                 }
             }
             return rows
@@ -119,7 +123,7 @@ class TaskAdapter(
             val q = query.trim()
             if (q.isNotEmpty()) {
                 val n = tasks.count { it.title.contains(q, true) || it.notes.contains(q, true) }
-                return if (n == 0) "No results" else "$n found"
+                return if (n == 0) Res.s(R.string.sum_no_results) else Res.f(R.string.sum_found, n)
             }
             val pending = tasks.filter { !it.done }
             val overdue = pending.count { it.dueAt < now }
@@ -127,12 +131,12 @@ class TaskAdapter(
                 Tab.TODAY -> {
                     val due = pending.count { it.dueAt >= now && day(it.dueAt) == today }
                     val date = java.time.format.DateTimeFormatter.ofPattern("EEE, d MMM").format(today)
-                    "$date · ${overdue + due} to do" + if (overdue > 0) " · $overdue overdue" else ""
+                    Res.f(R.string.sum_today, date, overdue + due) + if (overdue > 0) Res.f(R.string.sum_overdue, overdue) else ""
                 }
-                Tab.UPCOMING -> "${pending.count { it.dueAt >= now && day(it.dueAt).isAfter(today) }} scheduled"
+                Tab.UPCOMING -> Res.f(R.string.sum_scheduled, pending.count { it.dueAt >= now && day(it.dueAt).isAfter(today) })
                 Tab.DONE -> {
                     val n = tasks.count { it.done }.coerceAtMost(30)
-                    if (n == 0) "No completed tasks" else "Last $n completed"
+                    if (n == 0) Res.s(R.string.sum_no_done) else Res.f(R.string.sum_last_done, n)
                 }
             }
         }
@@ -145,16 +149,16 @@ class TaskAdapter(
             if (!t.done && d == today && t.dueAt >= now) {
                 val mins = (t.dueAt - now) / 60_000
                 val rel = when {
-                    mins < 1 -> "now"
-                    mins < 60 -> "in $mins min"
-                    else -> "in ${mins / 60} h"
+                    mins < 1 -> Res.s(R.string.rel_now)
+                    mins < 60 -> Res.f(R.string.rel_min, mins)
+                    else -> Res.f(R.string.rel_h, mins / 60)
                 }
                 return "$time\n$rel"
             }
             val dayText = when (d) {
-                today -> "Today"
-                today.plusDays(1) -> "Tomorrow"
-                today.minusDays(1) -> "Yesterday"
+                today -> Res.s(R.string.ui_today)
+                today.plusDays(1) -> Res.s(R.string.sec_tomorrow)
+                today.minusDays(1) -> Res.s(R.string.day_yesterday)
                 else -> java.time.format.DateTimeFormatter.ofPattern(if (d.year == today.year) "d MMM" else "d MMM yy").format(d)
             }
             return "$dayText\n$time"
@@ -166,9 +170,9 @@ class TaskAdapter(
             val today = LocalDate.now()
             val time = DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(ms))
             val dayText = when (d) {
-                today -> "Today"
-                today.plusDays(1) -> "Tomorrow"
-                today.minusDays(1) -> "Yesterday"
+                today -> Res.s(R.string.ui_today)
+                today.plusDays(1) -> Res.s(R.string.sec_tomorrow)
+                today.minusDays(1) -> Res.s(R.string.day_yesterday)
                 else -> DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(ms))
             }
             return "$dayText, $time"
@@ -258,7 +262,7 @@ class TaskAdapter(
         val red = ContextCompat.getColor(ctx, R.color.ios_red)
         val gray = ContextCompat.getColor(ctx, R.color.ios_secondary)
         // For today: line1 = time, line2 = "in 2 h". Otherwise line1 = day, line2 = time.
-        val todayStyle = line2.startsWith("in ") || line2 == "now"
+        val todayStyle = !t.done && day(t.dueAt) == LocalDate.now() && t.dueAt >= now
         v.findViewById<TextView>(R.id.sub).apply {
             text = if (todayStyle) line1 else line2
             setTextColor(if (overdue) red else if (t.done) gray else ContextCompat.getColor(ctx, R.color.ios_label))

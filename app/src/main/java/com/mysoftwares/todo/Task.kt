@@ -5,31 +5,43 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.TemporalAdjusters
 
-enum class Repeat(val label: String) {
-    NONE("Never"),
-    DAILY("Daily"),
-    WEEKLY("Weekly"),
-    MONTHLY("Monthly"),
-    MONTH_END("Month-end"),
-    QUARTERLY("Quarterly"),
-    QUARTER_END("Quarter-end"),
-    YEARLY("Yearly");
+enum class Repeat(private val labelRes: Int) {
+    NONE(R.string.rep_none),
+    DAILY(R.string.rep_daily),
+    WEEKLY(R.string.rep_weekly),
+    MONTHLY(R.string.rep_monthly),
+    MONTH_END(R.string.rep_month_end),
+    QUARTERLY(R.string.rep_quarterly),
+    QUARTER_END(R.string.rep_quarter_end),
+    YEARLY(R.string.rep_yearly);
+
+    val label: String get() = Res.s(labelRes)
 }
 
 /** What to do when a repeating task falls on a weekly off day. */
-enum class WorkdayRule(val label: String, val short: String) {
-    SAME_DAY("Same day", "Same day"),
-    PREVIOUS("Previous working day", "Previous"),
-    NEXT("Next working day", "Next");
+enum class WorkdayRule(private val labelRes: Int, private val shortRes: Int) {
+    SAME_DAY(R.string.wd_same, R.string.wd_same_short),
+    PREVIOUS(R.string.wd_prev, R.string.wd_prev_short),
+    NEXT(R.string.wd_next, R.string.wd_next_short);
+
+    val label: String get() = Res.s(labelRes)
+    val short: String get() = Res.s(shortRes)
 }
 
 /** Task priority, shown as ! / !! / !!! and used to sort the list. */
-enum class Priority(val label: String, val marks: String) {
-    NONE("None", ""), LOW("Low", "!"), MEDIUM("Medium", "!!"), HIGH("High", "!!!");
+enum class Priority(private val labelRes: Int, val marks: String) {
+    NONE(R.string.pri_none, ""), LOW(R.string.pri_low, "!"),
+    MEDIUM(R.string.pri_medium, "!!"), HIGH(R.string.pri_high, "!!!");
+
+    val label: String get() = Res.s(labelRes)
 }
 
 /** How the task reminds at its due time. */
-enum class RemindType(val label: String) { ALARM("Alarm"), NOTIFICATION("Notification") }
+enum class RemindType(private val labelRes: Int) {
+    ALARM(R.string.rt_alarm), NOTIFICATION(R.string.rt_notification);
+
+    val label: String get() = Res.s(labelRes)
+}
 
 /** Month-end and quarter-end tasks are set as "last day minus N" instead of a date. */
 fun Repeat.usesEndOffset() = this == Repeat.MONTH_END || this == Repeat.QUARTER_END
@@ -38,15 +50,16 @@ fun Repeat.usesEndOffset() = this == Repeat.MONTH_END || this == Repeat.QUARTER_
 fun Repeat.usesWorkdayRule() = this != Repeat.NONE && this != Repeat.DAILY
 
 /** Options for "remind me before the due time" (in minutes). */
-val ADVANCE_OPTIONS = listOf(
-    0 to "None",
-    15 to "15 min before",
-    60 to "1 hour before",
-    24 * 60 to "1 day before",
-    2 * 24 * 60 to "2 days before",
-    3 * 24 * 60 to "3 days before",
-    7 * 24 * 60 to "1 week before",
-)
+val ADVANCE_OPTIONS: List<Pair<Int, String>>
+    get() = listOf(
+        0 to Res.s(R.string.adv_none),
+        15 to Res.s(R.string.adv_15m),
+        60 to Res.s(R.string.adv_1h),
+        24 * 60 to Res.s(R.string.adv_1d),
+        2 * 24 * 60 to Res.s(R.string.adv_2d),
+        3 * 24 * 60 to Res.s(R.string.adv_3d),
+        7 * 24 * 60 to Res.s(R.string.adv_1w),
+    )
 
 data class Task(
     val id: Long = 0,

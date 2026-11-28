@@ -16,25 +16,33 @@ import com.google.android.material.color.DynamicColors
 object Appearance {
     private const val PREFS = "appearance"
 
-    enum class Mode(val label: String, val night: Int) {
-        SYSTEM("System", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
-        LIGHT("Light", AppCompatDelegate.MODE_NIGHT_NO),
-        DARK("Dark", AppCompatDelegate.MODE_NIGHT_YES),
+    enum class Mode(private val labelRes: Int, val night: Int) {
+        SYSTEM(R.string.mode_system, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM),
+        LIGHT(R.string.mode_light, AppCompatDelegate.MODE_NIGHT_NO),
+        DARK(R.string.mode_dark, AppCompatDelegate.MODE_NIGHT_YES);
+
+        val label: String get() = Res.s(labelRes)
     }
 
-    enum class Accent(val label: String, val colorRes: Int, val overlay: Int) {
-        BLUE("Blue", R.color.accent_blue, R.style.ThemeOverlay_Accent_Blue),
-        GREEN("Green", R.color.accent_green, R.style.ThemeOverlay_Accent_Green),
-        PURPLE("Purple", R.color.accent_purple, R.style.ThemeOverlay_Accent_Purple),
-        ORANGE("Orange", R.color.accent_orange, R.style.ThemeOverlay_Accent_Orange),
-        TEAL("Teal", R.color.accent_teal, R.style.ThemeOverlay_Accent_Teal),
-        PINK("Pink", R.color.accent_pink, R.style.ThemeOverlay_Accent_Pink),
+    enum class Accent(private val labelRes: Int, val colorRes: Int, val overlay: Int) {
+        BLUE(R.string.acc_blue, R.color.accent_blue, R.style.ThemeOverlay_Accent_Blue),
+        GREEN(R.string.acc_green, R.color.accent_green, R.style.ThemeOverlay_Accent_Green),
+        PURPLE(R.string.acc_purple, R.color.accent_purple, R.style.ThemeOverlay_Accent_Purple),
+        ORANGE(R.string.acc_orange, R.color.accent_orange, R.style.ThemeOverlay_Accent_Orange),
+        TEAL(R.string.acc_teal, R.color.accent_teal, R.style.ThemeOverlay_Accent_Teal),
+        PINK(R.string.acc_pink, R.color.accent_pink, R.style.ThemeOverlay_Accent_Pink),
         /** Material You: colours taken from the wallpaper (Android 12+). */
-        WALLPAPER("Wallpaper", R.color.accent_blue, R.style.ThemeOverlay_Accent_Blue),
+        WALLPAPER(R.string.acc_wallpaper, R.color.accent_blue, R.style.ThemeOverlay_Accent_Blue);
+
+        val label: String get() = Res.s(labelRes)
     }
 
     /** COMPACT = iOS inset grouped list (default); CARDS = separate rounded cards. */
-    enum class ListStyle(val label: String) { CARDS("Cards"), COMPACT("Grouped") }
+    enum class ListStyle(private val labelRes: Int) {
+        CARDS(R.string.ui_cards), COMPACT(R.string.ui_grouped);
+
+        val label: String get() = Res.s(labelRes)
+    }
 
     /** Changes every time a setting changes, so open screens know to redraw. */
     @Volatile var stamp = 0
