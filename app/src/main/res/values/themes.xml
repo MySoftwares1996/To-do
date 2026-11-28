@@ -29,6 +29,22 @@
         <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
     </style>
 
+    <!-- Equal snooze pills on the alarm screen -->
+    <style name="AlarmSnoozePill">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">46dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_alarm_snooze</item>
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:paddingHorizontal">6dp</item>
+        <item name="android:textColor">#E6FFFFFF</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
     <!-- Navigation bar: centred bold title, ‹ back arrow in accent colour -->
     <style name="IosToolbar" parent="Widget.Material3.Toolbar">
         <item name="android:background">@color/ios_bg</item>

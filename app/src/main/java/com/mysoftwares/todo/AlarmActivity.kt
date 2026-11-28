@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
@@ -33,30 +32,107 @@ class AlarmActivity : BaseActivity() {
         // AM/PM only for 12-hour phones.
         if (android.text.format.DateFormat.is24HourFormat(this)) findViewById<View>(R.id.ampm).visibility = View.GONE
 
-        findViewById<Button>(R.id.done).setOnClickListener { TaskActions.done(this, taskId, shownDue.takeIf { it > 0 }); finish() }
+        findViewById<View>(R.id.done).setOnClickListener { TaskActions.done(this, taskId, shownDue.takeIf { it > 0 }); finish() }
         val s1 = AlarmPrefs.snooze1(this)
         val s2 = AlarmPrefs.snooze2(this)
-        findViewById<Button>(R.id.snooze10).apply {
+        findViewById<TextView>(R.id.snooze10).apply {
             text = AlarmPrefs.label(s1)
             setOnClickListener { TaskActions.snooze(this@AlarmActivity, taskId, s1); finish() }
         }
-        findViewById<Button>(R.id.snooze60).apply {
+        findViewById<TextView>(R.id.snooze60).apply {
             text = AlarmPrefs.label(s2)
             setOnClickListener { TaskActions.snooze(this@AlarmActivity, taskId, s2); finish() }
         }
-        findViewById<Button>(R.id.snooze_more).setOnClickListener { moreSnooze() }
+        findViewById<View>(R.id.snooze_more).setOnClickListener { moreSnooze() }
         show(intent)
 
-        // Gentle pulsing bell.
+        startAnimations()
+    }
+
+    /** Soft glow colours; the screen takes the one that matches the task's priority. */
+    private enum class Glow(val center: Int, val mid: Int, val accent: Int, val tagText: Int) {
+        CORAL(0xFF5A2A33.toInt(), 0xFF22161C.toInt(), 0xFFFF9682.toInt(), 0xFFFFC1B4.toInt()),
+        AMBER(0xFF57421F.toInt(), 0xFF211B14.toInt(), 0xFFFFC56E.toInt(), 0xFFFFDDA8.toInt()),
+        BLUE(0xFF263A63.toInt(), 0xFF151A26.toInt(), 0xFF8FB8FF.toInt(), 0xFFC4D8FF.toInt()),
+    }
+
+    private fun withAlpha(color: Int, alpha: Float) = (color and 0x00FFFFFF) or ((alpha * 255).toInt() shl 24)
+    private fun dp(v: Float) = v * resources.displayMetrics.density
+
+    private fun applyGlow(glow: Glow) {
+        val root = findViewById<View>(R.id.alarm_root)
+        val edge = getColor(R.color.alarm_bg)
+        root.background = android.graphics.drawable.GradientDrawable().apply {
+            gradientType = android.graphics.drawable.GradientDrawable.RADIAL_GRADIENT
+            colors = intArrayOf(glow.center, glow.mid, edge)
+            setGradientCenter(0.5f, 0.45f)
+            gradientRadius = maxOf(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels) * 0.62f
+        }
+        fun oval(fill: Int, stroke: Int, strokeDp: Float) = android.graphics.drawable.GradientDrawable().apply {
+            shape = android.graphics.drawable.GradientDrawable.OVAL
+            setColor(fill)
+            if (strokeDp > 0) setStroke(dp(strokeDp).toInt(), stroke)
+        }
+        findViewById<View>(R.id.bell_disc).background = oval(withAlpha(glow.accent, 0.16f), 0, 0f)
+        findViewById<View>(R.id.ripple1).background = oval(0, withAlpha(glow.accent, 0.5f), 1.5f)
+        findViewById<View>(R.id.ripple2).background = oval(0, withAlpha(glow.accent, 0.5f), 1.5f)
+        findViewById<View>(R.id.card).background = android.graphics.drawable.GradientDrawable().apply {
+            cornerRadius = dp(24f)
+            setColor(0x14FFFFFF)
+            setStroke(dp(1f).toInt(), 0x17FFFFFF)
+        }
+        findViewById<TextView>(R.id.important).apply {
+            setTextColor(glow.tagText)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                cornerRadius = dp(12f); setColor(withAlpha(glow.accent, 0.2f))
+            }
+        }
+        // Three small dots in the glow colours; the current one is lit.
+        findViewById<android.widget.LinearLayout>(R.id.dots).apply {
+            removeAllViews()
+            Glow.entries.forEach { g ->
+                addView(View(context).apply {
+                    background = oval(if (g == glow) g.accent else withAlpha(g.accent, 0.28f), 0, 0f)
+                }, android.widget.LinearLayout.LayoutParams(dp(7f).toInt(), dp(7f).toInt()).apply {
+                    marginStart = dp(3f).toInt(); marginEnd = dp(3f).toInt()
+                })
+            }
+        }
+    }
+
+    private fun startAnimations() {
+        // Two soft ripples spreading out from the bell, half a beat apart.
+        listOf(R.id.ripple1 to 0L, R.id.ripple2 to 1200L).forEach { (id, delay) ->
+            ObjectAnimator.ofPropertyValuesHolder(
+                findViewById<View>(id),
+                PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.7f),
+                PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.7f),
+                PropertyValuesHolder.ofFloat(View.ALPHA, 0.9f, 0f),
+            ).apply {
+                duration = 2400
+                startDelay = delay
+                interpolator = android.view.animation.DecelerateInterpolator()
+                repeatCount = ValueAnimator.INFINITE
+                start()
+            }
+        }
+        // Calm breathing of the bell.
         ObjectAnimator.ofPropertyValuesHolder(
-            findViewById<View>(R.id.bell),
-            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.1f),
-            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.1f),
+            findViewById<View>(R.id.bell_disc),
+            PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.06f),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.06f),
         ).apply {
-            duration = 600
+            duration = 1200
+            interpolator = android.view.animation.AccelerateDecelerateInterpolator()
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.REVERSE
             start()
+        }
+        // The card floats in gently.
+        findViewById<View>(R.id.card).apply {
+            alpha = 0f; translationY = dp(18f)
+            animate().alpha(1f).translationY(0f).setDuration(450)
+                .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
         }
     }
 
@@ -118,11 +194,27 @@ class AlarmActivity : BaseActivity() {
         if (task == null || task.done) { finish(); return }
         shownDue = task.dueAt
         findViewById<TextView>(R.id.title).text = task.title
-        findViewById<TextView>(R.id.due).text = "Due " + TaskAdapter.friendlyTime(task.dueAt)
+        val due = getString(R.string.alarm_due, TaskAdapter.friendlyTime(task.dueAt))
+        findViewById<TextView>(R.id.due).text = if (task.checklist.isEmpty()) due
+        else due + "\n" + getString(R.string.alarm_checklist, task.checklist.count { it.done }, task.checklist.size)
         findViewById<TextView>(R.id.notes).apply {
             text = task.notes
             visibility = if (task.notes.isBlank()) View.GONE else View.VISIBLE
         }
-        findViewById<View>(R.id.important).visibility = if (task.important) View.VISIBLE else View.GONE
+        // Glow colour and tag follow the task: coral for important/high, amber for medium, blue otherwise.
+        val glow = when {
+            task.important || task.priority == Priority.HIGH -> Glow.CORAL
+            task.priority == Priority.MEDIUM -> Glow.AMBER
+            else -> Glow.BLUE
+        }
+        applyGlow(glow)
+        findViewById<TextView>(R.id.important).apply {
+            text = when {
+                task.important -> getString(R.string.alarm_tag_important)
+                task.priority != Priority.NONE -> getString(R.string.alarm_tag_priority, task.priority.label)
+                else -> ""
+            }
+            visibility = if (text.isEmpty()) View.GONE else View.VISIBLE
+        }
     }
 }

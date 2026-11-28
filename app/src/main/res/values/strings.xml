@@ -45,12 +45,9 @@
     <string name="ui_grouped_one_white_list_per_section_like_">Grouped: tasks of a section joined in one list with thin lines. Cards: every task on its own floating card with a shadow and space between.</string>
     <string name="ui_large_text">Large text</string>
     <string name="ui_bigger_task_titles_and_times">Bigger task titles and times</string>
-    <string name="ui_important_do_it_now">⚠  IMPORTANT – do it now</string>
-    <string name="ui_done">✔  DONE</string>
     <string name="ui_10_min">10 min</string>
     <string name="ui_1_hour">1 hour</string>
     <string name="ui_more">More…</string>
-    <string name="ui_snooze_for">Snooze for…</string>
     <string name="ui_your_phone_brand">Your phone brand</string>
     <string name="ui_open_app_settings">Open app settings</string>
     <string name="ui_test_ring_an_alarm_in_1_minute">Test: ring an alarm in 1 minute</string>
@@ -313,4 +310,11 @@
     <string name="chk_list_progress">Checklist  %1$d/%2$d</string>
     <string name="chk_item_hint">Step, e.g. Bank reconciliation</string>
     <string name="chk_add_item">＋  Add item</string>
+    <!-- Alarm screen -->
+    <string name="alarm_done">Done</string>
+    <string name="alarm_snooze_hint">Snooze</string>
+    <string name="alarm_tag_important">Important</string>
+    <string name="alarm_tag_priority">%1$s priority</string>
+    <string name="alarm_due">Due %1$s</string>
+    <string name="alarm_checklist">%1$d of %2$d steps done</string>
 </resources>
