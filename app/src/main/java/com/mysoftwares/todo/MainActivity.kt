@@ -82,6 +82,7 @@ class MainActivity : BaseActivity() {
             onClick = { startActivity(Intent(this, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, it.id)) },
             onCheck = { toggleDone(it) },
             onLongPress = { showTaskMenu(it) },
+            onHistory = { h, longPress -> if (longPress) showHistoryMenu(h) else undoHistory(h) },
             onBanner = { open ->
                 Reliability.markSeen(this) // don't show it again after updates
                 if (open) startActivity(Intent(this, SetupActivity::class.java)) else refresh()
@@ -234,8 +235,12 @@ class MainActivity : BaseActivity() {
 
     private fun refresh() {
         val tasks = TaskDb.get(this).all()
-        adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.newProblemCount(this), query))
-        if (!onSettings) setHeader(null, TaskAdapter.summary(tasks, tab, query))
+        // Completed dates of repeating tasks (last 60 days, since the last "Clear completed").
+        val history = TaskDb.get(this).recentHistory(
+            maxOf(AlarmPrefs.doneClearedAt(this), System.currentTimeMillis() - 60L * 24 * 3600_000)
+        )
+        adapter.submitList(TaskAdapter.buildRows(tasks, tab, Reliability.newProblemCount(this), query, history))
+        if (!onSettings) setHeader(null, TaskAdapter.summary(tasks, tab, query, history))
         // Red badge on the Today tab = number of overdue tasks.
         val now = System.currentTimeMillis()
         val overdue = tasks.count { !it.done && it.dueAt < now }
@@ -266,6 +271,25 @@ class MainActivity : BaseActivity() {
         val msg = if (before.repeat == Repeat.NONE) "Completed: ${before.title}"
         else "Completed. Next: ${TaskAdapter.friendlyTime(TaskDb.get(this).get(task.id)?.dueAt ?: before.dueAt)}"
         showUndo(msg, before, undoesDone = true)
+    }
+
+    /** Undo one completed date of a repeating task (only the newest one). */
+    private fun undoHistory(h: TaskDb.Done) {
+        haptic()
+        if (!TaskActions.undoHistory(this, h)) toast(getString(R.string.done_undo_only_latest))
+        refresh()
+    }
+
+    private fun showHistoryMenu(h: TaskDb.Done) {
+        haptic()
+        val items = arrayOf(getString(R.string.menu_mark_not_done), getString(R.string.done_open_task))
+        AlertDialog.Builder(this)
+            .setTitle(h.title)
+            .setItems(items) { _, i ->
+                if (i == 0) undoHistory(h)
+                else startActivity(Intent(this, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, h.taskId))
+            }
+            .show()
     }
 
     /** Long-press menu on a task. */
@@ -329,7 +353,8 @@ class MainActivity : BaseActivity() {
 
         ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
             override fun getSwipeDirs(rv: RecyclerView, vh: RecyclerView.ViewHolder): Int =
-                if (adapter.taskAt(vh.bindingAdapterPosition) == null) 0 else super.getSwipeDirs(rv, vh)
+                if (adapter.taskAt(vh.bindingAdapterPosition) == null || adapter.isHistory(vh.bindingAdapterPosition)) 0
+                else super.getSwipeDirs(rv, vh)
 
             override fun onMove(rv: RecyclerView, a: RecyclerView.ViewHolder, b: RecyclerView.ViewHolder) = false
 
@@ -420,12 +445,22 @@ class MainActivity : BaseActivity() {
     }
 
     private fun clearCompleted() {
-        val done = TaskDb.get(this).all().filter { it.done }
-        if (done.isEmpty()) { toast(getString(R.string.msg_no_completed_tasks)); return }
+        val tasks = TaskDb.get(this).all()
+        val done = tasks.filter { it.done }
+        val shown = TaskAdapter.doneItems(tasks, TaskDb.get(this).recentHistory(
+            maxOf(AlarmPrefs.doneClearedAt(this), System.currentTimeMillis() - 60L * 24 * 3600_000)
+        )).size
+        if (shown == 0) { toast(getString(R.string.msg_no_completed_tasks)); return }
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.msg_clear_completed))
-            .setMessage("Remove ${done.size} completed task(s) from the list.")
-            .setPositiveButton(getString(R.string.msg_clear)) { _, _ -> done.forEach { TaskActions.delete(this, it.id) }; refresh() }
+            .setMessage(getString(R.string.done_clear_msg, shown))
+            .setPositiveButton(getString(R.string.msg_clear)) { _, _ ->
+                // Repeating tasks stay (they are on their next date); their past dates leave the list
+                // but stay in the monthly report.
+                done.forEach { TaskActions.delete(this, it.id) }
+                AlarmPrefs.setDoneClearedAt(this, System.currentTimeMillis())
+                refresh()
+            }
             .setNegativeButton(getString(R.string.ui_cancel), null)
             .show()
     }

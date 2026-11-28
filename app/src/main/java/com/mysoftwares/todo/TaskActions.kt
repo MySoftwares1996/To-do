@@ -52,6 +52,27 @@ object TaskActions {
         finishAlarm(context, id)
     }
 
+    /**
+     * Undo a completed date of a repeating task: the task goes back to that date
+     * (as already rung, so it shows as pending/overdue without ringing again).
+     * Only the newest completion can be undone. Returns false if not possible.
+     */
+    fun undoHistory(context: Context, h: TaskDb.Done): Boolean {
+        val db = TaskDb.get(context)
+        val t = db.get(h.taskId) ?: return false
+        if (t.done || db.latestHistoryId(t.id) != h.id) return false
+        val now = System.currentTimeMillis()
+        val back = db.save(t.copy(
+            dueAt = h.dueAt, snoozeUntil = 0, autoRepeat = false,
+            rangFor = if (h.dueAt <= now) h.dueAt else 0,
+            advanceShownFor = if (h.dueAt <= now) h.dueAt - 1 else 0,
+            checklist = t.checklist.map { it.copy(done = true) },
+        ))
+        db.deleteHistory(h.id)
+        AlarmScheduler.schedule(context, back)
+        return true
+    }
+
     fun undoDone(context: Context, id: Long) {
         val db = TaskDb.get(context)
         db.get(id)?.let { AlarmScheduler.schedule(context, db.save(it.copy(done = false, rangFor = 0, snoozeUntil = 0, autoRepeat = false))) }

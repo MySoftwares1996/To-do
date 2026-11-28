@@ -70,4 +70,19 @@ class TaskLogicTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun rejectsOtherFiles() { Backup.fromJson("""{"hello":1}""") }
+
+    @Test fun doneTabShowsCompletedDatesOfRepeatingTasks() {
+        val monthly = Task(id = 1, title = "Invoice", startAt = 0, dueAt = 5_000, repeat = Repeat.MONTHLY)
+        val oneTime = Task(id = 2, title = "Call bank", startAt = 0, dueAt = 1_000, done = true)
+        val history = listOf(
+            TaskDb.Done("Invoice", "", dueAt = 2_000, doneAt = 3_000, id = 10, taskId = 1),
+            TaskDb.Done("Call bank", "", dueAt = 1_000, doneAt = 1_500, id = 11, taskId = 2), // shown once, as the task
+            TaskDb.Done("Old", "", dueAt = 100, doneAt = 200, id = 12, taskId = 99), // deleted task
+        )
+        val rows = TaskAdapter.doneItems(listOf(monthly, oneTime), history)
+        assertEquals(listOf(1L, 2L), rows.map { it.task.id })
+        assertEquals(2_000L, rows[0].task.dueAt)
+        assertEquals(true, rows[0].task.done)
+        assertEquals(5_000L, rows[0].nextDue)
+    }
 }

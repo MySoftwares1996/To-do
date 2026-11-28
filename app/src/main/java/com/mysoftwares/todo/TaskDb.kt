@@ -84,7 +84,10 @@ class TaskDb private constructor(private val appContext: Context) :
         )
     }
 
-    data class Done(val title: String, val category: String, val dueAt: Long, val doneAt: Long)
+    data class Done(
+        val title: String, val category: String, val dueAt: Long, val doneAt: Long,
+        val id: Long = 0, val taskId: Long = 0,
+    )
 
     @Synchronized
     fun logDone(t: Task, doneAt: Long) {
@@ -92,6 +95,20 @@ class TaskDb private constructor(private val appContext: Context) :
             put("task_id", t.id); put("title", t.title); put("category", "")
             put("due_at", t.dueAt); put("done_at", doneAt)
         })
+    }
+
+    /** Completions after [since], newest first (Done tab). */
+    fun recentHistory(since: Long): List<Done> = history(since, Long.MAX_VALUE).reversed()
+
+    /** Id of the newest completion of a task, or 0. */
+    @Synchronized
+    fun latestHistoryId(taskId: Long): Long =
+        readableDatabase.rawQuery("SELECT MAX(id) FROM history WHERE task_id = ?", arrayOf(taskId.toString()))
+            .use { if (it.moveToFirst()) it.getLong(0) else 0 }
+
+    @Synchronized
+    fun deleteHistory(id: Long) {
+        writableDatabase.delete("history", "id = ?", arrayOf(id.toString()))
     }
 
     /** Removes the latest completion of a task (used by Undo). */
@@ -116,6 +133,8 @@ class TaskDb private constructor(private val appContext: Context) :
                         c.getString(c.getColumnIndexOrThrow("category")),
                         c.getLong(c.getColumnIndexOrThrow("due_at")),
                         c.getLong(c.getColumnIndexOrThrow("done_at")),
+                        c.getLong(c.getColumnIndexOrThrow("id")),
+                        c.getLong(c.getColumnIndexOrThrow("task_id")),
                     )
                 )
             }

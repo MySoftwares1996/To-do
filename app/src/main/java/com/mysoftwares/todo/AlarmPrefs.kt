@@ -35,6 +35,10 @@ object AlarmPrefs {
     fun setRingMinutes(c: Context, m: Int) = prefs(c).edit().putInt("ring", m).apply()
 
     /** Morning summary notification: on/off and time (minutes after midnight, default 8:30). */
+    /** "Clear completed" time: older completions of repeating tasks are hidden from the Done tab. */
+    fun doneClearedAt(c: Context) = prefs(c).getLong("done_cleared_at", 0)
+    fun setDoneClearedAt(c: Context, ms: Long) = prefs(c).edit().putLong("done_cleared_at", ms).apply()
+
     fun summaryOn(c: Context) = prefs(c).getBoolean("summary_on", true)
     fun setSummaryOn(c: Context, on: Boolean) = prefs(c).edit().putBoolean("summary_on", on).apply()
     fun summaryMinutes(c: Context) = prefs(c).getInt("summary_at", 8 * 60 + 30)

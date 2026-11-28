@@ -30,7 +30,8 @@ sealed class Row {
     data class Banner(val problems: Int) : Row()
     data class Summary(val text: String) : Row()
     data class Header(val key: String, val title: String, val count: Int, val colorRes: Int?) : Row()
-    data class Item(val task: Task, val first: Boolean, val last: Boolean) : Row()
+    /** [history] is set for a completed date of a repeating task; [task] then shows that date. */
+    data class Item(val task: Task, val first: Boolean, val last: Boolean, val history: TaskDb.Done? = null, val nextDue: Long = 0) : Row()
     data class Empty(val text: String) : Row()
 }
 
@@ -41,6 +42,8 @@ class TaskAdapter(
     private val onLongPress: (Task) -> Unit,
     /** Banner tapped (open = true) or closed with ✕ (open = false). */
     private val onBanner: (open: Boolean) -> Unit,
+    /** Check circle / long-press on a completed date of a repeating task. */
+    private val onHistory: (TaskDb.Done, longPress: Boolean) -> Unit = { _, _ -> },
     /** true = iOS inset grouped list; false = separate rounded cards. */
     private val grouped: Boolean = true,
 ) : ListAdapter<Row, RecyclerView.ViewHolder>(DIFF) {
@@ -55,7 +58,7 @@ class TaskAdapter(
         private val DIFF = object : DiffUtil.ItemCallback<Row>() {
             override fun areItemsTheSame(a: Row, b: Row) = when {
                 a is Row.Header && b is Row.Header -> a.key == b.key
-                a is Row.Item && b is Row.Item -> a.task.id == b.task.id
+                a is Row.Item && b is Row.Item -> a.task.id == b.task.id && a.history?.id == b.history?.id
                 else -> a::class == b::class && a !is Row.Item && a !is Row.Header
             }
             override fun areContentsTheSame(a: Row, b: Row) = a == b
@@ -64,7 +67,26 @@ class TaskAdapter(
         private fun day(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).toLocalDate()
 
 
-        fun buildRows(tasks: List<Task>, tab: Tab, problems: Int, query: String = ""): List<Row> {
+        /**
+         * Done tab entries: finished one-time tasks plus each completed date of a repeating
+         * task (from the history), newest first.
+         */
+        fun doneItems(tasks: List<Task>, history: List<TaskDb.Done>): List<Row.Item> {
+            val byId = tasks.associateBy { it.id }
+            val oneTime = tasks.filter { it.done }.map { Row.Item(it, false, false) to it.dueAt }
+            val repeating = history.mapNotNull { h ->
+                val live = byId[h.taskId] ?: return@mapNotNull null // task deleted
+                if (live.done || live.repeat == Repeat.NONE) return@mapNotNull null // shown as a one-time task
+                val shown = live.copy(
+                    dueAt = h.dueAt, done = true, snoozeUntil = 0,
+                    checklist = live.checklist.map { it.copy(done = true) },
+                )
+                Row.Item(shown, false, false, history = h, nextDue = live.dueAt) to h.doneAt
+            }
+            return (oneTime + repeating).sortedByDescending { it.second }.take(50).map { it.first }
+        }
+
+        fun buildRows(tasks: List<Task>, tab: Tab, problems: Int, query: String = "", history: List<TaskDb.Done> = emptyList()): List<Row> {
             val now = System.currentTimeMillis()
             val today = LocalDate.now()
             val rows = mutableListOf<Row>()
@@ -108,16 +130,18 @@ class TaskAdapter(
                     if (future.isEmpty()) rows += Row.Empty(Res.s(R.string.empty_upcoming))
                 }
                 Tab.DONE -> {
-                    val done = tasks.filter { it.done }.sortedByDescending { it.dueAt }.take(30)
-                    section("done", Res.s(R.string.sec_completed), R.color.ios_secondary, done)
-                    if (done.isEmpty()) rows += Row.Empty(Res.s(R.string.empty_done))
+                    val done = doneItems(tasks, history)
+                    if (done.isNotEmpty()) {
+                        rows += Row.Header("done", Res.s(R.string.sec_completed), done.size, R.color.ios_secondary)
+                        done.forEachIndexed { i, it -> rows += it.copy(first = i == 0, last = i == done.lastIndex) }
+                    } else rows += Row.Empty(Res.s(R.string.empty_done))
                 }
             }
             return rows
         }
 
         /** One-line summary shown under the title, e.g. "Fri, 27 Nov · 5 to do · 1 overdue". */
-        fun summary(tasks: List<Task>, tab: Tab, query: String): String {
+        fun summary(tasks: List<Task>, tab: Tab, query: String, history: List<TaskDb.Done> = emptyList()): String {
             val now = System.currentTimeMillis()
             val today = LocalDate.now()
             val q = query.trim()
@@ -135,7 +159,7 @@ class TaskAdapter(
                 }
                 Tab.UPCOMING -> Res.f(R.string.sum_scheduled, pending.count { it.dueAt >= now && day(it.dueAt).isAfter(today) })
                 Tab.DONE -> {
-                    val n = tasks.count { it.done }.coerceAtMost(30)
+                    val n = doneItems(tasks, history).size
                     if (n == 0) Res.s(R.string.sum_no_done) else Res.f(R.string.sum_last_done, n)
                 }
             }
@@ -178,6 +202,10 @@ class TaskAdapter(
             return "$dayText, $time"
         }
     }
+
+    /** True for a completed date of a repeating task (no swipe actions). */
+    fun isHistory(position: Int): Boolean =
+        position in 0 until itemCount && (getItem(position) as? Row.Item)?.history != null
 
     fun taskAt(position: Int): Task? =
         if (position in 0 until itemCount) (getItem(position) as? Row.Item)?.task else null
@@ -300,6 +328,10 @@ class TaskAdapter(
                 tag(if (t.autoRepeat) "⟳ $at" else "⏰ $at", accent) // ⟳ = automatic repeat, ⏰ = your snooze
             }
         }
+        if (row.history != null && row.nextDue > 0) {
+            val next = java.time.format.DateTimeFormatter.ofPattern("d MMM").format(day(row.nextDue))
+            tag(ctx.getString(R.string.done_next_tag, next), accent)
+        }
         if (t.checklist.isNotEmpty()) {
             val n = t.checklist.count { it.done }
             tag("☑ $n/${t.checklist.size}", if (n == t.checklist.size) ContextCompat.getColor(ctx, R.color.ios_green) else gray)
@@ -346,9 +378,9 @@ class TaskAdapter(
             // Live animation: the row slides away and fades, then the list updates.
             v.animate().translationX(48 * ctx.resources.displayMetrics.density).alpha(0.25f)
                 .setStartDelay(180).setDuration(260).start()
-            check.postDelayed({ onCheck(t) }, 460)
+            check.postDelayed({ row.history?.let { onHistory(it, false) } ?: onCheck(t) }, 460)
         }
         v.setOnClickListener { onClick(t) }
-        v.setOnLongClickListener { onLongPress(t); true }
+        v.setOnLongClickListener { row.history?.let { onHistory(it, true) } ?: onLongPress(t); true }
     }
 }

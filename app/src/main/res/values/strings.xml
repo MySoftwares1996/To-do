@@ -323,4 +323,9 @@
     <string name="chk_all_done_msg">Mark the whole task as done?</string>
     <string name="chk_all_done_yes">Mark done</string>
     <string name="chk_all_done_no">Keep pending</string>
+    <!-- Done tab: completed dates of repeating tasks -->
+    <string name="done_next_tag">Next %1$s</string>
+    <string name="done_open_task">Open task</string>
+    <string name="done_undo_only_latest">Only the latest completed date of this task can be undone</string>
+    <string name="done_clear_msg">Remove %1$d completed item(s) from the list. Repeating tasks stay on their next date, and the monthly report keeps them.</string>
 </resources>
