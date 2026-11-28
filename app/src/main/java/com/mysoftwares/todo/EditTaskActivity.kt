@@ -275,7 +275,13 @@ class EditTaskActivity : BaseActivity() {
         val nextText = if (rep0.usesEndOffset()) {
             val rule = if (rep0.usesWorkdayRule()) WorkdayRule.entries[workdayIndex] else WorkdayRule.SAME_DAY
             val next = Recurrence.nextAfter(startFor(rep0), rep0, System.currentTimeMillis(), rule, endOffset, keepThisPeriod = true)
-            next?.let { "Next: " + java.text.SimpleDateFormat("EEE, d MMM", java.util.Locale.getDefault()).format(java.util.Date(it)) + ". " }.orEmpty()
+            val fmt = java.text.SimpleDateFormat("EEE, d MMM", java.util.Locale.getDefault())
+            // The date before any working-day move, to explain "moved from Sun, 29 Nov".
+            val plain = Recurrence.nextAfter(startFor(rep0), rep0, (next ?: 0L) - 7L * 86_400_000L, WorkdayRule.SAME_DAY, endOffset)
+            val moved = if (next != null && plain != null && fmt.format(java.util.Date(plain)) != fmt.format(java.util.Date(next)) &&
+                kotlin.math.abs(plain - next) < 8L * 86_400_000L
+            ) " (moved from ${fmt.format(java.util.Date(plain))} – off day)" else ""
+            next?.let { "Next: " + fmt.format(java.util.Date(it)) + moved + ". " }.orEmpty()
         } else ""
         findViewById<TextView>(R.id.important_note).text = nextText +
             (if (remindType == RemindType.ALARM) "Alarm: full-screen ringing. " else "Notification: one alert with Done / Snooze. ") +
