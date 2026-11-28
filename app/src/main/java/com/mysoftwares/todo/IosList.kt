@@ -10,11 +10,14 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.card.MaterialCardView
 
 /** Builds iOS-style grouped lists from code: section labels, white rounded groups, rows, footers. */
-class IosList(private val ctx: Context, private val root: LinearLayout) {
+class IosList(private val ctx: Context, val root: LinearLayout) {
     private val d = ctx.resources.displayMetrics.density
     private fun dp(v: Int) = (v * d).toInt()
 
     fun clear() = root.removeAllViews()
+
+    /** Vertical gap between groups (when no section label is used). */
+    fun spacer() = root.addView(View(ctx), LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(12)))
 
     fun label(text: String) {
         root.addView(TextView(ctx).apply {

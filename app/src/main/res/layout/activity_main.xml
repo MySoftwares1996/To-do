@@ -104,88 +104,13 @@
         android:visibility="gone"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <!-- Filled from code (MainActivity.refreshSettings) -->
         <LinearLayout
+            android:id="@+id/settings_content"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="10dp">
-
-            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_alarms" />
-            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-                    <include android:id="@+id/set_reliability" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_sound" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_vibrate" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_snooze" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_morning" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_nag" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_ring" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_test" layout="@layout/item_form_row" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_work" />
-            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-                    <include android:id="@+id/set_weekly_off" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_holidays" layout="@layout/item_form_row" />
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="16dp"
-                android:paddingTop="6dp"
-                android:text="@string/ui_used_by_repeating_tasks_set_to_previous_"
-                android:textColor="@color/ios_secondary"
-                android:textSize="13sp" />
-
-            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_look" />
-            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
-                <include android:id="@+id/set_appearance" layout="@layout/item_form_row" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView style="@style/IosGroupLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/ui_data" />
-            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-                    <include android:id="@+id/set_backup" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_report" layout="@layout/item_form_row" />
-                    <include layout="@layout/divider_inset" />
-                    <include android:id="@+id/set_update" layout="@layout/item_form_row" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <com.google.android.material.card.MaterialCardView style="@style/IosGroup" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp">
-                <TextView
-                    android:id="@+id/set_clear"
-                    android:layout_width="match_parent"
-                    android:layout_height="44dp"
-                    android:background="?attr/selectableItemBackground"
-                    android:gravity="center"
-                    android:text="@string/ui_clear_completed"
-                    android:textColor="@color/ios_red"
-                    android:textSize="17sp" />
-            </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                android:id="@+id/set_version"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingStart="16dp"
-                android:paddingTop="8dp"
-                android:textColor="@color/ios_secondary"
-                android:textSize="13sp" />
-        </LinearLayout>
+            android:paddingHorizontal="10dp" />
     </androidx.core.widget.NestedScrollView>
 
     <!-- Bottom tabs -->

@@ -15,7 +15,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
-import android.media.RingtoneManager
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -78,7 +77,6 @@ class MainActivity : BaseActivity() {
             PillTabBar.Item(R.id.tab_settings, R.drawable.ic_settings, getString(R.string.ui_settings)),
         ))
         onBackPressedDispatcher.addCallback(this, backToToday)
-        setupSettings()
 
         adapter = TaskAdapter(
             onClick = { startActivity(Intent(this, EditTaskActivity::class.java).putExtra(AlarmScheduler.EXTRA_TASK_ID, it.id)) },
@@ -150,160 +148,49 @@ class MainActivity : BaseActivity() {
         animateIn(settingsPage)
     }
 
-    // ---- Settings tab ----
-
-    private fun settingRow(id: Int, icon: Int, color: Int, label: String, onClick: () -> Unit) {
-        val row = findViewById<View>(id)
-        row.findViewById<android.widget.ImageView>(R.id.row_icon).apply {
-            setImageResource(icon)
-            background.mutate().setTint(ContextCompat.getColor(context, color))
-        }
-        row.findViewById<android.widget.TextView>(R.id.row_title).text = label
-        row.setOnClickListener { onClick() }
-    }
-
-    private fun settingValue(id: Int, value: String) {
-        findViewById<View>(id).findViewById<android.widget.TextView>(R.id.row_value).text = value
-    }
-
-    private fun setupSettings() {
-        settingRow(R.id.set_reliability, R.drawable.ic_check_circle, R.color.ios_green, getString(R.string.setup_title)) {
-            startActivity(Intent(this, SetupActivity::class.java))
-        }
-        settingRow(R.id.set_sound, R.drawable.ic_bell_small, R.color.ios_indigo, getString(R.string.msg_alarm_sound)) { pickSound() }
-        settingRow(R.id.set_vibrate, R.drawable.ic_repeat, R.color.ios_gray, getString(R.string.msg_vibrate_only)) {
-            AlarmPrefs.setVibrateOnly(this, !AlarmPrefs.vibrateOnly(this)); refreshSettings()
-        }
-        settingRow(R.id.set_snooze, R.drawable.ic_clock, R.color.ios_orange, getString(R.string.msg_snooze_buttons)) { chooseSnooze() }
-        settingRow(R.id.set_morning, R.drawable.ic_clock, R.color.ios_indigo, getString(R.string.set_morning)) { pickMorning() }
-        settingRow(R.id.set_nag, R.drawable.ic_flag, R.color.ios_orange, getString(R.string.msg_repeat_important_every)) {
-            pickMinutes(getString(R.string.msg_repeat_important_every), AlarmPrefs.NAG_CHOICES, AlarmPrefs.nagMinutes(this)) {
-                AlarmPrefs.setNagMinutes(this, it); refreshSettings()
-            }
-        }
-        settingRow(R.id.set_ring, R.drawable.ic_bell_small, R.color.ios_red, getString(R.string.msg_ring_for)) {
-            pickMinutes(getString(R.string.msg_ring_for), AlarmPrefs.RING_CHOICES, AlarmPrefs.ringMinutes(this)) {
-                AlarmPrefs.setRingMinutes(this, it); refreshSettings()
-            }
-        }
-        settingRow(R.id.set_test, R.drawable.ic_bell_small, R.color.ios_red, getString(R.string.msg_test_alarm)) { testAlarm() }
-        settingRow(R.id.set_weekly_off, R.drawable.ic_calendar, R.color.ios_orange, getString(R.string.msg_weekly_off)) { chooseWeeklyOff() }
-        settingRow(R.id.set_holidays, R.drawable.ic_flag, R.color.ios_red, getString(R.string.msg_holidays)) {
-            startActivity(Intent(this, HolidaysActivity::class.java))
-        }
-        settingRow(R.id.set_report, R.drawable.ic_check_circle, R.color.ios_green, getString(R.string.msg_monthly_report)) {
-            startActivity(Intent(this, ReportActivity::class.java))
-        }
-        settingRow(R.id.set_appearance, R.drawable.ic_palette, R.color.brand, getString(R.string.appearance_title)) {
-            startActivity(Intent(this, AppearanceActivity::class.java))
-        }
-        settingRow(R.id.set_backup, R.drawable.ic_tray, R.color.ios_indigo, getString(R.string.backup_title)) {
-            startActivity(Intent(this, BackupActivity::class.java))
-        }
-        settingRow(R.id.set_update, R.drawable.ic_repeat, R.color.ios_gray, getString(R.string.msg_check_for_updates)) { updates.checkForUpdate(manual = true) }
-        findViewById<View>(R.id.set_clear).setOnClickListener { clearCompleted() }
-        findViewById<android.widget.TextView>(R.id.set_version).text = "Office To-Do ${Updater.currentVersionName}"
-    }
+    // ---- Settings tab (short list; details are one tap deeper) ----
 
     private fun refreshSettings() {
+        val list = IosList(this, findViewById(R.id.settings_content))
+        list.clear()
+        val accent = com.google.android.material.color.MaterialColors.getColor(list.root, androidx.appcompat.R.attr.colorPrimary)
         val problems = Reliability.problemCount(this)
-        settingValue(R.id.set_reliability, if (problems == 0) "All set" else "$problems to fix")
-        findViewById<View>(R.id.set_reliability).findViewById<android.widget.ImageView>(R.id.row_icon)
-            .background.mutate().setTint(ContextCompat.getColor(this, if (problems == 0) R.color.ios_green else R.color.ios_red))
-        settingValue(R.id.set_test, "in 1 min")
-        settingValue(R.id.set_sound, if (AlarmPrefs.vibrateOnly(this)) "Off" else soundName())
-        settingValue(R.id.set_vibrate, if (AlarmPrefs.vibrateOnly(this)) "On" else "Off")
-        settingValue(R.id.set_snooze, "${AlarmPrefs.label(AlarmPrefs.snooze1(this))} · ${AlarmPrefs.label(AlarmPrefs.snooze2(this))}")
-        settingValue(R.id.set_nag, "${AlarmPrefs.nagMinutes(this)} min")
-        val mm = AlarmPrefs.morningMinutes(this)
-        settingValue(R.id.set_morning, java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(
-            java.util.Date(java.time.LocalDate.now().atTime(mm / 60, mm % 60).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())))
-        settingValue(R.id.set_ring, "${AlarmPrefs.ringMinutes(this)} min")
-        settingValue(R.id.set_holidays, WorkDays.holidays.size.toString())
 
-        settingValue(R.id.set_appearance, Appearance.mode(this).label)
-        settingValue(R.id.set_weekly_off, when (WorkDays.offDays) {
-            WorkDays.OffDays.SAT_SUN -> "Sat & Sun"
-            WorkDays.OffDays.SUN -> "Sunday"
-            WorkDays.OffDays.SUN_2ND_4TH_SAT -> "Sun + 2nd/4th Sat"
-        })
-        settingValue(R.id.set_backup, if (Backup.autoUri(this) != null) "On" else "Off")
-        settingValue(R.id.set_update, Updater.currentVersionName)
-    }
+        // Alarm check stays on top so problems are seen at once
+        list.spacer()
+        list.group().row(
+            getString(R.string.set_alarm_check), if (problems == 0) getString(R.string.set_all_set) else getString(R.string.set_to_fix, problems),
+            dot = ContextCompat.getColor(this, if (problems == 0) R.color.ios_green else R.color.ios_red),
+        ) { startActivity(Intent(this, SetupActivity::class.java)) }
 
-    private val soundPicker = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
-        if (r.resultCode == RESULT_OK) {
-            @Suppress("DEPRECATION")
-            val uri = r.data?.getParcelableExtra<android.net.Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            AlarmPrefs.setSound(this, uri)
-            refreshSettings()
+        list.spacer()
+        val main = list.group()
+        main.row(getString(R.string.set_alarms_snooze), "›", dot = ContextCompat.getColor(this, R.color.ios_red)) {
+            startActivity(Intent(this, AlarmSettingsActivity::class.java))
         }
-    }
-
-    private fun pickSound() {
-        soundPicker.launch(
-            Intent(RingtoneManager.ACTION_RINGTONE_PICKER)
-                .putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
-                .putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "Alarm sound")
-                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-                .putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                .putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, AlarmPrefs.sound(this) ?: Notifications.alarmSound())
-        )
-    }
-
-    private fun soundName(): String {
-        val uri = AlarmPrefs.sound(this) ?: return "Default"
-        return runCatching { RingtoneManager.getRingtone(this, uri)?.getTitle(this) }.getOrNull() ?: "Custom"
-    }
-
-    private fun pickMinutes(title: String, choices: List<Int>, current: Int, onPick: (Int) -> Unit) {
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setSingleChoiceItems(choices.map { AlarmPrefs.label(it) }.toTypedArray(), choices.indexOf(current)) { d, i ->
-                onPick(choices[i]); d.dismiss()
-            }
-            .show()
-    }
-
-    /** Time used by "Snooze until tomorrow" on the alarm screen. */
-    private fun pickMorning() {
-        val m = AlarmPrefs.morningMinutes(this)
-        val picker = com.google.android.material.timepicker.MaterialTimePicker.Builder()
-            .setTimeFormat(
-                if (android.text.format.DateFormat.is24HourFormat(this)) com.google.android.material.timepicker.TimeFormat.CLOCK_24H
-                else com.google.android.material.timepicker.TimeFormat.CLOCK_12H
-            )
-            .setHour(m / 60).setMinute(m % 60)
-            .setTitleText(getString(R.string.set_morning))
-            .build()
-        picker.addOnPositiveButtonClickListener {
-            AlarmPrefs.setMorningMinutes(this, picker.hour * 60 + picker.minute); refreshSettings()
+        main.row(getString(R.string.set_workdays), "›", dot = ContextCompat.getColor(this, R.color.ios_orange)) {
+            startActivity(Intent(this, WorkDaysActivity::class.java))
         }
-        picker.show(supportFragmentManager, "morning")
-    }
-
-    /** Pick the two quick snooze buttons shown on the alarm screen. */
-    private fun chooseSnooze() {
-        val choices = AlarmPrefs.SNOOZE_CHOICES
-        pickMinutes(getString(R.string.msg_first_snooze_button), choices, AlarmPrefs.snooze1(this)) { first ->
-            pickMinutes(getString(R.string.msg_second_snooze_button), choices.filter { it != first }, AlarmPrefs.snooze2(this)) { second ->
-                AlarmPrefs.setSnooze(this, minOf(first, second), maxOf(first, second))
-                refreshSettings()
-            }
+        main.row(getString(R.string.appearance_title), "›", dot = accent) {
+            startActivity(Intent(this, AppearanceActivity::class.java))
         }
-    }
 
-    private fun chooseWeeklyOff() {
-        val options = WorkDays.OffDays.entries
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.msg_weekly_off))
-            .setSingleChoiceItems(options.map { it.label }.toTypedArray(), WorkDays.offDays.ordinal) { d, which ->
-                WorkDays.set(this, options[which])
-                TaskActions.recomputeWorkdays(this) // move upcoming tasks to their new working days
-                d.dismiss()
-                refresh()
-            }
-            .show()
+        list.spacer()
+        val data = list.group()
+        data.row(getString(R.string.backup_title), if (Backup.autoUri(this) != null) "On ›" else "Off ›",
+            dot = ContextCompat.getColor(this, R.color.ios_indigo)) { startActivity(Intent(this, BackupActivity::class.java)) }
+        data.row(getString(R.string.msg_monthly_report), "›", dot = ContextCompat.getColor(this, R.color.ios_green)) {
+            startActivity(Intent(this, ReportActivity::class.java))
+        }
+        data.row(getString(R.string.msg_check_for_updates), Updater.currentVersionName + " ›",
+            dot = ContextCompat.getColor(this, R.color.ios_gray)) { updates.checkForUpdate(manual = true) }
+
+        list.spacer()
+        list.group().row(getString(R.string.set_test_alarm_button), titleColor = accent, centered = true) { testAlarm() }
+        list.spacer()
+        list.group().row(getString(R.string.msg_clear_completed), titleColor = ContextCompat.getColor(this, R.color.ios_red), centered = true) {
+            clearCompleted()
+        }
     }
 
     private fun testAlarm() {

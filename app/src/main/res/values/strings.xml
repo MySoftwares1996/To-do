@@ -145,4 +145,19 @@
     <string name="backup_copy_saved">Copy saved</string>
     <string name="backup_failed">Backup failed: %1$s</string>
     <string name="backup_footer">Tip: save the file in Google Drive so your tasks are safe if you change or lose your phone.</string>
+    <!-- Settings tab -->
+    <string name="set_alarm_check">Alarm check</string>
+    <string name="set_all_set">All set ›</string>
+    <string name="set_to_fix">%1$d to fix ›</string>
+    <string name="set_alarms_snooze">Alarms &amp; snooze</string>
+    <string name="set_workdays">Work days &amp; holidays</string>
+    <string name="set_test_alarm_button">🔔  Test alarm (rings in 1 min)</string>
+    <string name="set_sound">Sound</string>
+    <string name="set_off">Off</string>
+    <string name="set_default">Default</string>
+    <string name="set_custom">Custom</string>
+    <string name="set_snooze_buttons_long">Snooze buttons</string>
+    <string name="set_important_tasks">Important tasks</string>
+    <string name="set_remind_again_every">Remind again every</string>
+    <string name="set_alarm_footer">Alarms play on the alarm volume, so you hear them even in silent mode.</string>
 </resources>
